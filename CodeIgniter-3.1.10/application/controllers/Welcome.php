@@ -10,7 +10,7 @@ class Welcome extends CI_Controller
     }
 	public function index()
 	{
-		$this->load->view('welcome_message');
+		$this->load->view('view');
 	}
 	public function add()
 	{
@@ -29,10 +29,10 @@ class Welcome extends CI_Controller
 			echo 1;
 		}
 	}
-	public function view()
-    {
-        $this->load->view('view');
-    }
+	// public function view()
+ //    {
+ //        $this->load->view('view');
+ //    }
     public function get_list_of_lead()
     {
         $list = $this->lead->get_list_of_lead();
@@ -51,9 +51,7 @@ class Welcome extends CI_Controller
             $row[] = $value['contact'];
             $row[] = $value['note'];
             $row[] = $value['created_at'];
-            $row[] = '<button type="button" class="btn btn-success btn-sm" onclick="update('.$value['daily_lead_id'].');">
-                                    Update
-                                </button>';
+            $row[] = '<button type="button" class="btn btn-primary btn-sm" onclick="update('.$value['daily_lead_id'].');">Update</button>';
             $data[] = $row;
             // $i++;
         }
@@ -64,5 +62,27 @@ class Welcome extends CI_Controller
             "data" => $data
         );
         echo json_encode($output);
+    }
+    public function edit($daily_lead_id)
+    {
+    	$data=$this->common->select_single_records('daily_lead',array('daily_lead_id'=>$daily_lead_id));
+    	echo json_encode($data);
+    }
+    public function update()
+    {
+    	$result=$this->common->update_table('daily_lead',array('daily_lead_id'=>$this->input->post('daily_lead_id')),array(
+			'date'=>$this->input->post('date'),
+			'lead_origin'=>$this->input->post('lead_origin'),
+			'lead_area'=>$this->input->post('lead_area'),
+			'city'=>$this->input->post('city'),
+			'query'=>$this->input->post('query'),
+			'client_name'=>$this->input->post('client_name'),
+			'contact'=>$this->input->post('contact'),
+			'note'=>$this->input->post('note'),
+		));
+		if($result)
+		{
+			echo 1;
+		}
     }
 }
