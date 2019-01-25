@@ -4,6 +4,8 @@
 	<meta charset="UTF-8">
 	<title>Lead Table</title>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
 </head>
 <body>
 	<div class="container">
@@ -11,32 +13,31 @@
 			<h1>Lead Generation Table</h1>
 				<div class="offset-5 mt-3 col-2"><button type="button" data-toggle="modal" data-target="#add_lead_modal" class="btn btn-primary btn-sm">Add Lead</button></div>
 		</div>
-		<!-- <div class="table-responsive"> -->
-			<!-- <select name="date" class="form-group">
-				<option value="">Choose Date</option>
-				<option value="">1</option>
-				<option value="">2</option>
-				<option value="">3</option>
-			</select> -->
-			<table id="table" class="table table-sm table-hover table-bordered">
-				<thead>
-					<tr>
-						<th>Date</th>
-						<th>Lead Origin</th>
-						<th>Lead Area</th>
-						<th>City</th>
-						<th>Query</th>
-						<th>Client Name</th>
-						<th>Contact</th>
-						<th>Note</th>
-						<th>Posted</th>
-						<th>Action</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		<!-- </div> -->
+		<div class="row">
+            <div class="col-2 form-group">
+                <input type="text" class="form-control column_filter" data-column="0" name="" id="id0" placeholder="2019-12-31">
+            </div>
+        </div>
+        <div class="row">
+		<table id="lead_generation_table" class="table table-sm table-hover table-bordered">
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Lead Origin</th>
+					<th>Lead Area</th>
+					<th>City</th>
+					<th>Query</th>
+					<th>Client Name</th>
+					<th>Contact</th>
+					<th>Note</th>
+					<th>Posted</th>
+					<th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
 	</div>
 	<!-- Large modal -->
 	<div class="modal fade bd-example-modal-xl" id="add_lead_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
@@ -110,7 +111,7 @@
 	  </div>
 	</div>
 	<!-- Large modal -->
-	<div class="modal fade bd-example-modal-xl" id="lead_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal fade bd-example-modal-xl" id="update_lead_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
 	  <div class="modal-dialog modal-xl">
 	    <div class="modal-content">
 	    	<div class="container">
@@ -120,11 +121,11 @@
 					<div class="row">
 						<div class="form-group col-6">
 					    	<label for="exampleInputEmail1">Date</label>
-					    	<input type="date" class="form-control" name="date" id="date" aria-describedby="emailHelp" placeholder="" required="required">
+					    	<input type="date" class="form-control" name="date" id="date1" aria-describedby="emailHelp" placeholder="" required="required">
 					  	</div>
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Lead Origin</label>
-					    	<select name="lead_origin" id="lead_origin" class="form-control" required="required">
+					    	<select name="lead_origin" id="lead_origin1" class="form-control" required="required">
 					    		<option value="Facebook">Facebook</option>
 					    		<option value="Instagram">Instagram</option>
 					    		<option value="Newspaper">Newspaper</option>
@@ -136,11 +137,11 @@
 					<div class="row">
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Lead Area</label>
-					    	<input type="text" class="form-control" name="lead_area" id="lead_area" placeholder="" required="required">
+					    	<input type="text" class="form-control" name="lead_area" id="lead_area1" placeholder="" required="required">
 					  	</div>
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">City</label>
-					    	<select name="city" id="city" class="form-control" required="required">
+					    	<select name="city" id="city1" class="form-control" required="required">
 					    		<option value="Rawalpindi">Rawalpindi</option>
 					    		<option value="Islamabad">Islamabad</option>
 					    		<option value="Lahore">Lahore</option>
@@ -152,24 +153,24 @@
 					<div class="row">
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Query</label>
-					    	<input type="text" class="form-control" name="query" id="query" placeholder="" required="required">
+					    	<input type="text" class="form-control" name="query" id="query1" placeholder="" required="required">
 					  	</div>
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Client Name</label>
-					    	<input type="text" class="form-control" name="client_name" id="client_name" placeholder="" required="required">
+					    	<input type="text" class="form-control" name="client_name" id="client_name1" placeholder="" required="required">
 					  	</div>
 					</div>
 					<div class="row">
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Contact</label>
-					    	<input type="text" class="form-control" name="contact" id="contact" placeholder="" required="required">
+					    	<input type="text" class="form-control" name="contact" id="contact1" placeholder="" required="required">
 					  	</div>
 					  	<div class="form-group col-6">
 					    	<label for="exampleInputPassword1">Note</label>
-					    	<textarea name="note" id="note" rows="1" class="form-control"></textarea>
+					    	<textarea name="note" id="note1" rows="1" class="form-control"></textarea>
 					  	</div>
 					</div>
-					<input type="submit" id="submit-hidden" style="display: none">
+					<input type="submit" id="submit-hidden1" style="display: none">
 					<div id="alert"></div>
 					<div class="row mb-3">
 					  	<div class="col-6">
@@ -191,7 +192,7 @@
 	<script type="text/javascript">
 		$(document).ready(function()
 		{
-		    var ltable = $('#table');
+		    var ltable = $('#lead_generation_table');
 		    var leadtable=ltable.DataTable(
 		    {
 		        "pageLength": 10,
@@ -232,7 +233,7 @@
 		    //////////Advance search/////////////
 		    function filterColumn ( i )
 		    {
-		        $('#list_of_admin_datatable').DataTable().column( i ).search(
+		        $('#lead_generation_table').DataTable().column( i ).search(
 		            $('#id'+i).val()
 		        ).draw();
 		    }
@@ -268,8 +269,13 @@
 			        	$('#alert').html('<div class="alert alert-primary alert-dismissible fade show   m-alert m-alert--square m-alert--air"><button class="close" data-close="alert"></button><span>Lead Added!</span></div>');
     					// $('#add_form').clearForm();
     					$("#add_form")[0].reset();
+    					// $('#lead_generation_table').ajax.reload();
+    					var myDataTable = $('#lead_generation_table').DataTable(
+    					{
+							//Rest code
+						});
+						myDataTable.ajax.reload();
 			    	}
-
 		     	});
 	     		event.preventDefault();
 	     		return false;  //stop the actual form post !important!
@@ -277,7 +283,7 @@
 		});
 		function update(daily_lead_id)
 		{
-			$('#lead_modal').modal();
+			$('#update_lead_modal').modal();
 			$.ajax(
 			{
 				url: 'http://localhost/CodeIgniter-3.1.10/welcome/edit/'+daily_lead_id,
@@ -287,16 +293,16 @@
 			.done(function(data)
 			{
 				$('#daily_lead_id').val(data.daily_lead_id);
-				$('#date').val(data.date);
-				$('#lead_origin').val(data.lead_origin);
-				$('#owner_name').val(data.owner_name);
-				$('#lead_area').val(data.lead_area);
-				$('#city').val(data.city);
-				$('#query').val(data.query);
-				$('#city_name').val(data.city_name);
-				$('#client_name').val(data.client_name);
-				$('#contact').val(data.contact);
-				$('#note').val(data.note);
+				$('#date1').val(data.date);
+				$('#lead_origin1').val(data.lead_origin);
+				$('#owner_name1').val(data.owner_name);
+				$('#lead_area1').val(data.lead_area);
+				$('#city1').val(data.city);
+				$('#query1').val(data.query);
+				$('#city_name1').val(data.city_name);
+				$('#client_name1').val(data.client_name);
+				$('#contact1').val(data.contact);
+				$('#note1').val(data.note);
 				console.log("done");
 			})
 			.fail(function()
@@ -343,8 +349,14 @@
 	                {
 	                	alert('Successful!'); //Unterminated String literal fixed
 			        	$('#alert').html('<div class="alert alert-primary alert-dismissible fade show   m-alert m-alert--square m-alert--air"><button class="close" data-close="alert"></button><span>Lead Updated!</span></div>');
-            		}
-        		});
+			        	// $('#lead_generation_table').ajax.reload();
+						var myDataTable = $('#lead_generation_table').DataTable(
+						{
+							//Rest code
+						});
+						myDataTable.ajax.reload();
+		            		}
+		        		});
         		return false;
     		});
 		});
