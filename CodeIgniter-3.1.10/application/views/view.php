@@ -5,10 +5,26 @@
 	<title>Lead Table</title>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.css">
-        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+    <style type="text/css">
+    	/*text[text-anchor="middle"]*/
+    	/*{
+  			display:none;
+		}*/
+    </style>
 </head>
 <body>
 	<div class="container">
+		<div class="row">
+			<h1>Lead Graph</h1>
+		</div>
+		<div class="row">
+			<div id="bar_chart" style="height: 250px;"></div>
+		</div>
 		<div class="row">
 			<h1>Lead Generation Table</h1>
 				<div class="offset-5 mt-3 col-2"><button type="button" data-toggle="modal" data-target="#add_lead_modal" class="btn btn-primary btn-sm">Add Lead</button></div>
@@ -19,25 +35,25 @@
             </div>
         </div>
         <div class="row">
-		<table id="lead_generation_table" class="table table-sm table-hover table-bordered">
-			<thead>
-				<tr>
-					<th>Date</th>
-					<th>Lead Origin</th>
-					<th>Lead Area</th>
-					<th>City</th>
-					<th>Query</th>
-					<th>Client Name</th>
-					<th>Contact</th>
-					<th>Note</th>
-					<th>Posted</th>
-					<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
-	</div>
+			<table id="lead_generation_table" class="table table-sm table-hover table-bordered">
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>Lead Origin</th>
+						<th>Lead Area</th>
+						<th>City</th>
+						<th>Query</th>
+						<th>Client Name</th>
+						<th>Contact</th>
+						<th>Note</th>
+						<th>Posted</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
 	</div>
 	<!-- Large modal -->
 	<div class="modal fade bd-example-modal-xl" id="add_lead_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
@@ -118,6 +134,7 @@
 	    		<h1>Lead Generation</h1>
 				<form id="update_form">
 					<input type="hidden" name="daily_lead_id" id="daily_lead_id" value="">
+					<input type="hidden" name="old_date" id="date2" value="">
 					<div class="row">
 						<div class="form-group col-6">
 					    	<label for="exampleInputEmail1">Date</label>
@@ -182,6 +199,30 @@
 	    </div>
 	  </div>
 	</div>
+	 <!--MODAL DELETE-->
+         <form>
+            <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Delete Lead</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                       <strong>Are you sure to delete this record?</strong>
+                  </div>
+                  <div class="modal-footer">
+                    <input type="hidden" name="product_code_delete" id="product_code_delete" class="form-control">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button type="button" type="submit" id="delete_btn" class="btn btn-primary">Yes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </form>
+        <!--END MODAL DELETE-->
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 	<!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript" charset="utf-8"></script> -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -189,6 +230,65 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+        <script type="text/javascript">
+    	new Morris.Bar(
+        {
+            // ID of the element in which to draw the chart.
+            element: 'bar_chart',
+            // Chart data records -- each entry in this array corresponds to a point on
+            // the chart.
+            data: <?php echo $data;?>,
+            // data: [
+            //     { period: '2019-01-01', line: 1},
+            //     { period: '2019-01-02', line: 2},
+            //     { period: '2019-01-03', line: 3},
+            //     { period: '2019-01-04', line: 4},
+            //     { period: '2019-01-05', line: 5},
+            //     { period: '2019-01-06', line: 6},
+            //     { period: '2019-01-07', line: 7},
+            //     { period: '2019-01-08', line: 8},
+            //     { period: '2019-01-09', line: 9},
+            //     { period: '2019-01-10', line: 5},
+            //     { period: '2019-01-11', line: 11},
+            //     { period: '2019-01-12', line: 12},
+            //     { period: '2019-01-13', line: 13},
+            //     { period: '2019-01-14', line: 14},
+            //     { period: '2019-01-15', line: 15},
+            //     { period: '2019-01-16', line: 30},
+            //     { period: '2019-01-17', line: 17},
+            //     { period: '2019-01-18', line: 18},
+            //     { period: '2019-01-19', line: 19},
+            //     { period: '2019-01-20', line: 20},
+            //     { period: '2019-01-21', line: 21},
+            //     { period: '2019-01-22', line: 22},
+            //     { period: '2019-01-23', line: 23},
+            //     { period: '2019-01-24', line: 24},
+            //     { period: '2019-01-25', line: 25},
+            //     { period: '2019-01-26', line: 26},
+            //     { period: '2019-01-27', line: 27},
+            //     { period: '2019-01-28', line: 28},
+            //     { period: '2019-01-29', line: 29},
+            //     { period: '2019-01-30', line: 30},
+            // ],
+            // The name of the data record attribute that contains x-values.
+            xkey: 'date',
+            // A list of names of data record attributes that contain y-values.
+            ykeys: ['count'],
+            // Labels for the ykeys -- will be displayed when you hover over the
+            // chart.
+            labels: ['Total No. of Lead'],
+            // xLabels: 'day',
+            // xLabelAngle: 30,
+            fillOpacity: 0.6,
+            hideHover: 'auto',
+            behaveLikeLine: true,
+            resize: true,
+            lineWidth: '10px',
+            pointFillColors:['#ffffff'],
+            pointStrokeColors: ['black'],
+            lineColors:['black','red','blue']
+        });
+    </script>
 	<script type="text/javascript">
 		$(document).ready(function()
 		{
@@ -210,7 +310,7 @@
 		        // Load data for the table's content from an Ajax source
 		        "ajax": 
 		        {
-		            "url": 'http://localhost/CodeIgniter-3.1.10/welcome/get_list_of_lead',
+		            "url": '<?php echo site_url('welcome/get_list_of_lead')?>',
 		            "type": "POST"
 		        },
 		        "oLanguage": 
@@ -286,7 +386,7 @@
 			$('#update_lead_modal').modal();
 			$.ajax(
 			{
-				url: 'http://localhost/CodeIgniter-3.1.10/welcome/edit/'+daily_lead_id,
+				url: '<?php echo site_url('welcome/edit/')?>'+daily_lead_id,
 				method: 'POST',
 				dataType: 'json',
 			})
@@ -294,6 +394,7 @@
 			{
 				$('#daily_lead_id').val(data.daily_lead_id);
 				$('#date1').val(data.date);
+				$('#date2').val(data.date);
 				$('#lead_origin1').val(data.lead_origin);
 				$('#owner_name1').val(data.owner_name);
 				$('#lead_area1').val(data.lead_area);
@@ -355,11 +456,38 @@
 							//Rest code
 						});
 						myDataTable.ajax.reload();
-		            		}
-		        		});
+		            }
+		        });
         		return false;
     		});
 		});
+		// Delete Lead
+		function delete_lead(daily_lead_id)
+		{
+			$('#delete_modal').modal();
+			$('#delete_btn').on('click',function()
+			{
+	            // var form = $('#update_form').serialize()
+	            $.ajax(
+	            {
+	                type : "POST",
+	                url  : "<?php echo site_url('welcome/delete/')?>"+daily_lead_id,
+	                dataType : "JSON",
+	                success: function(data)
+	                {
+	                	 $('#delete_modal').modal('toggle');
+	                	// alert('Successful!'); //Unterminated String literal fixed
+			        	// $('#alert').html('<div class="alert alert-primary alert-dismissible fade show m-alert m-alert--square m-alert--air"><button class="close" data-close="alert"></button><span>Record Deleted!</span></div>');
+			        	// $('#lead_generation_table').ajax.reload();
+						var myDataTable = $('#lead_generation_table').DataTable(
+						{
+							//Rest code
+						});
+						myDataTable.ajax.reload();
+		            }
+		        });
+    		});
+		}
 	</script>
 </body>
 </html>

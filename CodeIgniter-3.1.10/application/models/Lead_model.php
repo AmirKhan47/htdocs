@@ -2,6 +2,14 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 class Lead_model extends CI_Model
 {
+	function chart_data()
+	{
+      	$this->db->select('date,count');
+      	$this->db->from('lead_count');
+      	// $this->db->join('daily_lead as dl','dl.date=lc.date','left');
+      	$result = $this->db->get();
+      	return $result;
+  	}
 	public function list_of_lead_count()
 	{
 		$this->db->select('*');
