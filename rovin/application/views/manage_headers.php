@@ -34,74 +34,76 @@ defined('BASEPATH') OR exit('No direct script access allowed');
         ?>
 		<h3><button class="btn btn-info" data-toggle="modal" data-target="#add_modal">Add New</button></h3>
 		<!-- <h3><a class="btn btn-info" href="<?php echo URL; ?>welcome/add_header">Add New</a></h3> -->
-		<table id="contact_table" class="table table-sm table-hover">
-			<thead>
-				<tr>
-					<!-- <th>Image</th> -->
-					<th>First Name</th>
-					<th>Last Name</th>
-					<th>Company</th>
-					<th>Job Title</th>
-					<th>Category</th>
-					<th>Email</th>
-					<th>Bussiness Phone</th>
-					<th>Home Phone</th>
-					<th>Date Created</th>
-					<th>Actiom</th>
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
+		<div class="table-responsive">
+			<table id="contact_table" class="table table-sm table-hover">
+				<thead>
+					<tr>
+						<th>Image</th>
+						<th>First Name</th>
+						<th>Last Name</th>
+						<th>Company</th>
+						<th>Job Title</th>
+						<th>Category</th>
+						<th>Email</th>
+						<th>Bussiness Phone</th>
+						<th>Home Phone</th>
+						<th>Date Created</th>
+						<th>Actiom</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
 	</div>
 
 	<!-- Large modal -->
-	<div class="modal fade bd-example-modal-xs" id="add_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-		<div class="modal-dialog modal-xl">
+	<div class="modal fade bd-example-modal-md" id="add_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-md">
 		   	<div class="modal-content">
 		    	<div class="container">
-		    		<h1>Lead Generation</h1>
+		    		<h3>Add</h3>
 					<form id="add_form" method="POST" enctype="multipart/form-data">
 						<div class="form-group row">
 							<div class="col">
-								<img id="image" src="#" alt="" style="max-height: 100px;">
-								<label for="">Image</label><input type="file" class="form-control-file" name="image_name" id="image_name" accept="image/*" required="required">
+								<img class="border" id="image" src="<?php URL;?>uploads/gardening-2518377_1920.jpg" alt="" style="max-height: 100px;max-width: 200px">
+								<input type="file" class="form-control-file mt-1" name="image_name" id="image_name" accept="image/gif, image/jpeg, image/png, image/jpg" required="required">
 							</div>
 							<div class="col">
-								<label for="">First Name</label><input type="text" class="form-control" name="first_name" required="required">
-							</div>
-						</div>
-
-						<div class="form-group row">
-							<div class="col">
-								<label for="">Last Name</label><input type="text" class="form-control" name="last_name" required="required">
-							</div>
-							<div class="col">
-								<label for="">Company</label><input type="text" class="form-control" name="company" required="required">
+								<label for="">First Name</label><input type="text" class="form-control form-control-sm" name="first_name" pattern="^[a-zA-Z ]{3,40}$" minlength="3" maxlength="50" title="Please Enter A valid First Name" placeholder="Abc Xyz" required="required">
 							</div>
 						</div>
 
 						<div class="form-group row">
 							<div class="col">
-								<label for="">Job Title</label><input type="text" class="form-control" name="job_title" required="required">
+								<label for="">Last Name</label><input type="text" class="form-control form-control-sm" name="last_name" pattern="^[a-zA-Z ]{3,40}$" minlength="3" maxlength="50" title="Please Enter A valid Last Name" placeholder="Abc Xyz" required="required">
 							</div>
 							<div class="col">
-								<label for="">Category</label><input type="text" class="form-control" name="category" required="required">
+								<label for="">Company</label><input type="text" class="form-control form-control-sm" name="company" pattern="^[a-zA-Z ]{3,40}$" minlength="3" maxlength="50" title="Please Enter A valid Campnay Name" placeholder="Abc Xyz" required="required">
 							</div>
 						</div>
 
 						<div class="form-group row">
 							<div class="col">
-								<label for="">Email</label><input type="text" class="form-control" name="email" required="required">
+								<label for="">Job Title</label><input type="text" class="form-control form-control-sm" name="job_title" pattern="^[a-zA-Z ]{3,40}$" minlength="3" maxlength="50" title="Please Enter A valid Job Tile" placeholder="Abc Xyz" required="required">
 							</div>
 							<div class="col">
-								<label for="">Bussiness Phone</label><input type="text" class="form-control" name="bussiness_phone" required="required">
+								<label for="">Category</label><input type="text" class="form-control form-control-sm" name="category" pattern="^[a-zA-Z ]{3,40}$" minlength="3" maxlength="50" title="Please Enter A valid Category Name" placeholder="Abc Xyz" required="required">
+							</div>
+						</div>
+
+						<div class="form-group row">
+							<div class="col">
+								<label for="">Email</label><input type="email" class="form-control form-control-sm" name="email" pattern="^[^.]([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$" placeholder="abc@gmail.com" required="required">
+							</div>
+							<div class="col">
+								<label for="">Bussiness Phone</label><input type="text" class="form-control form-control-sm" name="bussiness_phone" pattern="[0-9]{11,12}" maxlength="12" title="Please Enter Valid Phone Number" placeholder="03123456789" required="required">
 							</div>
 						</div>
 						
 						<div class="form-group row">
 							<div class="col">
-								<label for="">Home Phone</label><input type="text" class="form-control" name="home_phone" required="required">
+								<label for="">Home Phone</label><input type="text" class="form-control form-control-sm" name="home_phone" pattern="[0-9]{11,12}" maxlength="12" title="Please Enter Valid Phone Number" placeholder="03123456789"required="required">
 							</div>
 						</div>
 						<input type="submit" id="submit-hidden" style="display: none">
@@ -253,8 +255,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 						}
 						else
 						{
-							alert(data); //Unterminated String literal fixed
-				        	$('#alert').html('<div class="alert alert-danger alert-dismissible fade show  m-alert m-alert--square m-alert--air"><button class="close" data-close="alert"></button><span> Image type Not Allowed!</span></div>');
+							alert('Failed!'); //Unterminated String literal fixed
+				        	$('#alert').html('<div class="alert alert-danger alert-dismissible fade show  m-alert m-alert--square m-alert--air"><button class="close" data-close="alert"></button><span> Image type jpg/jpeg/png and size of max 2MB Allowed!</span></div>');
 						}
 			    	}
 		     	});

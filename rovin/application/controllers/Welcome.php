@@ -24,6 +24,7 @@ class Welcome extends CI_Controller {
             $no++;
             $row = array();
             // $row[] = $value['image_name'];
+            $row[] = '<a class="btn btn-info btn-sm" href="'.URL.'uploads/'.$value['image_name'].'" download>Download</a>';
             $row[] = $value['first_name'];
             $row[] = $value['last_name'];
             $row[] = $value['company'];
@@ -48,7 +49,7 @@ class Welcome extends CI_Controller {
 	public function add()
 	{
 		$config['upload_path']="./uploads";
-        $config['allowed_types']='gif|jpg|png';
+        $config['allowed_types']='gif|jpg|png|jpeg';
         $this->load->library('upload',$config);
         $this->upload->initialize($config);
         if($this->upload->do_upload("image_name"))
