@@ -1,41 +1,43 @@
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-xl-12"><h1 class="page-title"><?php echo $this->lang->line('event'); ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('event'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href='javascript:void(0);'><?php echo $this->lang->line('events'); ?></a></li>
+        </ul>
     </div>
 </section>
 
-<section class="content-area">
+<section class="page-event-area">
     <div class="container">
-        <div class="row">
-
-            <?php if(isset($events) && !empty($events)) { ?>
-            <?php foreach($events as $obj) { ?>
-                <div class="col-md-4 col-sm-6">
-                    <div class="single-event-list">
-                        <div class="event-img">
-                            <a href="<?php echo site_url('event-detail/'.$obj->id); ?>">
-                                <img src="<?php echo UPLOAD_PATH; ?>/event/<?php echo $obj->image; ?>" alt="">
-                            </a>
-                        </div>
-                        <div class="event-content">
-                            <div class="event-meta">
-                                <div class="event-title"><?php echo $obj->title; ?></div>
-                                <div class="event-for"><span><?php echo $this->lang->line('event_for'); ?></span>: <?php echo $obj->name ? $obj->name : $this->lang->line('all'); ?></div>
-                                <div class="event-place"><span><?php echo $this->lang->line('event_place'); ?></span>: <?php echo $obj->event_place; ?></div>
-                                <div class="event-date"><span><?php echo $this->lang->line('start_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($obj->event_from)); ?></div>
-                                <div class="event-date"><span><?php echo $this->lang->line('end_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($obj->event_to)); ?></div>
-                            </div>
-                            <div class="more-link"><a href="<?php echo site_url('event-detail/'.$obj->id); ?>" class="btn-link"><?php echo $this->lang->line('read_more'); ?> <i class="fa fa-long-arrow-right"></i></a></div>
+        <div class="row justify-content-center">
+        <?php if(isset($events) && !empty($events)){ ?>
+            <?php foreach($events AS $obj){ ?>
+            <div class="col-lg-4 col-md-6 col-sm-6 col-12">
+                <div class="single-event">
+                    <div class="img">
+                        <img src="<?php echo UPLOAD_PATH; ?>event/<?php echo $obj->image; ?>" alt="">
+                    </div>
+                    <div class="content">
+                        <h2 class="title"><a href="<?php echo site_url('event-detail/'.$obj->id); ?>"><?php echo $obj->title; ?></a></h2>
+                        <ul class="list">
+                            <li class="info"><span class="icon"><i class="fas fa-user"></i></span><?php echo $obj->event_for ? $obj->event_for : $this->lang->line('all'); ?> (<?php echo $this->lang->line('event_for'); ?>)</li>
+                            <li class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span><?php echo date($this->global_setting->date_format, strtotime($obj->event_from)); ?> (<?php echo $this->lang->line('start_date'); ?>)</li>
+                            <li class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span><?php echo date($this->global_setting->date_format, strtotime($obj->event_to)); ?> (<?php echo $this->lang->line('end_date'); ?>)</li>
+                            <li class="info"><span class="icon"><i class="fas fa-map-marker-alt"></i></span><?php echo $obj->event_place; ?></li>
+                        </ul>
+                        <div class="more text-center">
+                            <a href="<?php echo site_url('event-detail/'.$obj->id); ?>" class="link glbscl-link-btn hvr-bs"><?php echo $this->lang->line('read_more'); ?></a>
                         </div>
                     </div>
                 </div>
-            <?php } ?>
-            <?php } else { ?>
-            <div class="col-md-12 col-sm-12"><?php echo $this->lang->line('no_data_found'); ?></div>
-            <?php } ?>
-
+            </div>
+           <?php } ?>
+        <?php }else{ ?>
+            <div class="col-lg-12 col-md-12 col-sm-12 col-12">
+                <p class="text-center"><strong><?php echo $this->lang->line('no_data_found'); ?></strong></p>
+            </div>
+        <?php } ?>
         </div>
     </div>
 </section>

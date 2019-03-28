@@ -26,6 +26,10 @@
                                 <!-- /.box-header -->
                                 <div class="box-body no-padding">
                                   <div class="mailbox-read-info">
+                                      
+                                    <h4><?php echo $this->lang->line('school'); ?>: <?php echo $message->school_name; ?></h4>
+                                    <div class="ln_solid"></div> 
+                                    
                                     <h4><?php echo $message->subject; ?></h4>
                                     <h5>
                                         <?php if($message->receiver_id == $message->owner_id){ ?>
@@ -35,12 +39,13 @@
                                             <?php $user = get_user_by_id($message->receiver_id); ?>
                                             <span><?php echo $this->lang->line('receiver'); ?>: <?php echo $user->name; ?></span>
                                         <?php } ?>
-                                      <span class="mailbox-read-time pull-right"><?php echo date('M j, Y H:i:s a', strtotime($message->created_at)); ?></span>
+                                      <span class="mailbox-read-time pull-right"><?php echo date($this->global_setting->date_format . ' H:i:s a', strtotime($message->created_at)); ?></span>
                                     </h5>
                                   </div>
                                   <div class="ln_solid"></div>  
                                   <div class="mailbox-read-message">
                                     <?php echo nl2br($message->body); ?>
+                                     <br/>  
                                   </div>
                                   
                                   <?php if(isset($replies) && !empty($replies)){ ?>
@@ -49,10 +54,11 @@
                                     <h5>                                      
                                         <?php $user = get_user_by_id( $obj->sender_id); ?>
                                         <span> <?php echo $this->lang->line('reply'); ?>: <?php echo $user->name; ?></span>
-                                        <span class="mailbox-read-time pull-right"><?php echo date('M j, Y H:i:s a', strtotime($obj->created_at)); ?></span>
+                                        <span class="mailbox-read-time pull-right"><?php echo date($this->global_setting->date_format . ' H:i:s a', strtotime($obj->created_at)); ?></span>
                                     </h5>     
                                       <div class="mailbox-read-message">
                                         <?php echo nl2br($obj->body); ?>
+                                          <br/>
                                       </div>
 
                                     <?php } ?>
@@ -103,19 +109,6 @@
 
 <!-- datatable with buttons -->
  <script type="text/javascript">
-        $(document).ready(function() {
-          $('#datatable-responsive').DataTable( {
-              dom: 'Bfrtip',
-              iDisplayLength: 15,
-              buttons: [
-                  'copyHtml5',
-                  'excelHtml5',
-                  'csvHtml5',
-                  'pdfHtml5',
-                  'pageLength'
-              ],
-              search: true
-          });
-        });
+        
     $("#compose").validate();    
 </script> 

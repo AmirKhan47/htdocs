@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Classes.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Classes
  * @description     : Manage academic class.  
@@ -20,8 +20,8 @@ class Classes extends MY_Controller {
     
     function __construct() {
         parent::__construct();
-         $this->load->model('Classes_Model', 'classes', true);
-         
+        $this->load->model('Classes_Model', 'classes', true);
+       
     }
 
     
@@ -34,10 +34,17 @@ class Classes extends MY_Controller {
      * @return          : null 
      * ********************************************************** */
     public function index() {
-        
+         $this->output->delete_cache();
         check_permission(VIEW);
-        $this->data['classes'] = $this->classes->get_class_list();        
-         $this->data['teachers'] = $this->classes->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['classes'] = $this->classes->get_class_list();  
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['teachers'] = $this->classes->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }        
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_class'). ' | ' . SMS);
         $this->layout->view('class/index', $this->data);            
@@ -64,6 +71,9 @@ class Classes extends MY_Controller {
 
                 $insert_id = $this->classes->insert('classes', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a class :'.$data['name']);
+                    
                     success($this->lang->line('insert_success'));
                     $this->__create_default_section($insert_id);
                     redirect('academic/classes/index');
@@ -76,8 +86,15 @@ class Classes extends MY_Controller {
             }
         }
 
-        $this->data['classes'] = $this->classes->get_class_list();        
-        $this->data['teachers'] = $this->classes->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['classes'] = $this->classes->get_class_list();      
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['teachers'] = $this->classes->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }        
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('class'). ' | ' . SMS);
         $this->layout->view('class/index', $this->data);
@@ -108,6 +125,9 @@ class Classes extends MY_Controller {
                 $updated = $this->classes->update('classes', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a class :'.$data['name']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('academic/classes/index');                   
                 } else {
@@ -127,8 +147,16 @@ class Classes extends MY_Controller {
             }
         }
 
-        $this->data['classes'] = $this->classes->get_class_list();        
-        $this->data['teachers'] = $this->classes->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['classes'] = $this->classes->get_class_list();   
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['teachers'] = $this->classes->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }        
+        
+        $this->data['school_id'] = $this->data['class']->school_id;
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('class'). ' | ' . SMS);
         $this->layout->view('class/index', $this->data);
@@ -146,14 +174,10 @@ class Classes extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('teacher_id', $this->lang->line('teacher'), 'trim|required');   
         $this->form_validation->set_rules('numeric_name', $this->lang->line('numeric_name'), 'trim|required');     
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required|callback_name');
-        $this->form_validation->set_rules('monthly_tution_fee', $this->lang->line('monthly_tution_fee'), 'trim|required');     
-        $this->form_validation->set_rules('admission_fee', $this->lang->line('admission_fee'), 'trim|required');     
-        $this->form_validation->set_rules('exam_fee', $this->lang->line('exam_fee'), 'trim|required');     
-        $this->form_validation->set_rules('certificate_fee', $this->lang->line('certificate_fee'), 'trim|required');     
-      
     }
     
     /*****************Function name**********************************
@@ -168,7 +192,7 @@ class Classes extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $name = $this->classes->duplicate_check($this->input->post('name')); 
+          $name = $this->classes->duplicate_check($this->input->post('school_id'), $this->input->post('name')); 
           if($name){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -176,7 +200,7 @@ class Classes extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $name = $this->classes->duplicate_check($this->input->post('name'), $this->input->post('id')); 
+         $name = $this->classes->duplicate_check($this->input->post('school_id'), $this->input->post('name'), $this->input->post('id')); 
           if($name){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -198,13 +222,10 @@ class Classes extends MY_Controller {
     private function _get_posted_class_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'teacher_id';
         $items[] = 'name';
-        $items[] = 'numeric_name';
-        $items[] = 'monthly_tution_fee';
-        $items[] = 'admission_fee';
-        $items[] = 'exam_fee';
-        $items[] = 'certificate_fee';
+        $items[] = 'numeric_name';        
         $items[] = 'note';
         $data = elements($items, $_POST);        
         
@@ -239,7 +260,12 @@ class Classes extends MY_Controller {
              redirect('academic/classes/index');    
         }
         
-        if ($this->classes->delete('classes', array('id' => $id))) {            
+        $class = $this->classes->get_single('classes', array('id' => $id));
+        
+        if ($this->classes->delete('classes', array('id' => $id))) {
+
+            create_log('Has been deleted a class : '. $class->name);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
@@ -256,7 +282,10 @@ class Classes extends MY_Controller {
      * @return          : null 
      * ********************************************************** */
     private function __create_default_section($insert_id){
+        
+       
         $data = array();
+        $data['school_id']  = $this->input->post('school_id');
         $data['class_id']    = $insert_id;
         $data['teacher_id']  = $this->input->post('teacher_id');
         $data['name']       = 'A';

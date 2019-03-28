@@ -2,6 +2,23 @@ body {
     background: #1E90FF;    
 }
 
+.nav_menu{
+   background: linear-gradient(#1E90FF, #cbe5ff), #0459af;
+}
+
+.modal-header {
+    padding: 6px 10px;
+    background: #1E90FF;
+    background: linear-gradient(#1E90FF, #cbe5ff), #0459af;
+    color: #fff;
+}
+
+.alert-success {
+    color: #ffffff;
+    background-color: #1E90FF;
+    border-color: #1E90FF;
+}
+
 .left_col {
     background: #1E90FF;
 }
@@ -19,7 +36,7 @@ body {
 }
 
 .nav.side-menu>li.active>a{
-    background: linear-gradient(#1E90FF, #2f81d0), #2780da
+    background: linear-gradient(#1d84e9, #a5a9ad), #b7bbc0;
 }
 
 .nav-md ul.nav.child_menu li.current-page {
@@ -101,76 +118,4 @@ body {
 .compose-msg .fa,
 .theme-color .fa{
     color: #1e90ff;
-}
-
-
-/* front end stsrt */
-.header-top-area {
-    background: #5cafff;
-    border-bottom: 1px solid #359cff;
-}
-.header-area {
-    background: #6fb8ff;
-    border-bottom: 1px solid #4da8ff;
-}
-
-.main-menu ul li ul.submenu{
-    background: #6fb8ff none repeat scroll 0 0;
-}
-.main-menu ul li ul.submenu li {
-    border-bottom: 1px solid #dedede;
-}
-
-.page-title,
-.about-area,
-.right-pane .news-content,
-.right-pane .single-notice{
-    border-bottom: 1px solid #baddff !important;
-    border: 0;    
-}
-
-.single-event-list,
-.profile-details,
-.gallery,
-.single-notice,
-.news-content img,
-.gallery-img img{
-    border: 1px solid #6fb8ff;  
-}
-
-footer { 
-    background: #6fb8ff;   
-    border-top: 1px solid #2694ff;
-}
-.footer-title{
-    color: #2c4a93;
-}
-
-.footer-text,
-.footer-text span, 
-.footer-contact-info .text{
-    color: #fff !important;
-}
-.q-links ul li a {
-    color: #f9f9f9;
-}
-
-
-.btn-link .fa,
-.news-date .fa,
-.detail-notice .fa,
-.single-notice .fa,
-.notice-single .fa,
-.mainmenu .fa, 
-.social-links .fa, 
-.footer-contact-info .fa, 
-.header-top-area .fa,
-.profile-details .fa{
-    color: #2c4a93 !important;
-}
-.footer-bottom {
-    background: #5cafff;   
-}
-.admission-form{
-    border: 1px solid #6fb8ff;
 }

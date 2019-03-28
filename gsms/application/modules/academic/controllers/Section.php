@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Section.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Section
  * @description     : Manage academic class section/ division.  
@@ -33,7 +33,7 @@ class Section extends MY_Controller {
      * @param           : $id integer value
      * @return          : null 
      * ********************************************************** */
-    public function index($class_id = null) {
+    public function index($class_id = null, $school_id = null) {
         
         check_permission(VIEW); 
         
@@ -43,11 +43,20 @@ class Section extends MY_Controller {
         }
         
         $this->data['class_id'] = $class_id;
-
-        $this->data['sections'] = $this->section->get_section_list($class_id);        
-        $this->data['classes'] = $this->section->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->section->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['filter_school_id'] = $school_id;
+        $this->data['sections'] = $this->section->get_section_list($class_id, $school_id); 
+               
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->section->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->section->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
+        
         $this->data['list'] = TRUE;
+        $this->data['schools'] = $this->schools;
         $this->layout->title($this->lang->line('manage_section'). ' | ' . SMS);
         $this->layout->view('section/index', $this->data);            
        
@@ -75,6 +84,10 @@ class Section extends MY_Controller {
 
                 $insert_id = $this->section->insert('sections', $data);
                 if ($insert_id) {
+                    
+                    $class = $this->section->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been created a section : '. $data['name'].' for class : '. $class->name);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('academic/section/index/'.$data['class_id']);
                 } else {
@@ -90,12 +103,22 @@ class Section extends MY_Controller {
         if(!$class_id){
           $class_id = $this->input->post('class_id');
         }
+                
         
         $this->data['class_id'] = $class_id;
-        $this->data['sections'] = $this->section->get_section_list($class_id);        
-        $this->data['classes'] = $this->section->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->section->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['sections'] = $this->section->get_section_list($class_id); 
         
+       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->section->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->section->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('section'). ' | ' . SMS);
         $this->layout->view('section/index', $this->data);
@@ -127,6 +150,10 @@ class Section extends MY_Controller {
                 $updated = $this->section->update('sections', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $class = $this->section->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been updated a section : '. $data['name'].' for class : '. $class->name);
+                    
                     success($this->lang->line('update_success'));
                     redirect('academic/section/index/'.$data['class_id']);                   
                 } else {
@@ -153,10 +180,19 @@ class Section extends MY_Controller {
         }
         $this->data['class_id'] = $class_id;
         $this->data['sections'] = $this->section->get_section_list($class_id);        
-        $this->data['classes'] = $this->section->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->section->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+      
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->section->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->section->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
         
-        $this->data['edit'] = TRUE;       
+        $this->data['school_id'] = $this->data['section']->school_id;
+        $this->data['edit'] = TRUE;   
+        $this->data['schools'] = $this->schools;
+        
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('section'). ' | ' . SMS);
         $this->layout->view('section/index', $this->data);
     }
@@ -174,6 +210,7 @@ class Section extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('teacher_id', $this->lang->line('teacher'), 'trim|required');   
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');   
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'required|trim|callback_name');
@@ -192,7 +229,7 @@ class Section extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $section = $this->section->duplicate_check($this->input->post('class_id'),$this->input->post('name')); 
+          $section = $this->section->duplicate_check($this->input->post('school_id'), $this->input->post('class_id'),$this->input->post('name')); 
           if($section){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -200,7 +237,7 @@ class Section extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $section = $this->section->duplicate_check($this->input->post('class_id'),$this->input->post('name'), $this->input->post('id')); 
+         $section = $this->section->duplicate_check($this->input->post('school_id'), $this->input->post('class_id'),$this->input->post('name'), $this->input->post('id')); 
           if($section){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -224,6 +261,7 @@ class Section extends MY_Controller {
     private function _get_posted_section_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'class_id';
         $items[] = 'teacher_id';
         $items[] = 'name';
@@ -261,7 +299,11 @@ class Section extends MY_Controller {
         }
         
         $section = $this->section->get_single('sections', array('id' => $id));
-        if ($this->section->delete('sections', array('id' => $id))) {            
+        if ($this->section->delete('sections', array('id' => $id))) {  
+            
+            $class = $this->section->get_single('classes', array('id' => $section->class_id, 'school_id'=>$section->school_id));
+            create_log('Has been deleted a section : '. $section->name.' for class : '. $class->name);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

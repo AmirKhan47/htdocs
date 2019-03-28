@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Event.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Event
  * @description     : Manage school event for guardian, student, teacher and employee.  
@@ -37,6 +37,7 @@ class Event extends MY_Controller {
 
         $this->data['events'] = $this->event->get_event_list();
         $this->data['roles'] = $this->event->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+       
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_event') . ' | ' . SMS);
         $this->layout->view('event/index', $this->data);
@@ -62,6 +63,8 @@ class Event extends MY_Controller {
 
                 $insert_id = $this->event->insert('events', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been creted an Event : '.$data['title']);  
                     success($this->lang->line('insert_success'));
                     redirect('event/index');
                 } else {
@@ -75,6 +78,7 @@ class Event extends MY_Controller {
 
         $this->data['events'] = $this->event->get_event_list();
         $this->data['roles'] = $this->event->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('event') . ' | ' . SMS);
         $this->layout->view('event/index', $this->data);
@@ -107,6 +111,9 @@ class Event extends MY_Controller {
                 $updated = $this->event->update('events', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated an Event : '.$data['title']); 
+                    
                     success($this->lang->line('update_success'));
                     redirect('event/index');
                 } else {
@@ -128,6 +135,8 @@ class Event extends MY_Controller {
 
         $this->data['events'] = $this->event->get_event_list();
         $this->data['roles'] = $this->event->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        $this->data['school_id'] = $this->data['event']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('event') . ' | ' . SMS);
@@ -164,6 +173,25 @@ class Event extends MY_Controller {
     }
 
     
+        
+        
+           
+     /*****************Function get_single_event**********************************
+     * @type            : Function
+     * @function name   : get_single_event
+     * @description     : "Load single event information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_event(){
+        
+       $event_id = $this->input->post('event_id');
+       
+       $this->data['event'] = $this->event->get_single_event($event_id);
+       echo $this->load->view('get-single-event', $this->data);
+    }
+    
     /*****************Function _prepare_event_validation**********************************
     * @type            : Function
     * @function name   : _prepare_event_validation
@@ -176,6 +204,7 @@ class Event extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('event_for'), 'trim|required');
         $this->form_validation->set_rules('title', $this->lang->line('title') . ' ' . $this->lang->line('title'), 'trim|required|callback_title');
         $this->form_validation->set_rules('event_place', $this->lang->line('event_place'), 'trim|required');
@@ -196,7 +225,7 @@ class Event extends MY_Controller {
     * ********************************************************** */  
     public function title() {
         if ($this->input->post('id') == '') {
-            $event = $this->event->duplicate_check($this->input->post('title'), $this->input->post('event_from'));
+            $event = $this->event->duplicate_check($this->input->post('school_id'),$this->input->post('title'), $this->input->post('event_from'));
             if ($event) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -204,7 +233,7 @@ class Event extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $event = $this->event->duplicate_check($this->input->post('title'), $this->input->post('event_from'), $this->input->post('id'));
+            $event = $this->event->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('event_from'), $this->input->post('id'));
             if ($event) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -249,10 +278,12 @@ class Event extends MY_Controller {
     private function _get_posted_event_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'role_id';
         $items[] = 'title';
         $items[] = 'event_place';
         $items[] = 'note';
+        $items[] = 'is_view_on_web';
 
         $data = elements($items, $_POST);
 
@@ -347,6 +378,8 @@ class Event extends MY_Controller {
             if (file_exists($destination . '/event/' . $event->image)) {
                 @unlink($destination . '/event/' . $event->image);
             }
+            
+            create_log('Has been deleted an Event : '.$event->title);   
 
             success($this->lang->line('delete_success'));
         } else {

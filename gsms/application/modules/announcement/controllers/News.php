@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************News.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : News
  * @description     : Manage school academic news.  
@@ -35,9 +35,10 @@ class News extends MY_Controller {
     * ********************************************************** */
     public function index() {
         
-         check_permission(VIEW);
-        
-         $this->data['news_list'] = $this->news->get_list('news', array('status'=>1));  
+        check_permission(VIEW);
+
+        $this->data['news_list'] = $this->news->get_news_list(); 
+         
         $this->data['list'] = TRUE;
         $this->layout->title( $this->lang->line('manage_news'). ' | ' . SMS);
         $this->layout->view('news/index', $this->data);            
@@ -64,6 +65,9 @@ class News extends MY_Controller {
 
                 $insert_id = $this->news->insert('news', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a news : '.$data['title']); 
+                    
                     success($this->lang->line('insert_success'));
                     redirect('announcement/news/index');
                 } else {
@@ -75,7 +79,8 @@ class News extends MY_Controller {
             }
         }
         
-        $this->data['news_list'] = $this->news->get_list('news', array('status'=>1));  
+        $this->data['news_list'] = $this->news->get_news_list(); 
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('news'). ' | ' . SMS);
         $this->layout->view('news/index', $this->data);
@@ -107,6 +112,9 @@ class News extends MY_Controller {
                 $updated = $this->news->update('news', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a news : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('announcement/news/index');                   
                 } else {
@@ -126,7 +134,9 @@ class News extends MY_Controller {
             }
         }
 
-        $this->data['news_list'] = $this->news->get_list('news', array('status'=>1));  
+        $this->data['news_list'] = $this->news->get_news_list();  
+        $this->data['school_id'] = $this->data['news']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('news'). ' | ' . SMS);
         $this->layout->view('news/index', $this->data);
@@ -149,14 +159,30 @@ class News extends MY_Controller {
             redirect('announcement/news/index');    
         }
         
-        $this->data['news_list'] = $this->news->get_list('news', array('status'=>1)); 
+        $this->data['news_list'] = $this->news->get_news_list(); 
+        
         $this->data['news'] = $this->news->get_single('news', array('id' => $id));
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('news'). ' | ' . SMS);
         $this->layout->view('news/index', $this->data);
     }
 
-    
+                   
+     /*****************Function get_single_news**********************************
+     * @type            : Function
+     * @function name   : get_single_news
+     * @description     : "Load single news information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_news(){
+        
+       $news_id = $this->input->post('news_id');
+       
+       $this->data['news'] = $this->news->get_single_news($news_id);
+       echo $this->load->view('news/get-single-news', $this->data);
+    }
     
     /*****************Function _prepare_news_validation**********************************
     * @type            : Function
@@ -170,6 +196,7 @@ class News extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('title', $this->lang->line('title'), 'trim|required|callback_title');   
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required');   
         $this->form_validation->set_rules('news', $this->lang->line('news'), 'trim|required');   
@@ -189,7 +216,7 @@ class News extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $news = $this->news->duplicate_check($this->input->post('title'), $this->input->post('date')); 
+          $news = $this->news->duplicate_check($this->input->post('school_id'),$this->input->post('title'), $this->input->post('date')); 
           if($news){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -197,7 +224,7 @@ class News extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $news = $this->news->duplicate_check($this->input->post('title'),$this->input->post('date'), $this->input->post('id')); 
+         $news = $this->news->duplicate_check($this->input->post('school_id'), $this->input->post('title'),$this->input->post('date'), $this->input->post('id')); 
           if($news){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -244,8 +271,10 @@ class News extends MY_Controller {
     private function _get_posted_news_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'news';
+        $items[] = 'is_view_on_web';
         $data = elements($items, $_POST);  
       
         $data['date'] = date('Y-m-d', strtotime($this->input->post('date')));
@@ -328,7 +357,9 @@ class News extends MY_Controller {
             error($this->lang->line('unexpected_error'));
             redirect('announcement/news/index');    
         }  
-         $news = $this->news->get_single('news', array('id' => $id));
+        
+        $news = $this->news->get_single('news', array('id' => $id));
+         
         if ($this->news->delete('news', array('id' => $id))) {  
             
             // delete teacher resume and image
@@ -336,6 +367,8 @@ class News extends MY_Controller {
             if (file_exists( $destination.'/news/'.$news->image)) {
                 @unlink($destination.'/news/'.$news->image);
             }
+            
+            create_log('Has been deleted a news : '.$news->title); 
             
             success($this->lang->line('delete_success'));
         } else {

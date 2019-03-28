@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Invoice.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Invoice
  * @description     : Manage invoice for all type of student payment.  
@@ -38,8 +38,15 @@ class Invoice extends MY_Controller {
         
         check_permission(VIEW);
         
-        $this->data['classes'] = $this->invoice->get_list('classes', array('status'=> 1));        
-        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1, 'is_default'=>1));        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->invoice->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['income_heads'] = $this->invoice->get_fee_type($condition['school_id']);
+        }
+        
+         // default global income head       
         $this->data['invoices'] = $this->invoice->get_invoice_list();  
          
         $this->data['list'] = TRUE;
@@ -66,18 +73,15 @@ class Invoice extends MY_Controller {
             error($this->lang->line('unexpected_error'));
             redirect('accounting/invoice/index');
         }
-        
-        $this->data['classes'] = $this->invoice->get_list('classes', array('status'=> 1));        
-        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1, 'is_default'=>1));        
-        $this->data['invoices'] = $this->invoice->get_invoice_list();  
-         
-        $this->data['settings'] = $this->invoice->get_single('settings', array('status'=>1));
-        $invoice                = $this->payment->get_invoice_amount($id);
-        
+     
+        $invoice                = $this->payment->get_invoice_amount($id);        
         $this->data['paid_amount'] = $invoice->paid_amount;
         $this->data['invoice'] = $this->invoice->get_single_invoice($id);
-        $this->data['invoice_logs'] = $this->invoice->get_invoice_log_list($id); 
-        $this->data['list'] = TRUE;
+        
+              
+        $school_id = $this->data['invoice']->school_id;
+        $this->data['school']   = $this->invoice->get_school_by_id($school_id);
+      
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('invoice'). ' | ' . SMS);
         $this->layout->view('invoice/view', $this->data);            
        
@@ -123,7 +127,13 @@ class Invoice extends MY_Controller {
                 $data = $this->_get_posted_invoice_data();
 
                 $insert_id = $this->invoice->insert('invoices', $data);
-                if ($insert_id) {   
+                if ($insert_id) { 
+                    
+                    create_log('Has been created a invoice : '. $data['net_amount']);
+                    
+                    // save transction table data
+                    $data['invoice_id'] = $insert_id;
+                    $this->_save_transaction($data);
                     
                     success($this->lang->line('insert_success'));
                     redirect('accounting/invoice/index');
@@ -136,11 +146,19 @@ class Invoice extends MY_Controller {
             }
         }
 
-        $this->data['classes'] = $this->invoice->get_list('classes', array('status'=> 1));        
-        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1, 'is_default'=>1));        
-        $this->data['invoices'] = $this->invoice->get_invoice_list();  
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->invoice->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['income_heads'] = $this->invoice->get_fee_type($condition['school_id']);
+        }
         
-        $this->data['add'] = TRUE;
+        // default global income head
+        $this->data['invoices'] = $this->invoice->get_invoice_list(); 
+          
+        
+        $this->data['single'] = TRUE;
         $this->layout->title($this->lang->line('create'). ' ' . $this->lang->line('invoice'). ' | ' . SMS);
         $this->layout->view('invoice/index', $this->data);
     }
@@ -177,9 +195,17 @@ class Invoice extends MY_Controller {
             }
         }
 
-        $this->data['classes'] = $this->invoice->get_list('classes', array('status'=> 1));        
-        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1, 'is_default'=>1));        
-        $this->data['invoices'] = $this->invoice->get_invoice_list();  
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->invoice->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['income_heads'] = $this->invoice->get_fee_type($condition['school_id']);
+        }
+        
+        // default global income head
+        $this->data['invoices'] = $this->invoice->get_invoice_list(); 
+          
         
         $this->data['bulk'] = TRUE;
         $this->layout->title($this->lang->line('create'). ' ' . $this->lang->line('invoice'). ' | ' . SMS);
@@ -212,6 +238,9 @@ class Invoice extends MY_Controller {
                 $updated = $this->invoice->update('invoices', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a invoice : '. $data['net_amount']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('accounting/invoice/index');                   
                 } else {
@@ -231,9 +260,18 @@ class Invoice extends MY_Controller {
             }
         }
         
-        $this->data['classes'] = $this->invoice->get_list('classes', array('status'=> 1));        
-        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1));        
-        $this->data['invoices'] = $this->invoice->get_invoice_list();  
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->invoice->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        // default global income head
+        $this->data['income_heads'] = $this->invoice->get_list('income_heads', array('status'=> 1), '','', '', 'id', 'ASC');        
+        $this->data['invoices'] = $this->invoice->get_invoice_list(); 
+        
+        $this->data['school_id'] = $this->data['invoice']->school_id;
 
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('invoice'). ' | ' . SMS);
@@ -253,36 +291,20 @@ class Invoice extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
-        $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');               
-        $this->form_validation->set_rules('student_id', $this->lang->line('student_id'), 'trim|required');  
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');               
+        $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
+        $this->form_validation->set_rules('paid_status', $this->lang->line('paid').' '.$this->lang->line('status'), 'trim|required'); 
+        
+        if($this->input->post('type')== 'single'){
+            $this->form_validation->set_rules('student_id', $this->lang->line('student_id'), 'trim|required'); 
+            $this->form_validation->set_rules('amount', $this->lang->line('amont'), 'trim|required');   
+        }
+        
         $this->form_validation->set_rules('is_applicable_discount', $this->lang->line('is_applicable_discount'), 'trim|required');   
         $this->form_validation->set_rules('month', $this->lang->line('month'), 'trim|required');   
+        $this->form_validation->set_rules('income_head_id', $this->lang->line('title'), 'trim|required');   
         
        
-        $status = FALSE;
-        
-        if($this->input->post('hostel_fee')){
-             $status = TRUE;
-        }
-        if($this->input->post('transport_fee')){
-             $status = TRUE;
-        }
-        if($this->input->post('certificate_fee')){
-             $status = TRUE;
-        }
-        if($this->input->post('exam_fee')){
-             $status = TRUE;
-        }
-        if($this->input->post('monthly_fee')){
-             $status = TRUE;
-        }
-        if($this->input->post('admission_fee')){
-             $status = TRUE;
-        }
-        
-        if(!$status){
-            $this->form_validation->set_rules('student_fee', '','required', array('required' => $this->lang->line('check_at_least_one')));
-        }
         
     }
 
@@ -299,32 +321,61 @@ class Invoice extends MY_Controller {
     private function _get_posted_invoice_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'income_head_id';
         $items[] = 'class_id';
         $items[] = 'student_id';
-        $items[] = 'is_applicable_discount';        
-        $items[] = 'amount';        
+        $items[] = 'is_applicable_discount';  
         $items[] = 'month';        
+        $items[] = 'paid_status';        
         $items[] = 'note';
+        
         $data = elements($items, $_POST);          
+        
+        $income_head = $this->invoice->get_single('income_heads', array('id' => $this->input->post('income_head_id')));
+        
+                    
+        $data['discount'] = 0.00;
+        $data['gross_amount'] = $this->input->post('amount');
+        $data['net_amount'] = $this->input->post('amount');
+        
+        if($data['is_applicable_discount']){
+            
+            $discount = $this->invoice->get_student_discount($data['student_id']);
+            if(!empty($discount)){
+                $data['discount']   = $discount->amount/100*$data['gross_amount'];;
+                $data['net_amount'] = $data['gross_amount'] - $data['discount'];
+            }
+        }
         
         $data['date'] = date('Y-m-d');
     
         if ($this->input->post('id')) {
+            
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
+            
         } else {
             $data['custom_invoice_id'] = $this->invoice->get_custom_id('invoices', 'INV');
-            $data['paid_status'] = 'unpaid';
             $data['status'] = 1;
-            $data['invoice_type'] = 'academic';
-            $data['academic_year_id'] = $this->academic_year_id;
+            $data['invoice_type'] = $income_head->head_type;
+            
+            $school = $this->invoice->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('accounting/invoice/index');
+            }             
+            
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();                       
         }
 
         return $data;
     }
+    
 
         /*****************Function _get_create_bulk_invoice**********************************
      * @type            : Function
@@ -338,119 +389,65 @@ class Invoice extends MY_Controller {
         
         $data = array();
        
-        $data['paid_status'] = 'unpaid';
+        $items[] = 'school_id';
+        $items[] = 'income_head_id';
+        $items[] = 'class_id';       
+        $items[] = 'is_applicable_discount';  
+        $items[] = 'month'; 
+        $items[] = 'paid_status';
+        $items[] = 'note';
+        
+        $data = elements($items, $_POST);         
+        
+        $income_head = $this->invoice->get_single('income_heads', array('id' => $this->input->post('income_head_id')));
+        
+        $data['date'] = date('Y-m-d');            
+        $data['discount'] = 0.00;
         $data['status'] = 1;
-        $data['invoice_type'] = 'academic';
-        $data['academic_year_id'] = $this->academic_year_id;
-        $data['month'] = $this->input->post('payment_month');
-        $data['created_at'] = date('Y-m-d H:i:s');
-        $data['created_by'] = logged_in_user_id();            
-        $data['date'] = date('Y-m-d');
         
+        $school = $this->invoice->get_school_by_id($data['school_id']);
         
-        // need to get student list by class id 
-       $is_applicable_discount = $this->input->post('is_applicable_discount') ? $this->input->post('is_applicable_discount') : 0;       
-       $hostel_fee      = $this->input->post('hostel_fee') ? $this->input->post('hostel_fee') : '';       
-       $transport_fee   = $this->input->post('transport_fee ') ? $this->input->post('transport_fee ') : ''; 
-       
-       $certificate_fee = $this->input->post('certificate_fee') ? $this->input->post('certificate_fee') : ''; 
-       $exam_fee        = $this->input->post('exam_fee') ? $this->input->post('exam_fee') : ''; 
-       $monthly_fee     = $this->input->post('monthly_fee') ? $this->input->post('monthly_fee') : ''; 
-       $admission_fee   = $this->input->post('admission_fee') ? $this->input->post('admission_fee') : ''; 
-       
-       $class_id = $this->input->post('class_id');       
-       $student_id = $this->input->post('student_id');   
-       
-       $class = $this->invoice->get_single('classes', array('id' => $class_id));
-       $students = $this->invoice->get_student_list($class_id, $student_id);
-       
-       if(!empty($students)){
-                    
-           foreach($students as $obj ){
-               
-               $discount = 0.00;
-               $total_amount = 0.00;
-               
-               // save invoice data
-               $data['custom_invoice_id'] = $this->invoice->get_custom_id('invoices', 'INV');
-               $data['student_id'] = $obj->id;
-               $data['class_id'] = $class_id;
-               $data['discount'] = $discount;
-               $data['gross_amount'] = $total_amount;
-               $data['net_amount'] = $total_amount;
-               $data['is_applicable_discount'] = $is_applicable_discount;
-               $invoice_id = $this->invoice->insert('invoices', $data);
-               
-               $logs = array();
-               $logs['invoice_id'] = $invoice_id;
-               $logs['created_at'] = $data['created_at'];
-               $logs['created_by'] = $data['created_by'];
-               $logs['status'] = $data['status'];
-               
-               if($hostel_fee != '' && $obj->is_hostel_member == 1){ 
-                 
-                    $hostel_cost = $this->invoice->get_student_hostel_cost($obj->user_id);
-                    $total_amount +=  $hostel_cost->cost;  
-                    $logs['amount'] = $hostel_cost->cost;
-                    $logs['income_head_id'] = $hostel_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($transport_fee != '' && $obj->is_transport_member == 1){
-                   
-                    $transport_fare = $this->invoice->get_student_transport_fare($obj->user_id);
-                    $total_amount +=  $transport_fare->fare;  
-                    $logs['amount'] = $transport_fare->fare;
-                    $logs['income_head_id'] = $transport_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($certificate_fee != '' ){
-                   
-                    $total_amount +=  $class->certificate_fee;  
-                    $logs['amount'] = $class->certificate_fee;
-                    $logs['income_head_id'] = $certificate_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($exam_fee != '' ){
-                   
-                    $total_amount +=  $class->exam_fee;
-                    $logs['amount'] = $class->exam_fee;
-                    $logs['income_head_id'] = $exam_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($monthly_fee != ''){
-                   
-                    $total_amount +=  $class->monthly_tution_fee;
-                    $logs['amount'] = $class->monthly_tution_fee;
-                    $logs['income_head_id'] = $monthly_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($admission_fee != ''){
-                   
-                    $total_amount +=  $class->admission_fee;
-                    $logs['amount'] = $class->admission_fee;
-                    $logs['income_head_id'] = $admission_fee;
-                    $this->invoice->insert('invoice_logs', $logs);
-               }
-               
-               if($is_applicable_discount == 1){
-                  $discount =  $obj->discount/100*$total_amount;
-               }
-               
-               // update invoice amount and discount data after calculate 
-               $update = array();
-               $update['discount'] = $discount;
-               $update['gross_amount']   = $total_amount;
-               $update['net_amount']   = $total_amount - $discount;
-               $this->invoice->update('invoices', $update, array('id' => $invoice_id));          
-               
-           }
-       }
-        return TRUE;
+        if(!$school->academic_year_id){
+            error($this->lang->line('set_academic_year_for_school'));
+            redirect('accounting/invoice/index');
+        } 
+        
+        $data['academic_year_id'] = $school->academic_year_id;
+      
+     foreach ($this->input->post('students') as $key=>$value){
+        
+            $data['student_id'] = $key;            
+            $data['gross_amount'] = $value;
+            $data['net_amount'] = $value;
+
+            if($data['is_applicable_discount']){
+
+                $discount = $this->invoice->get_student_discount($data['student_id']);
+                if(!empty($discount)){
+                    $data['discount']   = $discount->amount/100*$data['gross_amount'];
+                    $data['net_amount'] = $data['gross_amount'] - $data['discount'];
+                }
+            }
+
+            $data['custom_invoice_id'] = $this->invoice->get_custom_id('invoices', 'INV');
+            
+            $data['invoice_type'] = $income_head->head_type;            
+            $data['created_at'] = date('Y-m-d H:i:s');
+            $data['created_by'] = logged_in_user_id(); 
+            
+           $insert_id = $this->invoice->insert('invoices', $data);
+            
+            // save transction table data
+            $txn = array(); 
+            $txn = $data;
+            $txn['invoice_id'] = $insert_id;
+            $this->_save_transaction($txn);
+            
+           
+        }
+        
+        create_log('Has been created a invoice : '. $data['net_amount']);
+        return TRUE; 
     }
 
     
@@ -470,9 +467,12 @@ class Invoice extends MY_Controller {
              redirect('accounting/invoice/index');
         } 
                 
+        $invoice = $this->invoice->get_single('invoices', array('id' => $id));
+        
         if ($this->invoice->delete('invoices', array('id' => $id))) {  
             
-            $this->invoice->delete('invoice_logs', array('invoice_id' => $id));
+            create_log('Has been deleted a invoice : '. $invoice->net_amount);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
@@ -480,5 +480,169 @@ class Invoice extends MY_Controller {
         
         redirect('accounting/invoice/index');
     }
+    
+    
+        
+    /*****************Function _save_transaction**********************************
+     * @type            : Function
+     * @function name   : _save_transaction
+     * @description     : transaction data save/update into database 
+     *                    while add/update income data into database                
+     *                       
+     * @param           : $id integer value
+     * @return          : null 
+     * ********************************************************** */
+    private function _save_transaction($data){
+        
+        if($data['paid_status'] == 'paid'){
+        
+            $txn = array();
+            $txn['school_id'] = $data['school_id'];  
+            $txn['amount'] = $data['net_amount'];  
+            $txn['note'] = $data['note'];
+            $txn['payment_date'] = $data['date'];
+            $txn['payment_method'] = $this->input->post('payment_method');
+            $txn['bank_name'] = $this->input->post('bank_name');
+            $txn['cheque_no'] = $this->input->post('cheque_no');
+
+            if ($this->input->post('id')) {
+
+                $txn['modified_at'] = date('Y-m-d H:i:s');
+                $txn['modified_by'] = logged_in_user_id();
+                $this->invoice->update('transactions', $txn, array('invoice_id'=>$this->input->post('id')));
+
+            } else {            
+
+                $txn['invoice_id'] = $data['invoice_id'];
+                $txn['status'] = 1;
+                $txn['academic_year_id'] = $data['academic_year_id'];            
+                $txn['created_at'] = $data['created_at'];
+                $txn['created_by'] = $data['created_by'];
+                $this->invoice->insert('transactions', $txn);
+            }        
+        }
+    }
+    
+    
+    
+    /* Ajax */
+    public function get_fee_type_by_school(){
+        
+        $school_id = $this->input->post('school_id');
+        $fee_type_id = $this->input->post('fee_type_id');
+        
+        $income_heads = $this->invoice->get_fee_type($school_id);
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        if (!empty($income_heads)) {
+            foreach ($income_heads as $obj) {   
+                
+                $selected = $fee_type_id == $obj->id ? $select : '';
+                $str .= '<option value="' . $obj->id . '" ' . $selected . '>' . $obj->title .' </option>';
+                
+            }
+        }
+
+        echo $str;
+    }
+    
+     public function get_fee_amount(){
+        
+        $school_id = $this->input->post('school_id'); 
+        $class_id       = $this->input->post('class_id');       
+        $student_id     = $this->input->post('student_id'); 
+        $income_head_id = $this->input->post('income_head_id');
+        
+        $income_head = $this->invoice->get_single('income_heads', array('id' => $income_head_id));        
+        $amount = 0.00;
+        
+        if($income_head->head_type == 'hostel'){
+            
+            $fee = $this->invoice->get_hostel_fee($student_id);            
+            if(!empty($fee)){
+                $amount = $fee->cost;
+            }            
+            
+        }elseif($income_head->head_type == 'transport'){
+            
+            $fee = $this->invoice->get_transport_fee($student_id);            
+            if(!empty($fee)){
+                $amount = $fee->stop_fare;
+            }
+            
+        }else{
+            
+            $fee = $this->invoice->get_single('fees_amount', array('class_id' => $class_id, 'income_head_id'=>$income_head_id));
+            if(!empty($fee)){
+                $amount = $fee->fee_amount;
+            }
+        }
+        
+        echo $amount;
+    }
+    
+    
+    public function get_student_and_fee_amount(){
+        
+        
+        $school_id = $this->input->post('school_id');
+        $class_id       = $this->input->post('class_id');       
+        $income_head_id = $this->input->post('income_head_id');
+        
+        $income_head = $this->invoice->get_single('income_heads', array('id' => $income_head_id));
+        $amount = 0.00;
+        
+        $school = $this->invoice->get_school_by_id($school_id);
+        if(!$school->academic_year_id){
+            echo 'ay';
+            die();
+        } 
+            
+        $students = $this->invoice->get_student_list($school_id, $school->academic_year_id, $class_id); 
+       
+        $str = '';
+        
+        if(!empty($students)){
+            
+            $fee = $this->invoice->get_single('fees_amount', array('class_id' => $class_id, 'income_head_id' => $income_head_id));
+            
+            foreach($students as $obj){
+                
+                // when fee is transport and hostel then need to check
+                // that student is eligible for fee
+                if($income_head->head_type == 'hostel' && $obj->is_hostel_member == 0){
+                    continue;
+                }elseif($income_head->head_type == 'transport' && $obj->is_transport_member == 0){
+                    continue;
+                }               
+                
+                if($income_head->head_type == 'hostel'){
+            
+                    $hostel_fee = $this->invoice->get_hostel_fee($obj->id);
+                    if (!empty($hostel_fee)) {
+                        $amount = $hostel_fee->cost;
+                    }
+                } elseif ($income_head->head_type == 'transport') {
+
+                    $transport_fee = $this->invoice->get_transport_fee($obj->id);
+                    if (!empty($transport_fee)) {
+                        $amount = $transport_fee->stop_fare;
+                    }
+                } else { 
+                    
+                    if(!empty($fee)){
+                        $amount = $fee->fee_amount;
+                    }
+                }
+                
+                // making student string....
+                $str .= '<div class="multi-check"><input type="checkbox" name="students['.$obj->id.']" value="'.$amount.'" /> '.$obj->name.' ['.$school->currency_symbol.$amount.']</div>';
+            }
+        }
+        
+        echo $str;
+    }
+    
    
 }

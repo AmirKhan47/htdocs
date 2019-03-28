@@ -8,56 +8,74 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
-            <div class="x_content quick-link no-print">
-                <?php echo $this->lang->line('quick_link'); ?>:
-               <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
-                    <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+           <div class="x_content quick-link no-print">
+                <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+               <?php if(has_permission(VIEW, 'accounting', 'discount')){ ?>
+                    <a href="<?php echo site_url('accounting/discount/index'); ?>"><?php echo $this->lang->line('discount'); ?></a>                  
                 <?php } ?> 
-                <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
-                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('manage_income'); ?></a>                     
+              
+               <?php if(has_permission(VIEW, 'accounting', 'feetype')){ ?>
+                  | <a href="<?php echo site_url('accounting/feetype/index'); ?>"><?php echo $this->lang->line('fee_type'); ?></a>                  
                 <?php } ?> 
+                
                 <?php if(has_permission(VIEW, 'accounting', 'invoice')){ ?>
                    
                    <?php if($this->session->userdata('role_id') == STUDENT || $this->session->userdata('role_id') == GUARDIAN){ ?>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                    <?php }else{ ?>
-                        | <a href="<?php echo site_url('accounting/invoice'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/add'); ?>"><?php echo $this->lang->line('fee'); ?> <?php echo $this->lang->line('collection'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/index'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                     <?php } ?> 
                 <?php } ?> 
+                  
+                <?php if(has_permission(VIEW, 'accounting', 'duefeeemail')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeeemail/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('email'); ?></a>                  
+                <?php } ?>
+                 <?php if(has_permission(VIEW, 'accounting', 'duefeesms')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeesms/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('sms'); ?></a>                  
+                <?php } ?>         
+                        
+                 <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
+                  | <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+                <?php } ?> 
+                 <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
+                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('income'); ?></a>                     
+                <?php } ?>  
                 <?php if(has_permission(VIEW, 'accounting', 'exphead')){ ?>
                    | <a href="<?php echo site_url('accounting/exphead/index'); ?>"><?php echo $this->lang->line('expenditure_head'); ?></a>                  
                 <?php } ?> 
                 <?php if(has_permission(VIEW, 'accounting', 'expenditure')){ ?>
-                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('manage_expenditure'); ?></a>                  
+                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('expenditure'); ?></a>                  
                 <?php } ?> 
-                
             </div>
+            
             <div class="x_content">
-                <section class="content invoice profile_img text-left">
-                   <div class="col-md-12">
+                <section class="content invoice profile_img ">
+                   <div class="col-md-12 col-sm-12">
                          <!-- title row -->
                         <div class="row">
                             <div class="col-md-6 col-sm-6 col-xs-6 invoice-header">
                                 <h1><?php echo $this->lang->line('invoice'); ?></h1>
                             </div>
                             <div class="col-md-6 col-sm-6 col-xs-6 invoice-header text-center">
-                                <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $settings->logo; ?>" alt="" width="70" />
+                                <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $school->logo; ?>" alt="" width="70" style="background-color: #505099 !important; padding: 4px;border: 0;"/>
                             </div>
                         </div>
+                         
                         <!-- info row -->
                         <div class="row invoice-info">
-                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col">
+                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col text-left">
                                 <strong><?php echo $this->lang->line('school'); ?>:</strong>
                                 <address>
-                                    <?php echo $settings->school_name; ?>
-                                    <br><?php echo $settings->address; ?>
-                                    <br><?php echo $this->lang->line('phone'); ?>: <?php echo $settings->phone; ?>
-                                    <br><?php echo $this->lang->line('email'); ?>: <?php echo $settings->email; ?>
+                                    <?php echo $school->school_name; ?>
+                                    <br><?php echo $school->address; ?>
+                                    <br><?php echo $this->lang->line('phone'); ?>: <?php echo $school->phone; ?>
+                                    <br><?php echo $this->lang->line('email'); ?>: <?php echo $school->email; ?>
                                 </address>
                             </div>
                             <!-- /.col -->
-                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col">
+                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col text-left">
                                 <strong><?php echo $this->lang->line('student'); ?>:</strong>
                                 <address>
                                     <?php echo $invoice->name; ?>
@@ -67,12 +85,12 @@
                                 </address>
                             </div>
                             <!-- /.col -->
-                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col">
+                            <div class="col-md-4 col-sm-4 col-xs-4 invoice-col text-left">
                                 <b><?php echo $this->lang->line('invoice'); ?> #<?php echo $invoice->custom_invoice_id; ?></b>                                                     
                                 <br>
                                 <b><?php echo $this->lang->line('payment'); ?> <?php echo $this->lang->line('status'); ?>:</b> <span class="btn-success"><?php echo get_paid_status($invoice->paid_status); ?></span>
                                 <br>
-                                <b><?php echo $this->lang->line('date'); ?>:</b> <?php echo date('M j, Y', strtotime($invoice->created_at)); ?>
+                                <b><?php echo $this->lang->line('date'); ?>:</b> <?php echo date($this->global_setting->date_format, strtotime($invoice->date)); ?>
                             </div>
                             <!-- /.col -->
                         </div>
@@ -91,16 +109,12 @@
                                         <th><?php echo $this->lang->line('amount'); ?></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                   <?php $count = 1; if(isset($invoice_logs) && !empty($invoice_logs)){ ?>
-                                        <?php foreach($invoice_logs as $obj){ ?>
-                                        <tr>
-                                            <td  style="width:15%"><?php echo $count++; ?></td>
-                                            <td  style="width:60%"> <?php echo $this->lang->line($obj->title); ?></td>
-                                            <td><?php echo $settings->currency_symbol; ?><?php echo $obj->amount; ?></td>
-                                        </tr> 
-                                         <?php } ?>
-                                    <?php } ?>
+                                <tbody>                                   
+                                    <tr>
+                                        <td  style="width:15%"><?php echo 1; ?></td>
+                                        <td  style="width:60%"> <?php echo $invoice->head; ?></td>
+                                        <td><?php echo $school->currency_symbol; ?><?php echo $invoice->net_amount; ?></td>
+                                    </tr>                                          
                                 </tbody>
                             </table>
                         </div>
@@ -124,28 +138,28 @@
                                     <tbody>
                                         <tr>
                                             <th style="width:50%"><?php echo $this->lang->line('subtotal'); ?>:</th>
-                                            <td><?php echo $settings->currency_symbol; ?><?php echo $invoice->gross_amount; ?></td>
+                                            <td><?php echo $school->currency_symbol; ?><?php echo $invoice->gross_amount; ?></td>
                                         </tr>
                                         <tr>
                                             <th><?php echo $this->lang->line('discount'); ?></th>
-                                            <td><?php echo $settings->currency_symbol; ?><?php  echo $invoice->inv_discount; ?></td>
+                                            <td><?php echo $school->currency_symbol; ?><?php  echo $invoice->inv_discount; ?></td>
                                         </tr>
                                         <tr>
                                             <th><?php echo $this->lang->line('total'); ?>:</th>
-                                            <td><?php echo $settings->currency_symbol; ?><?php echo $invoice->net_amount; ?></td>
+                                            <td><?php echo $school->currency_symbol; ?><?php echo $invoice->net_amount; ?></td>
                                         </tr>
                                         <tr>
                                             <th><?php echo $this->lang->line('paid'); ?> <?php echo $this->lang->line('amount'); ?>:</th>
-                                            <td><?php echo $settings->currency_symbol; ?><?php echo $paid_amount ? $paid_amount : 0.00; ?></td>
+                                            <td><?php echo $school->currency_symbol; ?><?php echo $paid_amount ? $paid_amount : 0.00; ?></td>
                                         </tr>
                                         <tr>
                                             <th><?php echo $this->lang->line('due_amount'); ?>:</th>
-                                            <td><span class="btn-danger" style="padding: 5px;">$<?php echo $invoice->net_amount-$paid_amount; ?></span></td>
+                                            <td><span class="btn-danger" style="padding: 5px;"><?php echo $school->currency_symbol; ?><?php echo $invoice->net_amount-$paid_amount; ?></span></td>
                                         </tr>
                                         <?php if($invoice->paid_status == 'paid'){ ?>
                                             <tr>
                                                 <th><?php echo $this->lang->line('paid'); ?> <?php echo $this->lang->line('date'); ?>:</th>
-                                                <td><?php echo date('M j, Y', strtotime($invoice->modified_at)); ?></td>
+                                                <td><?php echo date($this->global_setting->date_format, strtotime($invoice->date)); ?></td>
                                             </tr>
                                         <?php } ?>
                                     </tbody>
@@ -162,7 +176,6 @@
                             <button class="btn btn-default" onclick="window.print();"><i class="fa fa-print"></i> <?php echo $this->lang->line('print'); ?></button>
                             <?php if($invoice->paid_status != 'paid'){ ?>
                                 <a href="<?php echo site_url('accounting/payment/index/'.$invoice->inv_id); ?>"><button class="btn btn-success pull-right"><i class="fa fa-credit-card"></i> <?php echo $this->lang->line('submit'); ?> <?php echo $this->lang->line('payment'); ?></button></a>
-                                <!--<button class="btn btn-primary pull-right" style="margin-right: 5px;"><i class="fa fa-download"></i> Generate PDF</button>-->
                             <?php } ?>
                         </div>
                     </div>

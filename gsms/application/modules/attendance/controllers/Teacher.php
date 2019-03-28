@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Teacher.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Teacher
  * @description     : Manage teacher daily attendance.  
@@ -40,12 +40,20 @@ class Teacher extends MY_Controller {
             $date = $this->input->post('date');
             $month = date('m', strtotime($this->input->post('date')));
             $year = date('Y', strtotime($this->input->post('date')));
-            $academic_year_id = $this->academic_year_id;
-
-            $this->data['teachers'] = $this->teacher->get_teacher_list();
+            $school_id = $this->input->post('school_id');
+            
+            $school = $this->teacher->get_school_by_id($school_id);
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('attendance/teacher/index');
+            }
+            $academic_year_id = $school->academic_year_id;            
+            
+            $this->data['teachers'] = $this->teacher->get_teacher_list($school_id);
 
 
             $condition = array(
+                'school_id' => $school_id,
                 'month' => $month,
                 'year' => $year
             );
@@ -59,7 +67,7 @@ class Teacher extends MY_Controller {
 
                     $attendance = $this->teacher->get_single('teacher_attendances', $condition);
 
-                    if (empty($attendance)) {
+                    if (empty($attendance)) {                       
                         $data['academic_year_id'] = $academic_year_id;
                         $data['teacher_id'] = $obj->id;
                         $data['status'] = 1;
@@ -70,12 +78,14 @@ class Teacher extends MY_Controller {
                 }
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['day'] = date('d', strtotime($this->input->post('date')));
             $this->data['month'] = date('m', strtotime($this->input->post('date')));
             $this->data['year'] = date('Y', strtotime($this->input->post('date')));
 
             $this->data['date'] = $date;
+            create_log('Has been process Teacher Attendance'); 
         }
 
         $this->layout->title($this->lang->line('teacher') . ' ' . $this->lang->line('attendance') . ' | ' . SMS);
@@ -95,14 +105,20 @@ class Teacher extends MY_Controller {
     public function update_single_attendance() {
 
         $status = $this->input->post('status');
-        $condition['teacher_id'] = $this->input->post('teacher_id');
-        ;
+        $condition['school_id'] = $this->input->post('school_id');      
+        $condition['teacher_id'] = $this->input->post('teacher_id');      
         $condition['month'] = date('m', strtotime($this->input->post('date')));
         $condition['year'] = date('Y', strtotime($this->input->post('date')));
-        $condition['academic_year_id'] = $this->academic_year_id;
+        
+        $school = $this->teacher->get_school_by_id($condition['school_id']); 
+        if(!$school->academic_year_id){
+           echo 'ay';
+           die();
+        }
+        $condition['academic_year_id'] = $school->academic_year_id;
 
         $field = 'day_' . abs(date('d', strtotime($this->input->post('date'))));
-        if ($this->teacher->update('teacher_attendances', array($field => $status), $condition)) {
+        if ($this->teacher->update('teacher_attendances', array($field => $status, 'modified_at'=>date('Y-m-d H:i:s')), $condition)) {
             echo TRUE;
         } else {
             echo FALSE;
@@ -123,12 +139,19 @@ class Teacher extends MY_Controller {
 
         $status = $this->input->post('status');
 
+        $condition['school_id'] = $this->input->post('school_id');
         $condition['month'] = date('m', strtotime($this->input->post('date')));
         $condition['year'] = date('Y', strtotime($this->input->post('date')));
-        $condition['academic_year_id'] = $this->academic_year_id;
+        
+        $school = $this->teacher->get_school_by_id($condition['school_id']);   
+        if(!$school->academic_year_id){
+           echo 'ay';
+           die();
+        }
+        $condition['academic_year_id'] = $school->academic_year_id;
 
         $field = 'day_' . abs(date('d', strtotime($this->input->post('date'))));
-        if ($this->teacher->update('teacher_attendances', array($field => $status), $condition)) {
+        if ($this->teacher->update('teacher_attendances', array($field => $status, 'modified_at'=>date('Y-m-d H:i:s')), $condition)) {
             echo TRUE;
         } else {
             echo FALSE;

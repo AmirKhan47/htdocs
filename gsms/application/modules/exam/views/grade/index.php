@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'exam', 'grade')){ ?>
                     <a href="<?php echo site_url('exam/grade/'); ?>"><?php echo $this->lang->line('exam_grade'); ?></a>
                 <?php } ?> 
@@ -27,19 +27,31 @@
                 <?php } ?> 
             </div>
             <div class="x_content">
-                <div class="" data-example-id="togglable-tabs">
-                    
+                <div class="" data-example-id="togglable-tabs">                    
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_grade_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('exam_grade'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'exam', 'grade')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_grade"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('exam_grade'); ?></a> </li>                          
+                        
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('exam/grade/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('exam_grade'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                 <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_grade"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('exam_grade'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>  
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_grade"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('exam_grade'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_grade"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('exam_grade'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>   
+                            
+                        <li class="li-class-list">
+                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){  ?> 
+                                <select  class="form-control col-md-7 col-xs-12" onchange="get_grade_by_school(this.value);">                                  
+                                    <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>--</option> 
+                                    <?php foreach($schools as $obj ){ ?>
+                                        <option value="<?php echo $obj->id; ?>" <?php if(isset($filter_school_id) && $filter_school_id == $obj->id){ echo 'selected="selected"';} ?> > <?php echo $obj->school_name; ?></option>
+                                    <?php } ?>                                            
+                                </select>
+                            <?php } ?> 
+                        </li>                        
                     </ul>
                     <br/>
                     
@@ -50,10 +62,14 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('exam_grade'); ?></th>
                                         <th><?php echo $this->lang->line('grade_point'); ?></th>
                                         <th><?php echo $this->lang->line('mark_from'); ?></th>
                                         <th><?php echo $this->lang->line('mark_to'); ?></th>
+                                        <th><?php echo $this->lang->line('note'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -62,17 +78,18 @@
                                         <?php foreach($grades as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->name; ?></td>
                                             <td><?php echo $obj->point; ?></td>
                                             <td><?php echo $obj->mark_from; ?></td>
                                             <td><?php echo $obj->mark_to; ?></td>
+                                            <td><?php echo $obj->note; ?></td>
                                             <td>
                                                 <?php if(has_permission(EDIT, 'exam', 'grade')){ ?>
                                                     <a href="<?php echo site_url('exam/grade/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
-                                                <?php } ?>
-                                                <?php if(has_permission(VIEW, 'exam', 'grade')){ ?>
-                                                    <a href="<?php echo site_url('exam/grade/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
-                                                <?php } ?>
+                                                <?php } ?>                                               
                                                 <?php if(has_permission(DELETE, 'exam', 'grade')){ ?>
                                                     <a href="<?php echo site_url('exam/grade/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
                                                 <?php } ?>
@@ -87,13 +104,15 @@
 
                         <div  class="tab-pane fade in <?php if(isset($add)){ echo 'active'; }?>" id="tab_add_grade">
                             <div class="x_content"> 
+                                
                                <?php echo form_open(site_url('exam/grade/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>
+                                
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('exam_grade'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('exam_grade'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('exam_grade'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('exam_grade'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>                                
@@ -102,7 +121,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="point"><?php echo $this->lang->line('grade_point'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="point"  id="point" value="<?php echo isset($post['point']) ?  $post['point'] : ''; ?>" placeholder="<?php echo $this->lang->line('grade_point'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="point"  id="point" value="<?php echo isset($post['point']) ?  $post['point'] : ''; ?>" placeholder="<?php echo $this->lang->line('grade_point'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('point'); ?></div>
                                     </div>
                                 </div>
@@ -111,7 +130,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="mark_from"><?php echo $this->lang->line('mark_from'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_from"  id="mark_from" value="<?php echo isset($post['mark_from']) ?  $post['mark_from'] : ''; ?>" placeholder="<?php echo $this->lang->line('mark_from'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_from"  id="mark_from" value="<?php echo isset($post['mark_from']) ?  $post['mark_from'] : ''; ?>" placeholder="<?php echo $this->lang->line('mark_from'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('mark_from'); ?></div>
                                     </div>
                                 </div>
@@ -120,11 +139,10 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="mark_to"><?php echo $this->lang->line('mark_to'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_to"  id="mark_to" value="<?php echo isset($post['mark_to']) ?  $post['mark_to'] : ''; ?>" placeholder="<?php echo $this->lang->line('mark_to'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_to"  id="mark_to" value="<?php echo isset($post['mark_to']) ?  $post['mark_to'] : ''; ?>" placeholder="<?php echo $this->lang->line('mark_to'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('mark_to'); ?></div>
                                     </div>
-                                </div>
-                          
+                                </div>                          
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
@@ -150,11 +168,13 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('exam/grade/edit/'.$grade->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>  
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('exam_grade'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($grade->name) ?  $grade->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('exam_grade'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($grade->name) ?  $grade->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('exam_grade'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -163,7 +183,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="point"><?php echo $this->lang->line('grade_point'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="point"  id="point" value="<?php echo isset($grade->point) ?  $grade->point : $post['point']; ?>" placeholder="<?php echo $this->lang->line('grade_point'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="point"  id="point" value="<?php echo isset($grade->point) ?  $grade->point : $post['point']; ?>" placeholder="<?php echo $this->lang->line('grade_point'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('point'); ?></div>
                                     </div>
                                 </div>
@@ -172,7 +192,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="mark_from"><?php echo $this->lang->line('mark_from'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_from"  id="mark_from" value="<?php echo isset($grade->mark_from) ?  $grade->mark_from : $post['mark_from']; ?>" placeholder="<?php echo $this->lang->line('mark_from'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_from"  id="mark_from" value="<?php echo isset($grade->mark_from) ?  $grade->mark_from : $post['mark_from']; ?>" placeholder="<?php echo $this->lang->line('mark_from'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('mark_from'); ?></div>
                                     </div>
                                 </div>
@@ -181,11 +201,10 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="mark_to"><?php echo $this->lang->line('mark_to'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_to"  id="mark_to" value="<?php echo isset($grade->mark_to) ?  $grade->mark_to : $post['mark_to']; ?>" placeholder="<?php echo $this->lang->line('mark_to'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="mark_to"  id="mark_to" value="<?php echo isset($grade->mark_to) ?  $grade->mark_to : $post['mark_to']; ?>" placeholder="<?php echo $this->lang->line('mark_to'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('mark_to'); ?></div>
                                     </div>
-                                </div>
-                                
+                                </div>                                
                                                                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
@@ -207,69 +226,14 @@
                             </div>
                         </div>  
                         <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_grade">
-                            <div class="x_content"> 
-                               <?php echo form_open(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('exam_grade'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $grade->name; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('grade_point'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $grade->point; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('mark_from'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $grade->mark_from; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('mark_to'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $grade->mark_to; ?>
-                                    </div>
-                                </div>
-                                                        
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $grade->note; ?>
-                                    </div>
-                                </div>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('created'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-9">
-                                    : <?php echo date('M j, Y', strtotime($grade->created_at)); ?>
-                                    </div>
-                                </div>  
-                                <?php if(has_permission(EDIT, 'exam', 'grade')){ ?>
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a  href="<?php echo site_url('exam/grade/edit/'.$grade->id); ?>"  class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                 <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                                         
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
  <script type="text/javascript">
         $(document).ready(function() {
           $('#datatable-responsive').DataTable( {
@@ -282,9 +246,20 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
-    $("#edit").validate();     
+    $("#edit").validate();   
+    
+    function get_grade_by_school(school_id){          
+        if(school_id){           
+            window.location.href = '<?php echo site_url('exam/grade/index/'); ?>'+school_id; 
+        }else{
+             window.location.href = '<?php echo site_url('exam/grade/index'); ?>';
+        }
+    }   
+    
 </script>

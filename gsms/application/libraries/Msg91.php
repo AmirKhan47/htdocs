@@ -3,6 +3,7 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 error_reporting(0);
+
 class Msg91 {
 
     protected $authKey;
@@ -10,8 +11,16 @@ class Msg91 {
 
     public function __construct() {
         $ci = & get_instance();
+        $school_id = '';
+        if ($ci->session->userdata('school_id')) {
+            $school_id = $ci->session->userdata('school_id');
+        } else {
+            $school_id = $ci->input->post('school_id');
+        }
+
         $ci->db->select('S.*');
         $ci->db->from('sms_settings AS S');
+        $ci->db->where('S.school_id', $school_id);
         $setting = $ci->db->get()->row();
 
         $this->authKey = $setting->msg91_auth_key;
@@ -55,7 +64,7 @@ class Msg91 {
 
         //get response
         $output = curl_exec($ch);
-        print_r($output);
+        //print_r($output);
         //Print error if any
         if (curl_errno($ch)) {
             echo 'error:' . curl_error($ch);

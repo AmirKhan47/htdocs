@@ -14,25 +14,39 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_section_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'academic', 'section')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_section"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('section'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('academic/section/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('section'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_section"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('section'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>  
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_section"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('section'); ?></a> </li>                          
                         <?php } ?>  
                             
                         <li class="li-class-list">
-                            <select  class="form-control col-md-7 col-xs-12" onchange="get_section_by_class(this.value);">
-                                <?php if($this->session->userdata('role_id') != STUDENT){ ?>
-                                    <option value="<?php echo site_url('academic/section/index/'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                <?php } ?>  
-                                <?php foreach($classes as $obj ){ ?>
-                                    <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
-                                        <option value="<?php echo site_url('academic/section/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
-                                    <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
-                                        <option value="<?php echo site_url('academic/section/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                           <?php if($this->session->userdata('role_id') != SUPER_ADMIN){  ?> 
+                                <select  class="form-control col-md-7 col-xs-12" onchange="get_section_by_class(this.value);">
+                                    <?php if($this->session->userdata('role_id') != STUDENT){ ?>
+                                        <option value="<?php echo site_url('academic/section/index/'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
+                                    <?php } ?>  
+                                    <?php foreach($classes as $obj ){ ?>
+                                        <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
+                                            <option value="<?php echo site_url('academic/section/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                        <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
+                                            <option value="<?php echo site_url('academic/section/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                        <?php } ?>                                            
                                     <?php } ?>                                            
-                                <?php } ?>                                            
-                            </select>
+                                </select>
+                            <?php }else{ ?> 
+                                <select  class="form-control col-md-7 col-xs-12" onchange="get_section_by_class(this.value);">
+                                        <option value="<?php echo site_url('academic/section/index/'); ?>">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>--</option> 
+                                    <?php foreach($schools as $obj ){ ?>
+                                        <option value="<?php echo site_url('academic/section/index/0/'.$obj->id); ?>" <?php if(isset($filter_school_id) && $filter_school_id == $obj->id){ echo 'selected="selected"';} ?> > <?php echo $obj->school_name; ?></option>
+                                    <?php } ?>   
+                                </select>
+                            <?php } ?>   
+                            
                         </li>     
                     </ul>
                     <br/>
@@ -44,6 +58,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                         <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('class'); ?></th>
                                         <th><?php echo $this->lang->line('teacher'); ?></th>
@@ -56,6 +73,9 @@
                                         <?php foreach($sections as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->name; ?></td>
                                             <td><?php echo $obj->class_name; ?></td>
                                             <td><?php echo $obj->teacher; ?></td>
@@ -80,11 +100,13 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('academic/section/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                 <?php $this->load->view('layout/school_list_form'); ?>
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -94,7 +116,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12 select2"  name="class_id"  id="class_id" required="required" >
+                                        <select  class="form-control col-md-7 col-xs-12 select2"  name="class_id"  id="add_class_id" required="required" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($classes as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php echo isset($post['class_id']) && $post['class_id'] == $obj->id ?  'selected="selected"' : ''; ?>><?php echo $obj->name; ?></option>
@@ -105,10 +127,10 @@
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="teacher_id" required="required" >
+                                        <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="add_teacher_id" required="required" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($teachers as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php echo isset($post['teacher_id']) && $post['teacher_id'] == $obj->id ?  'selected="selected"' : ''; ?>><?php echo $obj->name; ?></option>
@@ -147,11 +169,13 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('academic/section/edit/'.$section->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($section->name) ?  $section->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($section->name) ?  $section->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -161,7 +185,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="class_id" required="required" >
+                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="edit_class_id" required="required" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($classes as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php if($section->class_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $obj->name; ?></option>
@@ -172,10 +196,10 @@
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('section'); ?> <?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="teacher_id" required="required" >
+                                        <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="edit_teacher_id" required="required" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($teachers as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php if($section->teacher_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $obj->name; ?></option>
@@ -212,10 +236,82 @@
         </div>
     </div>
 </div>
+
+
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $("document").ready(function() {
+         <?php if(isset($section) && !empty($section)){ ?>
+            $("#edit_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();
+        var class_id = '';
+        var teacher_id = '';
+        <?php if(isset($section) && !empty($section)){ ?>
+            class_id =  '<?php echo $section->class_id; ?>';
+            teacher_id =  '<?php echo $section->teacher_id; ?>';
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?>  <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                   if(class_id){
+                       $('#edit_class_id').html(response);   
+                   }else{
+                       $('#add_class_id').html(response);   
+                   }
+                                    
+                   get_teacher_by_school(school_id, teacher_id);
+               }
+            }
+        });
+    }); 
+    
+    
+    function get_teacher_by_school(school_id, teacher_id){
+    
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_teacher_by_school'); ?>",
+            data   : { school_id:school_id, teacher_id: teacher_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {    
+                   if(teacher_id){
+                       $('#edit_teacher_id').html(response);
+                   }else{
+                       $('#add_teacher_id').html(response); 
+                   }
+               }
+            }
+        });
+    }
+    
+  </script>
+<!-- Super admin js end -->
+  
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
-          $('#datatable-responsive').DataTable( {
+            
+          $('#datatable-responsive').DataTable({
               dom: 'Bfrtip',
               iDisplayLength: 15,
               buttons: [
@@ -225,9 +321,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
-          });
+              search: true,              
+              responsive: true
+          });          
         });
+        
     function get_section_by_class(url){          
         if(url){
             window.location.href = url; 

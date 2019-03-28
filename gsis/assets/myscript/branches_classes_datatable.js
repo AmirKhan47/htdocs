@@ -17,7 +17,7 @@ $(document).ready(function()
         // Load data for the table's content from an Ajax source
         "ajax": 
         {
-          "url": "http://localhost/gsis/classes/get_branches_classes/",
+          "url": window.location.origin+"/classes/get_branches_classes/",
           // "url": "http://localhost/mydatatable/datatable/get_data/",
           "type": "POST"
         },

@@ -1,10 +1,12 @@
 <?php
-error_reporting(E_ALL);
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class My_Controller extends CI_Controller {
 
     public $academic_year_id = '';
+    public $schools = array();
+    public $global_setting = array();
+    public $school_setting = array();
     public $lang_path = 'application/language/english/sms_lang.php';
     public $config_path = 'application/config/custom.php';
     
@@ -15,18 +17,37 @@ class My_Controller extends CI_Controller {
             exit;
         }
         
-        $academic_year = $this->db->get_where('academic_years', array('is_running'=>1))->row();
-        if($academic_year){
-            $this->academic_year_id = $academic_year->id;
+        // Get all schools
+        $this->schools = $this->db->get_where('schools', array('status'=>1))->result();
+        $this->global_setting = $this->db->get_where('global_setting', array('status'=>1))->row();
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            $this->school_setting = $this->db->get_where('schools', array('status'=>1, 'id'=>$this->session->userdata('school_id')))->row();
         }
+        
+        if($this->global_setting){           
+            date_default_timezone_set($this->global_setting->time_zone);
+        }
+        
         $this->config->load('custom');
+        
+        header("HTTP/1.0 200 OK");
+        header("HTTP/1.1 200 OK");
+        header("Expires: Tue, 01 Jan 2020 00:00:00 GMT");
+        header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Cache-Control: post-check=0, pre-check=0", false);
+        header("Pragma: no-cache");
+        clearstatcache();
+        
+       
     }
     
    
     public function update_lang() {
         
         $data = array();
-        $language = $this->db->get_where('settings', array('status'=>1))->row()->language; 
+        $language = $this->db->get_where('global_setting', array('status'=>1))->row()->language; 
         $this->db->select("id, label, $language");
         $this->db->from('languages');        
         $this->db->order_by('id' , 'ASC');
@@ -148,6 +169,6 @@ class My_Controller extends CI_Controller {
 
         return TRUE;
     }
-
+ 
     
 }

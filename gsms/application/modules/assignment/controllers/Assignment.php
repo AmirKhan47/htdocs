@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Assignment.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Assignment
  * @description     : Manage student assignment by class teacher.  
@@ -19,13 +19,7 @@ class Assignment extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-
-        $this->load->model('Assignment_Model', 'assignment', true);
-       // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }  
+        $this->load->model('Assignment_Model', 'assignment', true);        
     }
 
     
@@ -37,7 +31,7 @@ class Assignment extends MY_Controller {
     * @param           : $class_id integer value
     * @return          : null 
     * ********************************************************** */
-    public function index($class_id = null) {
+    public function index($class_id = null, $school_id = null) {
 
         check_permission(VIEW);
         
@@ -46,18 +40,26 @@ class Assignment extends MY_Controller {
              redirect('assignment/index');
         }
         
+        $school = $this->assignment->get_school_by_id($school_id);
+               
         if ($this->session->userdata('role_id') == STUDENT) {
-            $student_id = $this->session->userdata('profile_id');        
-            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $this->academic_year_id));
-            $class_id = $enroll_student->class_id;
+            $class_id = $this->session->userdata('class_id');    
+        }        
+        
+        $this->data['assignments'] = $this->assignment->get_assignment_list($class_id, $school_id, @$school->academic_year_id);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
         }
         
-        
-        $this->data['assignments'] = $this->assignment->get_assignment_list($class_id);
-        
-        $this->data['classes'] = $this->assignment->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['class_list'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        $this->data['filter_school_id'] = $school_id;
         $this->data['class_id'] = $class_id;
-         
+        
+        $this->data['schools'] = $this->schools;
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_assignment') . ' | ' . SMS);
         $this->layout->view('assignment/index', $this->data);
@@ -83,6 +85,9 @@ class Assignment extends MY_Controller {
 
                 $insert_id = $this->assignment->insert('assignments', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created an assignment : '.$data['title']); 
+                    
                     success($this->lang->line('insert_success'));
                     redirect('assignment/index/'.$data['class_id']);
                 } else {
@@ -100,15 +105,26 @@ class Assignment extends MY_Controller {
         }
         
         if ($this->session->userdata('role_id') == STUDENT) {
+            
+            $school = $this->assignment->get_school_by_id($this->session->userdata('school_id'));
             $student_id = $this->session->userdata('profile_id');        
-            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $this->academic_year_id));
-            $class_id = $enroll_student->class_id;
+            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $school->academic_year_id));
+            $class_id = $enroll_student->class_id;            
         }
 
         $this->data['assignments'] = $this->assignment->get_assignment_list($class_id);
-        $this->data['classes'] = $this->assignment->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['class_id'] = $class_id;
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        $this->data['class_list'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+                
+        $this->data['class_id'] = $class_id;
+       
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('assignment') . ' | ' . SMS);
         $this->layout->view('assignment/index', $this->data);
@@ -140,8 +156,11 @@ class Assignment extends MY_Controller {
                 $updated = $this->assignment->update('assignments', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated an assignment : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
-                    redirect('assignment/index/'.$data['class_id']);
+                    redirect('assignment/index/'.$data['class_id'].'/'.$data['school_id']);
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('assignment/edit/' . $this->input->post('id'));
@@ -166,21 +185,31 @@ class Assignment extends MY_Controller {
 
         if ($this->session->userdata('role_id') == STUDENT) {
             $student_id = $this->session->userdata('profile_id');        
-            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $this->academic_year_id));
+            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $this->data['assignment']->academic_year_id));
             $class_id = $enroll_student->class_id;
         }
         
-        $this->data['assignments'] = $this->assignment->get_assignment_list($class_id);
-        $this->data['classes'] = $this->assignment->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['class_id'] = $class_id;
+        $this->data['assignments'] = $this->assignment->get_assignment_list($class_id, $this->data['assignment']->school_id, $this->data['assignment']->academic_year_id);
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        $this->data['class_list'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        
+        $this->data['school_id'] = $this->data['assignment']->school_id;
+        
+        $this->data['class_id'] = $class_id;
+        $this->data['schools'] = $this->schools; 
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('assignment') . ' | ' . SMS);
         $this->layout->view('assignment/index', $this->data);
     }
 
     
-    /*****************Function view**********************************
+    /*****************Function view omit **********************************
     * @type            : Function
     * @function name   : view
     * @description     : Load user interface with specific assignment data                 
@@ -201,18 +230,47 @@ class Assignment extends MY_Controller {
         $class_id = $this->data['assignment']->class_id;
         
         if ($this->session->userdata('role_id') == STUDENT) {
+            
+            $school = $this->assignment->get_school_by_id($this->session->userdata('school_id'));
             $student_id = $this->session->userdata('profile_id');        
-            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $this->academic_year_id));
+            $enroll_student = $this->assignment->get_single('enrollments', array('student_id' => $student_id, 'academic_year_id' => $school->academic_year_id));
             $class_id = $enroll_student->class_id;
         }
         
         $this->data['assignments'] = $this->assignment->get_assignment_list($class_id);
-        $this->data['classes'] = $this->assignment->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['class_id'] = $class_id;
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        $this->data['class_list'] = $this->assignment->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        
+        
+        $this->data['class_id'] = $class_id;
+        $this->data['schools'] = $this->schools;
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('assignment') . ' | ' . SMS);
         $this->layout->view('assignment/index', $this->data);
+    }
+
+    
+           
+     /*****************Function get_single_assignment**********************************
+     * @type            : Function
+     * @function name   : get_single_assignment
+     * @description     : "Load single assignment information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_assignment(){
+        
+       $assignment_id = $this->input->post('assignment_id');
+       
+       $this->data['assignment'] = $this->assignment->get_single_assignment($assignment_id);
+       echo $this->load->view('get-single-assignment', $this->data);
     }
 
     
@@ -229,6 +287,7 @@ class Assignment extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         $this->form_validation->set_rules('title', $this->lang->line('assignment') . ' ' . $this->lang->line('title'), 'trim|required');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
         $this->form_validation->set_rules('subject_id', $this->lang->line('subject'), 'trim|required');
         $this->form_validation->set_rules('deadline', $this->lang->line('deadline'), 'trim|required');
@@ -290,6 +349,7 @@ class Assignment extends MY_Controller {
     private function _get_posted_assignment_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'class_id';
         $items[] = 'subject_id';
         $items[] = 'title';
@@ -300,13 +360,25 @@ class Assignment extends MY_Controller {
         $data['deadline'] = date('Y-m-d', strtotime($this->input->post('deadline')));
 
         if ($this->input->post('id')) {
+            
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
+            
         } else {
+            
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->assignment->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('assignment/index');
+            }
+            
+            $data['academic_year_id'] = $school->academic_year_id;
+            
         }
 
 
@@ -382,6 +454,7 @@ class Assignment extends MY_Controller {
         }
         
         $assignment = $this->assignment->get_single('assignments', array('id' => $id));
+        
         if ($this->assignment->delete('assignments', array('id' => $id))) {
 
             // delete assignment assignment
@@ -389,12 +462,14 @@ class Assignment extends MY_Controller {
             if (assignment_exists($destination . '/assignment/' . $assignment->assignment)) {
                 @unlink($destination . '/assignment/' . $assignment->assignment);
             }
+            
+            create_log('Has been deleted an assignment : '.$assignment->title);
 
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
-        redirect('assignment/index/' . $assignment->class_id);
+        redirect('assignment/index/' . $assignment->class_id.'/'.$assignment->school_id);
     }
 
 }

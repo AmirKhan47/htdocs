@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Income.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Income
  * @description     : Manage all kind of income like student fee, admission, fine and other income.  
@@ -35,7 +35,15 @@ class Income extends MY_Controller {
         
         check_permission(VIEW);
         
-        $this->data['income_heads'] = $this->income->get_list('income_heads', array('status'=> 1,'is_default'=>0));        
+        $condition = array();
+        $condition['status'] = 1;        
+        $condition['head_type'] = 'income';    
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['income_heads'] = $this->income->get_list('income_heads', $condition); 
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }        
         $this->data['incomes'] = $this->income->get_income_list();
          
         $this->data['list'] = TRUE;
@@ -63,14 +71,13 @@ class Income extends MY_Controller {
                 $data = $this->_get_posted_income_data();
 
                 $insert_id = $this->income->insert('invoices', $data);
-                if ($insert_id) {                    
-                        // save transction table data
-                        $data['invoice_id'] = $insert_id;
-                        $this->_save_transaction($data);
-                        $this->_save_invoice_log($data);
-                        
-                        // save invoice log
-                        
+                if ($insert_id) {
+                    
+                    create_log('Has been created a income : '. $data['net_amount']);
+                    // save transction table data
+                    $data['invoice_id'] = $insert_id;
+                    $this->_save_transaction($data);
+                                             
                     success($this->lang->line('insert_success'));
                     redirect('accounting/income/index');
                 } else {
@@ -82,7 +89,14 @@ class Income extends MY_Controller {
             }
         }
 
-        $this->data['income_heads'] = $this->income->get_list('income_heads', array('status'=> 1,'is_default'=>0));        
+        $condition = array();
+        $condition['status'] = 1;        
+        $condition['head_type'] = 'income';       
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['income_heads'] = $this->income->get_list('income_heads', $condition);
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }        
         $this->data['incomes'] = $this->income->get_income_list();
          
         $this->data['add'] = TRUE;
@@ -117,8 +131,10 @@ class Income extends MY_Controller {
                 $updated = $this->income->update('invoices', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a income : '. $data['net_amount']);
+                    
                     $this->_save_transaction($data);
-                    $this->_save_invoice_log($data);
                     success($this->lang->line('update_success'));
                     redirect('accounting/income/index');                   
                 } else {
@@ -138,9 +154,19 @@ class Income extends MY_Controller {
             }
         }
 
-        $this->data['income_heads'] = $this->income->get_list('income_heads', array('status'=> 1,'is_default'=>0));        
+        $condition = array();
+        $condition['status'] = 1;        
+        $condition['head_type'] = 'income';     
+        if($this->session->userdata('role_id') != SUPER_ADMIN){   
+            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['income_heads'] = $this->income->get_list('income_heads', $condition);  
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }  
+        
         $this->data['incomes'] = $this->income->get_income_list();
-         
+        $this->data['school_id'] = $this->data['income']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('income'). ' | ' . SMS);
         $this->layout->view('income/index', $this->data);
@@ -163,14 +189,39 @@ class Income extends MY_Controller {
             redirect('accounting/income/index'); 
         }
         
-        $this->data['income_heads'] = $this->income->get_list('income_heads', array('status'=> 1,'is_default'=>0));        
-        $this->data['incomes'] = $this->income->get_income_list();
-         
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        $condition['head_type'] = 'income';        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['income_heads'] = $this->income->get_list('income_heads', $condition);  
+        }        
+        $this->data['incomes'] = $this->income->get_income_list(); 
         $this->data['income'] = $this->income->get_single_income($id);
+        
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('income'). ' | ' . SMS);
         $this->layout->view('income/index', $this->data);
     }
+    
+    
+               
+    /*****************Function get_single_income*********************************
+     * @type            : Function
+     * @function name   : get_single_income
+     * @description     : "Load single income information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_income(){
+        
+       $income_id = $this->input->post('income_id');       
+       $this->data['income'] = $this->income->get_single_income($income_id);
+       echo $this->load->view('income/get-single-income', $this->data);
+    }
+
 
     
     /*****************Function _prepare_income_validation**********************************
@@ -185,6 +236,7 @@ class Income extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('income_head_id', $this->lang->line('income_head'), 'trim|required');   
         $this->form_validation->set_rules('amount', $this->lang->line('amount'), 'trim|required|numeric');   
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required');   
@@ -204,6 +256,8 @@ class Income extends MY_Controller {
     private function _get_posted_income_data() {
      
         $data = array();
+        $data['school_id'] = $this->input->post('school_id');
+        $data['income_head_id'] = $this->input->post('income_head_id');
         $data['note'] = $this->input->post('note');
         $data['gross_amount'] = $this->input->post('amount');
         $data['net_amount'] = $this->input->post('amount');
@@ -218,10 +272,18 @@ class Income extends MY_Controller {
             $data['class_id'] = 0;
             $data['student_id'] = 0;
             $data['discount'] = 0;
-            $data['invoice_type'] = 'general';
+            $data['invoice_type'] = 'income';
             $data['paid_status'] = 'paid';
             $data['status'] = 1;
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->income->get_school_by_id($data['school_id']);
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('accounting/income/index'); 
+            } 
+            
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();            
            
@@ -248,7 +310,12 @@ class Income extends MY_Controller {
             redirect('accounting/income/index'); 
         }
         
-        if ($this->income->delete('invoices', array('id' => $id))) {            
+        $income = $this->income->get_single('invoices', array('id' => $id));
+        
+        if ($this->income->delete('invoices', array('id' => $id))) {  
+            
+             create_log('Has been deleted a income : '. $income->net_amount);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
@@ -269,6 +336,7 @@ class Income extends MY_Controller {
     private function _save_transaction($data){
         
         $txn = array();
+        $txn['school_id'] = $data['school_id'];  
         $txn['amount'] = $data['net_amount'];  
         $txn['note'] = $data['note'];
         $txn['payment_date'] = $data['date'];
@@ -294,35 +362,59 @@ class Income extends MY_Controller {
     }
     
     
-    /*****************Function _save_invoice_log**********************************
+
+    /*****************Function get_income_head_by_school**********************************
      * @type            : Function
-     * @function name   : _save_invoice_log
-     * @description     : invoice log data save/update into database 
-     *                    while add/update income data into database                
-     *                       
-     * @param           : $id integer value
+     * @function name   : get_income_head_by_school
+     * @description     : Load "Income Head Listing" by ajax call                
+     *                    and populate user listing
+     * @param           : null
      * @return          : null 
      * ********************************************************** */
-    private function _save_invoice_log($data){
+    
+    public function get_income_head_by_school() {
         
-        $logs = array();
-        $logs['amount'] = $data['net_amount']; 
-        $logs['income_head_id'] = $this->input->post('income_head_id');        
-      
-        if ($this->input->post('id')) {
-            
-            $logs['modified_at'] = date('Y-m-d H:i:s');
-            $logs['modified_by'] = logged_in_user_id();
-            $this->income->update('invoice_logs', $logs, array('invoice_id'=>$this->input->post('id')));
-            
-        } else {            
-           
-            $logs['invoice_id'] = $data['invoice_id'];
-            $logs['status'] = 1;                   
-            $logs['created_at'] = $data['created_at'];
-            $logs['created_by'] = $data['created_by'];
-            $this->income->insert('invoice_logs', $logs);
+        $school_id  = $this->input->post('school_id');
+        $income_head_id  = $this->input->post('income_head_id');
+         
+        $income_heads = $this->income->get_list('income_heads', array('school_id'=>$school_id, 'head_type'=>'income'));  
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        if (!empty($income_heads)) {
+            foreach ($income_heads as $obj) {   
+                
+                $selected = $income_head_id == $obj->id ? $select : '';
+                $str .= '<option value="' . $obj->id . '" ' . $selected . '>' . $obj->title . '</option>';
+                
+            }
         }
+
+        echo $str;
     }
+    
+    
+    public function get_payment_method_by_school(){
+        
+        $school_id  = $this->input->post('school_id');
+        $payment_method  = $this->input->post('payment_method');
+        $payments = get_payment_methods($school_id);
+        
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        
+        if (!empty($payments)) {
+            foreach ($payments as $key=>$value) {   
+                
+                $selected = $key == $payment_method ? $select : '';
+                if(in_array($key, array('cheque', 'cash'))){
+                    $str .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+                }
+            }
+        }
+        echo $str;
+        
+    }
+    
    
 }

@@ -1,16 +1,4 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- * Description of Auth_Model
- *
- * @author Nafeesa
- */
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
@@ -20,12 +8,27 @@ class Year_Model extends MY_Model {
         parent::__construct();
     }
     
+    public function get_year_list(){
         
-    function duplicate_check($session_year, $id = null ){           
+        $this->db->select('AY.*, S.school_name');
+        $this->db->from('academic_years AS AY');
+        $this->db->join('schools AS S', 'S.id = AY.school_id', 'left');
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            $this->db->where('AY.school_id', $this->session->userdata('school_id'));
+        }
+        
+        $this->db->order_by('AY.id', 'ASC');
+        return $this->db->get()->result();
+        
+    }
+        
+    function duplicate_check($session_year, $school_id, $id = null ){           
            
         if($id){
             $this->db->where_not_in('id', $id);
         }
+        $this->db->where('school_id', $school_id);
         $this->db->where('session_year', $session_year);
         return $this->db->get('academic_years')->num_rows();            
     }

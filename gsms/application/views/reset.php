@@ -22,7 +22,11 @@
         <div class="login_wrapper">
             <section>
                 <center>
-                    <img width="100" height="100" src="<?php echo IMG_URL; ?>/sms-logo.png">
+                    <?php  if(UPLOAD_PATH.'logo/'.$this->global_setting->brand_logo){ ?>
+                        <img  src="<?php echo UPLOAD_PATH.'logo/'.$this->global_setting->brand_logo; ?>" style="max-width: 100px;" alt="">
+                    <?php }else{ ?>
+                        <img  width="100" height="100" src="<?php echo IMG_URL; ?>/sms-logo.png">
+                    <?php } ?>
                 </center>
             </section>
             <div class="form login_form">
@@ -30,7 +34,6 @@
                 <section class="login_content">                    
                     <?php echo form_open(site_url('auth/resetpass'), array('name' => 'login', 'id' => 'login'), ''); ?>
                     <div class="col-md-12 col-sm-12 col-xs-12  text-center">
-                        <input type="hidden" name="email" value="<?php echo $user->email; ?>" />
                         <input type="hidden" name="id" value="<?php echo $user->id; ?>" />
                         <input type="hidden" name="key" value="<?php echo $key; ?>" />
                         <p class="red"><?php echo $this->session->flashdata('error'); ?></p>

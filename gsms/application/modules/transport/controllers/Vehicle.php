@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Vehicle.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Vehicle
  * @description     : Manage transport vehicle.  
@@ -35,7 +35,9 @@ class Vehicle extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
+        
         $this->data['vehicles'] = $this->vehicle->get_vehicle_list();
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_vehicle') . ' | ' . SMS);
         $this->layout->view('vehicle/index', $this->data);
@@ -72,6 +74,7 @@ class Vehicle extends MY_Controller {
         }
 
         $this->data['vehicles'] = $this->vehicle->get_vehicle_list();
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('vehicle') . ' | ' . SMS);
         $this->layout->view('vehicle/index', $this->data);
@@ -122,6 +125,9 @@ class Vehicle extends MY_Controller {
         }
 
         $this->data['vehicles'] = $this->vehicle->get_vehicle_list();
+        
+        $this->data['school_id'] = $this->data['vehicle']->school_id;
+        
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('vehicle') . ' | ' . SMS);
         $this->layout->view('vehicle/index', $this->data);
@@ -144,11 +150,31 @@ class Vehicle extends MY_Controller {
           redirect('transport/vehicle/index');
         }
         
-        $this->data['vehicle'] = $this->vehicle->get_single('vehicles', array('id' => $id));
         $this->data['vehicles'] = $this->vehicle->get_vehicle_list();
+        
+        $this->data['vehicle'] = $this->vehicle->get_single('vehicles', array('id' => $id));
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('vehicle') . ' | ' . SMS);
         $this->layout->view('vehicle/index', $this->data);
+    }
+    
+    
+                   
+    /*****************Function get_single_vehicle**********************************
+     * @type            : Function
+     * @function name   : get_single_vehicle
+     * @description     : "Load single vehicle information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_vehicle(){
+        
+        $vehicle_id = $this->input->post('vehicle_id');
+       
+        $this->data['vehicle'] = $this->vehicle->get_single_vehicle($vehicle_id);
+        echo $this->load->view('vehicle/get-single-vehicle', $this->data);
     }
     
     /*****************Function _prepare_vehicle_validation**********************************
@@ -163,12 +189,13 @@ class Vehicle extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div vehicle="error-message" style="color: red;">', '</div>');
 
-        $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('contact', $this->lang->line('vehicle_contact'), 'trim|required');
         $this->form_validation->set_rules('license', $this->lang->line('vehicle_license'), 'trim');
         $this->form_validation->set_rules('driver', $this->lang->line('driver'), 'trim');
         $this->form_validation->set_rules('model', $this->lang->line('vehicle_model'), 'trim');
         $this->form_validation->set_rules('number', $this->lang->line('vehicle') . ' ' . $this->lang->line('number'), 'required|trim|callback_number');
+        $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
     }
 
         
@@ -182,7 +209,7 @@ class Vehicle extends MY_Controller {
     * ********************************************************** */ 
     public function number() {
         if ($this->input->post('id') == '') {
-            $vehicle = $this->vehicle->duplicate_check($this->input->post('number'));
+            $vehicle = $this->vehicle->duplicate_check($this->input->post('school_id'), $this->input->post('number'));
             if ($vehicle) {
                 $this->form_validation->set_message('number', $this->lang->line('already_exist'));
                 return FALSE;
@@ -190,7 +217,7 @@ class Vehicle extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $vehicle = $this->vehicle->duplicate_check($this->input->post('number'), $this->input->post('id'));
+            $vehicle = $this->vehicle->duplicate_check($this->input->post('school_id'), $this->input->post('number'), $this->input->post('id'));
             if ($vehicle) {
                 $this->form_validation->set_message('number', $this->lang->line('already_exist'));
                 return FALSE;
@@ -214,6 +241,7 @@ class Vehicle extends MY_Controller {
     private function _get_posted_vehicle_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'number';
         $items[] = 'model';
         $items[] = 'driver';

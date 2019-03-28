@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Guardian.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Guardian
  * @description     : Manage guardian information.  
@@ -63,6 +63,9 @@ class Guardian extends MY_Controller {
 
                 $insert_id = $this->guardian->insert('guardians', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been added a Guardian : '.$data['name']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('guardian/index');
                 } else {
@@ -109,6 +112,9 @@ class Guardian extends MY_Controller {
                 $updated = $this->guardian->update('guardians', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a Guardian : '.$data['name']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('guardian/index');
                 } else {
@@ -130,6 +136,7 @@ class Guardian extends MY_Controller {
 
         $this->data['guardians'] = $this->guardian->get_guardian_list();
         $this->data['roles'] = $this->guardian->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['school_id'] = $this->data['guardian']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('guardian') . ' | ' . SMS);
@@ -164,6 +171,27 @@ class Guardian extends MY_Controller {
         $this->layout->view('guardian/index', $this->data);
     }
     
+    
+    
+         /*****************Function get_single_guardian**********************************
+     * @type            : Function
+     * @function name   : get_single_guardian
+     * @description     : "Load single guardian information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_guardian(){
+        
+       $guardian_id = $this->input->post('guardian_id');
+       
+       $this->data['guardian'] = $this->guardian->get_single_guardian($guardian_id);
+       $school = $this->guardian->get_school_by_id($this->data['guardian']->school_id);
+       $this->data['students'] = $this->guardian->get_student_list($guardian_id, $school->academic_year_id);
+       $this->data['invoices'] = $this->guardian->get_invoice_list($guardian_id);  
+       
+       echo $this->load->view('get-single-guardian', $this->data);
+    }
         
     /*****************Function _prepare_guardian_validation**********************************
     * @type            : Function
@@ -178,13 +206,14 @@ class Guardian extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         if (!$this->input->post('id')) {
-            $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|required|valid_email|callback_email');
+            $this->form_validation->set_rules('username', $this->lang->line('username'), 'trim|required|callback_username');
             $this->form_validation->set_rules('password', $this->lang->line('password'), 'trim|required');
         }
-
+        
+        $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|valid_email');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('role'), 'trim|required');
-        $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required');
-        $this->form_validation->set_rules('relation', $this->lang->line('relation'), 'trim|required');
+        $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required');        
         $this->form_validation->set_rules('phone', $this->lang->line('phone'), 'trim|required');
         $this->form_validation->set_rules('profession', $this->lang->line('profession'), 'trim');
         $this->form_validation->set_rules('present_address', $this->lang->line('present') . ' ' . $this->lang->line('address'), 'trim');
@@ -194,27 +223,27 @@ class Guardian extends MY_Controller {
     }
 
                         
-    /*****************Function email**********************************
+    /*****************Function username**********************************
     * @type            : Function
-    * @function name   : email
-    * @description     : Unique check for "Guardian Email" data/value                  
+    * @function name   : username
+    * @description     : Unique check for "Guardian username" data/value                  
     *                       
     * @param           : null
     * @return          : boolean true/false 
     * ********************************************************** */ 
-    public function email() {
+    public function username() {
         if ($this->input->post('id') == '') {
-            $email = $this->guardian->duplicate_check($this->input->post('email'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->guardian->duplicate_check($this->input->post('username'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $email = $this->guardian->duplicate_check($this->input->post('email'), $this->input->post('id'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->guardian->duplicate_check($this->input->post('username'), $this->input->post('id'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
@@ -236,9 +265,11 @@ class Guardian extends MY_Controller {
 
         $items = array();
 
-        $items[] = 'name';
-        $items[] = 'relation';
+        $items[] = 'school_id';
+        $items[] = 'national_id';
+        $items[] = 'name';       
         $items[] = 'phone';
+        $items[] = 'email';
         $items[] = 'profession';
         $items[] = 'present_address';
         $items[] = 'permanent_address';
@@ -341,6 +372,8 @@ class Guardian extends MY_Controller {
             if (file_exists($destination . '/guardian-photo/' . $guardian->photo)) {
                 @unlink($destination . '/guardian-photo/' . $guardian->photo);
             }
+            
+             create_log('Has been deleted a Guardian : '.$guardian->name);
 
             success($this->lang->line('delete_success'));
         } else {
@@ -364,7 +397,7 @@ class Guardian extends MY_Controller {
              redirect('dashboard');
         }
          
-        $this->data['invoices'] = $this->guardian->get_invoice_list();  
+        $this->data['invoices'] = $this->guardian->get_invoice_list($this->session->userdata('profile_id'));  
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('invoice'). ' | ' . SMS);

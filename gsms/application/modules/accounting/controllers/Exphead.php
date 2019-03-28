@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Exphead.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Exphead
  * @description     : Manage all expenditure type/head/title as per accounting rule.  
@@ -36,7 +36,10 @@ class Exphead extends MY_Controller {
     public function index() {
         
         check_permission(VIEW);
-        $this->data['expheads'] = $this->exphead->get_list('expenditure_heads', array('status'=> 1));     
+            
+        $this->data['expheads'] = $this->exphead->get_exphead_list();  
+       
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_expenditure_head'). ' | ' . SMS);
         $this->layout->view('exp_head/index', $this->data);            
@@ -63,6 +66,9 @@ class Exphead extends MY_Controller {
 
                 $insert_id = $this->exphead->insert('expenditure_heads', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been created a expenditure head : '. $data['title']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('accounting/exphead/index');
                 } else {
@@ -73,8 +79,10 @@ class Exphead extends MY_Controller {
                 $this->data['post'] = $_POST;
             }
         }
-
-        $this->data['expheads'] = $this->exphead->get_list('expenditure_heads', array('status'=> 1));     
+        
+        $this->data['expheads'] = $this->exphead->get_exphead_list();  
+       
+   
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('expenditure_head'). ' | ' . SMS);
         $this->layout->view('exp_head/index', $this->data);
@@ -106,6 +114,9 @@ class Exphead extends MY_Controller {
                 $updated = $this->exphead->update('expenditure_heads', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a expenditure head : '. $data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('accounting/exphead/index');                   
                 } else {
@@ -125,7 +136,9 @@ class Exphead extends MY_Controller {
             }
         }
 
-        $this->data['expheads'] = $this->exphead->get_list('expenditure_heads', array('status'=> 1));     
+        $this->data['expheads'] = $this->exphead->get_exphead_list();  
+        $this->data['school_id'] = $this->data['exphead']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('expenditure_head'). ' | ' . SMS);
         $this->layout->view('exp_head/index', $this->data);
@@ -144,6 +157,7 @@ class Exphead extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('title', $this->lang->line('expenditure_head'), 'trim|required|callback_title');   
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');   
     }
@@ -161,7 +175,7 @@ class Exphead extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $exphead = $this->exphead->duplicate_check('title',$this->input->post('title')); 
+          $exphead = $this->exphead->duplicate_check($this->input->post('school_id'), $this->input->post('title')); 
           if($exphead){
                 $this->form_validation->set_message('title',  $this->lang->line('already_exist'));         
                 return FALSE;
@@ -169,7 +183,7 @@ class Exphead extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $exphead = $this->exphead->duplicate_check('title',$this->input->post('title'), $this->input->post('id')); 
+         $exphead = $this->exphead->duplicate_check($this->input->post('school_id'),$this->input->post('title'), $this->input->post('id')); 
           if($exphead){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -191,6 +205,7 @@ class Exphead extends MY_Controller {
     private function _get_posted_exphead_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'note';
         $data = elements($items, $_POST);  
@@ -225,7 +240,12 @@ class Exphead extends MY_Controller {
             redirect('accounting/exphead/index');
         }
         
-        if ($this->exphead->delete('expenditure_heads', array('id' => $id))) {            
+        $exphead = $this->exphead->get_single('expenditure_heads', array('id' => $id));
+        
+        if ($this->exphead->delete('expenditure_heads', array('id' => $id))) { 
+            
+            create_log('Has been deleted a expenditure head : '. $exphead->title);
+             
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

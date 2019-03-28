@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Grade.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Grade
  * @description     : Manage all Salary Grades as per payroll.  
@@ -36,7 +36,9 @@ class Grade extends MY_Controller {
     public function index() {
         
         check_permission(VIEW);
-        $this->data['grades'] = $this->grade->get_list('salary_grades', array('status'=> 1));     
+          
+        $this->data['grades'] = $this->grade->get_grade_list();   
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_salary_grade'). ' | ' . SMS);
         $this->layout->view('grade/index', $this->data);            
@@ -74,7 +76,8 @@ class Grade extends MY_Controller {
             }
         }
 
-        $this->data['grades'] = $this->grade->get_list('salary_grades', array('status'=> 1));     
+        $this->data['grades'] = $this->grade->get_grade_list();      
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('salary_grade'). ' | ' . SMS);
         $this->layout->view('grade/index', $this->data);
@@ -125,7 +128,9 @@ class Grade extends MY_Controller {
             }
         }
 
-        $this->data['grades'] = $this->grade->get_list('salary_grades', array('status'=> 1));     
+        $this->data['grades'] = $this->grade->get_grade_list();     
+        $this->data['school_id'] = $this->data['grade']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('salary_grade'). ' | ' . SMS);
         $this->layout->view('grade/index', $this->data);
@@ -150,10 +155,32 @@ class Grade extends MY_Controller {
         }
         
         $this->data['grade'] = $this->grade->get_single('salary_grades', array('id' => $id));   
-        $this->data['grades'] = $this->grade->get_list('salary_grades', array('status'=> 1)); 
+        
+        $this->data['grades'] = $this->grade->get_grade_list();    
+        
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('salary_grade'). ' | ' . SMS);
         $this->layout->view('grade/index', $this->data); 
+    }
+    
+    
+    
+            
+           
+     /*****************Function get_single_grade**********************************
+     * @type            : Function
+     * @function name   : get_single_grade
+     * @description     : "Load single grade information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_grade(){
+        
+       $grade_id = $this->input->post('grade_id');
+       
+       $this->data['grade'] = $this->grade->get_single_grade($grade_id);
+       echo $this->load->view('grade/get-single-grade', $this->data);
     }
 
     
@@ -169,6 +196,7 @@ class Grade extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('grade_name', $this->lang->line('grade_name'), 'trim|required|callback_grade_name');   
         $this->form_validation->set_rules('basic_salary', $this->lang->line('basic_salary'), 'trim|required');   
         $this->form_validation->set_rules('house_rent', $this->lang->line('house_rent'), 'trim');   
@@ -197,7 +225,7 @@ class Grade extends MY_Controller {
        
       if($this->input->post('id') == '')
       {   
-          $grade = $this->grade->duplicate_check('grade_name',$this->input->post('grade_name')); 
+          $grade = $this->grade->duplicate_check($this->input->post('school_id'), $this->input->post('grade_name')); 
           if($grade){
                 $this->form_validation->set_message('grade_name',  $this->lang->line('already_exist'));         
                 return FALSE;
@@ -205,7 +233,7 @@ class Grade extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $grade = $this->grade->duplicate_check('grade_name',$this->input->post('grade_name'), $this->input->post('id')); 
+         $grade = $this->grade->duplicate_check($this->input->post('school_id'), $this->input->post('grade_name'), $this->input->post('id')); 
           if($grade){
                 $this->form_validation->set_message('grade_name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -227,6 +255,7 @@ class Grade extends MY_Controller {
     private function _get_posted_grade_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'grade_name';
         $items[] = 'basic_salary';
         $items[] = 'house_rent';

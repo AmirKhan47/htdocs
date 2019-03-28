@@ -1,16 +1,22 @@
 <div class="top_nav">
     <div class="nav_menu">
         <nav>
-            <div class="col-md-3">
+            <div class="col-md-1">
                 <div class="nav toggle">
                     <a id="menu_toggle"><i class="fa fa-bars"></i></a>
                 </div>
             </div>
-            <div class="col-md-5 ">
-                <div class="school-name"><?php echo $this->session->userdata('school_name'); ?></div>
+            <div class="col-md-7 ">
+                <div class="school-name">
+                    <?php  if($this->session->userdata('role_id') != SUPER_ADMIN){ ?>
+                        <?php echo $this->session->userdata('school_name'); ?>
+                    <?php }else{ ?>
+                         <?php echo $this->global_setting->brand_name ? $this->global_setting->brand_name : SMS; ?>
+                    <?php } ?>
+                </div>
             </div>
             <div class="col-md-4">
-                <ul class="nav navbar-nav navbar-right">
+                <ul class="nav navbar-nav <?php echo $this->global_setting->enable_rtl ? 'navbar-left' : 'navbar-right'; ?>">
                     <li class="">
                         <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
                             <?php
@@ -36,6 +42,7 @@
                             <li><a href="<?php echo site_url('auth/logout'); ?>"><i class="fa fa-sign-out pull-right"></i> <?php echo $this->lang->line('logout'); ?></a></li>
                         </ul>
                     </li>
+                    
                     <?php $messages = get_inbox_message(); ?>
                     <?php if(isset($messages) && !empty($messages)){ ?>
                     <li role="presentation" class="dropdown">
@@ -47,11 +54,11 @@
                             
                            <?php foreach($messages as $obj){ ?> 
                             <li>
-                                <?php $user = get_user_by_id($obj->sender_id);  ?>
-                                <a>
+                                <?php $user = get_user_by_id($obj->sender_id); ?>
+                                <a href="<?php echo site_url('message/view/'.$obj->id); ?>">
                                     <span class="image"><img src="<?php echo IMG_URL; ?>default-user.png" alt="Profile Image" /></span>
                                     <span>
-                                        <span><?php echo $user->name; ?></span>
+                                        <span><?php echo @$user->name; ?></span>
                                         <span class="time"><?php echo get_nice_time($obj->created_at); ?></span>
                                     </span>
                                     <span class="message">
@@ -70,10 +77,19 @@
                             </li>
                         </ul>
                     </li>
-                    <?php } ?>
-                    <li>
-                        <a href="<?php echo site_url(); ?>"><i class="fa fa-globe"></i> Web</a>
-                    </li>
+                    <?php } ?>                     
+                    <?php if($this->global_setting->enable_frontend){ ?>
+                        <li>
+                            <?php if($this->session->userdata('role_id') != SUPER_ADMIN){ ?>                            
+                                    <?php if($this->school_setting->enable_frontend){ ?>
+                                        <a href="<?php echo site_url(); ?>"><i class="fa fa-globe"></i> Web</a>
+                                    <?php } ?> 
+                            <?php }else{ ?>  
+                                <a href="<?php echo site_url(); ?>"><i class="fa fa-globe"></i> Web</a>
+                            <?php } ?>  
+                        </li>
+                    <?php } ?>  
+                    
                 </ul>
             </div>
         </nav>

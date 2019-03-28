@@ -1,0 +1,75 @@
+body{
+    background-color: #fff;
+}
+.navbar{
+    background: #fff;
+    box-shadow: 0px 0px 2px grey;
+}
+.navbar-brand{
+    margin-top: -10px !important;
+}
+.navbar a{
+    font-size: 12px;
+    text-transform: uppercase;
+    color: black !important;
+}
+.navbar a:hover{
+    color: grey !important;
+}
+/* .navbar a .active{
+    color: black !important;
+} */
+
+.active a{
+    background-color: #1B1B1B !important;
+    color: whitesmoke !important;
+}
+.active a:hover{
+    color: whitesmoke !important;
+}
+
+.carousel-inner{
+    height: 35vh;
+    min-height: 570px !important;
+}
+.strengths_wrapper .card{
+    border: 1px solid #fff !important;
+    box-shadow: 0px 0px 3px grey;
+    border-radius: 0px;
+    border-left: 2px solid black !important;
+}
+
+.strengths_wrapper .card-header{
+    background: none;
+}
+
+.strengths_wrapper .card:hover{
+    box-shadow: 0px 0px 8px grey;
+    border-left: 5px solid black !important;
+}
+
+.consultants_wrapper h5{
+    color: grey;
+}
+
+.consultants_wrapper .card{
+    border: 1px solid #fff !important;
+    box-shadow: 0px 0px 1px grey;
+    border-radius: 0px;
+    border-bottom: 4px solid black !important;
+    border-radius: 0px 0px 10px 10px;
+}
+
+footer{
+    background-color: #1B1B1B;
+    box-shadow: 0px -2px 2px grey; 
+}
+footer p{
+    color: grey;
+}
+
+footer a{
+    color: whitesmoke;
+    font-size: 12px;
+    text-transform: uppercase;
+}

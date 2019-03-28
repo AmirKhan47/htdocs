@@ -188,6 +188,7 @@
 			    			$this->db->delete('guardian',array('id' => $mother_id['mother_id'] ));
 			    			$this->db->delete('student',array('id' => $student_id['student_id'] ));
 			    			print_r( $this->db->error());
+			    			$uppercase_all_names = $this->db->query("UPDATE student SET `student_name` = UPPER(`student_name`)");
 			    		}
 			    		else
 			    		{
@@ -240,6 +241,7 @@
 								    }
 							    }
 			    			}
+			    		$uppercase_all_students_name = $this->db->query("UPDATE student SET `student_name` = UPPER(`student_name`)");
 			    		}
 			    	}	
 			    }

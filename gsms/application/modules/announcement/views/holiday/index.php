@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'announcement', 'notice')){ ?>
                     <a href="<?php echo site_url('announcement/notice/index'); ?>"><?php echo $this->lang->line('manage_notice'); ?></a>
                 <?php } ?>    
@@ -18,10 +18,7 @@
                 <?php } ?>    
                 <?php if(has_permission(VIEW, 'announcement', 'holiday')){ ?>
                    | <a href="<?php echo site_url('announcement/holiday/index'); ?>"><?php echo $this->lang->line('manage_holiday'); ?></a>                    
-                <?php } ?>
-                <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
-                   | <a href="<?php echo site_url('frontend/index'); ?>"><?php echo $this->lang->line('manage_frontend'); ?> </a>
-                <?php } ?>    
+                <?php } ?>                 
             </div>
             
             <div class="x_content">
@@ -30,14 +27,16 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_holiday_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'announcement', 'holiday')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_holiday"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('holiday'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('announcement/holiday/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('holiday'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_holiday"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('holiday'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>  
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_holiday"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('holiday'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_holiday"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('holiday'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>               
+                                      
                     </ul>
                     <br/>
                     
@@ -48,9 +47,13 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('from_date'); ?></th>
                                         <th><?php echo $this->lang->line('to_date'); ?></th>
+                                        <th><?php echo $this->lang->line('is_view_on_web'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -59,15 +62,19 @@
                                         <?php foreach($holidays as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->title; ?></td>
                                             <td><?php echo $obj->date_from; ?></td>
                                             <td><?php echo $obj->date_to; ?></td>
+                                            <td><?php echo $obj->is_view_on_web ? $this->lang->line('yes') : $this->lang->line('no'); ?></td>
                                             <td>
                                                 <?php if(has_permission(EDIT, 'announcement', 'holiday')){ ?>
                                                     <a href="<?php echo site_url('announcement/holiday/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
-                                                <?php if(has_permission(VIEW, 'announcement', 'holiday')){ ?>
-                                                    <a href="<?php echo site_url('announcement/holiday/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                               <?php if(has_permission(VIEW, 'announcement', 'holiday')){ ?>
+                                                    <a  onclick="get_holiday_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-holiday-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(DELETE, 'announcement', 'holiday')){ ?>
                                                     <a href="<?php echo site_url('announcement/holiday/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
@@ -84,12 +91,13 @@
                         <div  class="tab-pane fade in <?php if(isset($add)){ echo 'active'; }?>" id="tab_add_holiday">
                             <div class="x_content"> 
                                <?php echo form_open(site_url('announcement/holiday/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
+                               
+                                <?php $this->load->view('layout/school_list_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>                                
@@ -98,7 +106,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="date_from"><?php echo $this->lang->line('from_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="date_from"  id="add_date_from" value="<?php echo isset($post['date_from']) ?  $post['date_from'] : ''; ?>" placeholder="<?php echo $this->lang->line('from_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="date_from"  id="add_date_from" value="<?php echo isset($post['date_from']) ?  $post['date_from'] : ''; ?>" placeholder="<?php echo $this->lang->line('from_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('date_from'); ?></div>
                                     </div>
                                 </div>
@@ -107,7 +115,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="date_to"><?php echo $this->lang->line('to_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="date_to"  id="add_date_to" value="<?php echo isset($post['date_to']) ?  $post['date_to'] : ''; ?>" placeholder="<?php echo $this->lang->line('to_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="date_to"  id="add_date_to" value="<?php echo isset($post['date_to']) ?  $post['date_to'] : ''; ?>" placeholder="<?php echo $this->lang->line('to_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('date_to'); ?></div>
                                     </div>
                                 </div>
@@ -121,6 +129,18 @@
                                     </div>
                                 </div>
                                
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <select  class="form-control col-md-7 col-xs-12" name="is_view_on_web" id="is_view_on_web">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                            <option value="1"><?php echo $this->lang->line('yes'); ?></option>                                           
+                                            <option value="0"><?php echo $this->lang->line('no'); ?></option>                                           
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
+                                    </div>
+                                </div>
+                                
                                 <div class="ln_solid"></div>
                                 <div class="form-group">
                                     <div class="col-md-6 col-md-offset-3">
@@ -137,11 +157,12 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('announcement/holiday/edit/'.$holiday->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($holiday->title) ?  $holiday->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($holiday->title) ?  $holiday->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -149,7 +170,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="date_from"><?php echo $this->lang->line('from_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="date_from"  id="edit_date_from" value="<?php echo isset($holiday->date_from) ?  date('d-m-Y', strtotime($holiday->date_from)) : $post['date_from']; ?>" placeholder="<?php echo $this->lang->line('from_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="date_from"  id="edit_date_from" value="<?php echo isset($holiday->date_from) ?  date('d-m-Y', strtotime($holiday->date_from)) : $post['date_from']; ?>" placeholder="<?php echo $this->lang->line('from_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('date_from'); ?></div>
                                     </div>
                                 </div>
@@ -157,11 +178,10 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="date_to"><?php echo $this->lang->line('to_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="date_to"  id="edit_date_to" value="<?php echo isset($holiday->date_to) ?  date('d-m-Y', strtotime($holiday->date_to)) : $post['date_to']; ?>" placeholder="<?php echo $this->lang->line('to_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="date_to"  id="edit_date_to" value="<?php echo isset($holiday->date_to) ?  date('d-m-Y', strtotime($holiday->date_to)) : $post['date_to']; ?>" placeholder="<?php echo $this->lang->line('to_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('date_to'); ?></div>
                                     </div>
-                                </div>
-                                
+                                </div>                                
                                                                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
@@ -170,6 +190,18 @@
                                         <div class="help-block"><?php echo form_error('note'); ?></div>
                                     </div>
                                 </div>
+                                
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <select  class="form-control col-md-7 col-xs-12" name="is_view_on_web" id="is_view_on_web">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                           <option value="1" <?php if($holiday->is_view_on_web == 1){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('yes'); ?></option>                                           
+                                                <option value="0" <?php if($holiday->is_view_on_web == 0){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('no'); ?></option>                                                                                  
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
+                                    </div>
+                                </div>                                      
                                                              
                                 <div class="ln_solid"></div>
                                 <div class="form-group">
@@ -183,56 +215,47 @@
                             </div>
                         </div>  
                         <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_holiday">
-                            <div class="x_content"> 
-                               <?php echo form_open(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $holiday->title; ?>
-                                    </div>
-                                </div> 
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('from_date'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo date('M j, Y', strtotime($holiday->date_from)); ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('to_date'); ?></label>
-                                    <div class="col-md-6 col-sm-9 col-xs-8">
-                                    : <?php echo date('M j, Y', strtotime($holiday->date_to)); ?>
-                                    </div>
-                                </div> 
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $holiday->note; ?>
-                                    </div>
-                                </div>                                
-                                <?php if(has_permission(EDIT, 'announcement', 'holiday')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('announcement/holiday/edit/'.$holiday->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                  
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<div class="modal fade bs-holiday-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('holiday'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_holiday_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_holiday_modal(holiday_id){
+         
+        $('.fn_holiday_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('announcement/holiday/get_single_holiday'); ?>",
+          data   : {holiday_id : holiday_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_holiday_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
 
 <link href="<?php echo VENDOR_URL; ?>datepicker/datepicker.css" rel="stylesheet">
  <script src="<?php echo VENDOR_URL; ?>datepicker/datepicker.js"></script>
@@ -254,9 +277,11 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+          search: true,              
+          responsive: true
       });
     });
+    
     $("#add").validate();     
     $("#edit").validate();  
   </script> 

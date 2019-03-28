@@ -9,10 +9,10 @@ class Fee_structure_model extends CI_Model
 	}
 	public function get_fee_structure($id=0)
 	{
-		$column_order = array('c.class_name','fs.created_at'); //set column field database for datatable orderable
-		$column_search = array('c.class_name','fs.created_at'); //set column field database for datatable searchable 
+		$column_order = array('c.class_name','fs.fee_structure_type','fs.created_at','fs.updated_at'); //set column field database for datatable orderable
+		$column_search = array('c.class_name','fs.fee_structure_type','fs.created_at','fs.updated_at'); //set column field database for datatable searchable 
 		$order = array('fee_structure_id' => 'desc'); // default order 
-		$this->db->select('*');
+		$this->db->select('fs.*,c.class_name,c.class_code');
 		$this->db->from('fee_structure as fs');
 		$this->db->join('classes as c', 'c.id = fs.class_id', 'left');
         $i = 0;

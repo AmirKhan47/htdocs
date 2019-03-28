@@ -28,7 +28,34 @@ class Challan extends CI_Controller
 				$data['student_id']=$student_id;
 				$data['challans']=$this->registration_model->read_data_from_table('challan',array('student_id' => $student_id ));
 				$data['registration']=$this->common->select_single_records('registration',array('student_id'=>$student_id));
-				$data['fee_structure']=$this->common->select_single_records('fee_structure',array('class_id'=>$data['registration']['class_id']));
+				$data['fee_structure']=$this->common->select_single_records('fee_structure',array('class_id'=>$data['registration']['class_id'],'fee_structure_type'=>'New'));
+				$data['active']='registeredStudents';
+				$this->load->view('admin/header',$data);
+				$this->load->view('registration/data_entry',$data);
+			}
+			else
+			{
+				show_404();
+			}
+		}
+		else
+		{
+			redirect('login/');
+		}
+	}
+	public function get_fee_structure_type()
+	{
+		if($this->session->userdata('id'))
+		{
+			$student_id=$this->input->post('student_id');
+			if($student_id>0)
+			{
+				$data['due_date']=date('Y-m-d',strtotime($this->dateToday . "+10 days"));
+				$data['date_today']=$this->dateToday;
+				$data['student_id']=$student_id;
+				$data['challans']=$this->registration_model->read_data_from_table('challan',array('student_id' => $student_id ));
+				$data['registration']=$this->common->select_single_records('registration',array('student_id'=>$student_id));
+				$data['fee_structure']=$this->common->select_single_records('fee_structure',array('class_id'=>$data['registration']['class_id'],'fee_structure_type'=>$this->input->post('fee_structure_type')));
 				$data['active']='registeredStudents';
 				$this->load->view('admin/header',$data);
 				$this->load->view('registration/data_entry',$data);
@@ -58,7 +85,7 @@ class Challan extends CI_Controller
 	{
 		if($this->session->userdata('id'))
 		{
-			$data['students']=$this->common->all_registered_students_data();
+			$data['students']=$this->common->excel_data();
 			if(empty($data['students']))
 			{
 				echo 'No Record Found!';
@@ -88,56 +115,58 @@ class Challan extends CI_Controller
 			$sheet->setCellValue('A1', 'Registration No');
 			$sheet->setCellValue('B1', 'Roll No');
 			$sheet->setCellValue('C1', 'Name');
-			$sheet->setCellValue('D1', 'Gender');
-			$sheet->setCellValue('E1', 'Registration Date');
-			$sheet->setCellValue('F1', 'Status');
-			$sheet->setCellValue('G1', 'Registration Fee');
-			$sheet->setCellValue('H1', 'Last School');
-			$sheet->setCellValue('I1', 'Reason For Leaving');
-			$sheet->setCellValue('J1', 'Father Name');
-			$sheet->setCellValue('K1', 'Father CNIC');
-			$sheet->setCellValue('L1', 'Father Occupation');
-			$sheet->setCellValue('M1', 'Father Designation');
-			$sheet->setCellValue('N1', 'Father Organization');
-			$sheet->setCellValue('O1', 'Mother Name');
-			$sheet->setCellValue('P1', 'Mother CNIC');
-			$sheet->setCellValue('Q1', 'Mother Occupation');
-			$sheet->setCellValue('R1', 'Mother Designation');
-			$sheet->setCellValue('S1', 'Mother Organization');
-			$sheet->setCellValue('T1', 'Issue Date');
-			$sheet->setCellValue('U1', 'Due Date');
-			$sheet->setCellValue('V1', 'Fee Month');
+			$sheet->setCellValue('D1', 'Class Name');
+			$sheet->setCellValue('E1', 'Gender');
+			$sheet->setCellValue('F1', 'Registration Date');
+			$sheet->setCellValue('G1', 'Status');
+			$sheet->setCellValue('H1', 'Registration Fee');
+			$sheet->setCellValue('I1', 'Last School');
+			$sheet->setCellValue('J1', 'Reason For Leaving');
+			$sheet->setCellValue('K1', 'Father Name');
+			$sheet->setCellValue('L1', 'Father CNIC');
+			$sheet->setCellValue('M1', 'Father Occupation');
+			$sheet->setCellValue('N1', 'Father Designation');
+			$sheet->setCellValue('O1', 'Father Organization');
+			$sheet->setCellValue('P1', 'Mother Name');
+			$sheet->setCellValue('Q1', 'Mother CNIC');
+			$sheet->setCellValue('R1', 'Mother Occupation');
+			$sheet->setCellValue('S1', 'Mother Designation');
+			$sheet->setCellValue('T1', 'Mother Organization');
+			$sheet->setCellValue('U1', 'Issue Date');
+			$sheet->setCellValue('V1', 'Due Date');
+			$sheet->setCellValue('W1', 'Fee Month');
 
-			$sheet->setCellValue('W1', 'Admission Fee');
-			$sheet->setCellValue('X1', 'Admission Fee Discount %');
-			$sheet->setCellValue('Y1', 'Admission Fee Discounted Amount ');
+			$sheet->setCellValue('X1', 'Admission Fee');
+			$sheet->setCellValue('Y1', 'Admission Fee Discount %');
+			$sheet->setCellValue('Z1', 'Admission Fee Discounted Amount ');
 
-			$sheet->setCellValue('Z1', 'Security (Refundable)');
-			$sheet->setCellValue('AA1', 'Security Discount %');
-			$sheet->setCellValue('AB1', 'Security Discounted Amount');
+			$sheet->setCellValue('AA1', 'Security (Refundable)');
+			$sheet->setCellValue('AB1', 'Security Discount %');
+			$sheet->setCellValue('AC1', 'Security Discounted Amount');
 
-			$sheet->setCellValue('AC1', 'Tution Fee');
-			$sheet->setCellValue('AD1', 'Tution Fee Discount %');
-			$sheet->setCellValue('AE1', 'Tution Fee Discounted Amount');
+			$sheet->setCellValue('AD1', 'Tution Fee');
+			$sheet->setCellValue('AE1', 'Tution Fee Discount %');
+			$sheet->setCellValue('AF1', 'Tution Fee Discounted Amount');
 
-			$sheet->setCellValue('AF1', 'Annual Stationary Fund');
-			$sheet->setCellValue('AG1', 'Annual Stationary Fund Discount %');
-			$sheet->setCellValue('AH1', 'Annual Stationary Fund Discounted Amount');
+			$sheet->setCellValue('AG1', 'Annual Stationary Fund');
+			$sheet->setCellValue('AH1', 'Annual Stationary Fund Discount %');
+			$sheet->setCellValue('AI1', 'Annual Stationary Fund Discounted Amount');
 
-			$sheet->setCellValue('AI1', 'Annual Fund');
-			$sheet->setCellValue('AJ1', 'Annual Fund Discount %');
-			$sheet->setCellValue('AK1', 'Annual Fund Discounted Amount');
+			$sheet->setCellValue('AJ1', 'Annual Fund');
+			$sheet->setCellValue('AK1', 'Annual Fund Discount %');
+			$sheet->setCellValue('AL1', 'Annual Fund Discounted Amount');
 
-			$sheet->setCellValue('AL1', 'Monthly lab Charges');
-			$sheet->setCellValue('AM1', 'Exam Charges');
-			$sheet->setCellValue('AN1', 'Registration Charges');
-			$sheet->setCellValue('AO1', 'Less: DEFERRED (IF ANY)');
-			$sheet->setCellValue('AP1', 'House Shirt Charges');
-			$sheet->setCellValue('AQ1', 'Less: Received (IF ANY)');
-			$sheet->setCellValue('AR1', 'Monthly Security');
-			$sheet->setCellValue('AS1', 'Monthly Computer Charges');
-			$sheet->setCellValue('AT1', 'Remarks');
-			$sheet->getStyle('A1:AT1')->applyFromArray($styleArray);
+			$sheet->setCellValue('AM1', 'Monthly lab Charges');
+			$sheet->setCellValue('AN1', 'Exam Charges');
+			$sheet->setCellValue('AO1', 'Registration Charges');
+			$sheet->setCellValue('AP1', 'Less: DEFERRED (IF ANY)');
+			$sheet->setCellValue('AQ1', 'House Shirt Charges');
+			$sheet->setCellValue('AR1', 'Less: Received (IF ANY)');
+			$sheet->setCellValue('AS1', 'Monthly Security');
+			$sheet->setCellValue('AT1', 'Monthly Computer Charges');
+			$sheet->setCellValue('AU1', 'Remarks');
+			$sheet->setCellValue('AV1', 'Challan By');
+			$sheet->getStyle('A1:AV1')->applyFromArray($styleArray);
 			$totalStudents=(int)(count($data['students']))+1;
 			// $sheet->getStyle('A2:A'.$totalStudents)->applyFromArray($styleArray_roll);
 			foreach ($data['students'] as $student)
@@ -161,49 +190,51 @@ class Challan extends CI_Controller
 				$sheet->setCellValue('A'.$i, $student['student_roll_no']);
 				$sheet->setCellValue('B'.$i, $student['student_registration_no']);
 				$sheet->setCellValue('C'.$i, $student['student_name']);
-				$sheet->setCellValue('D'.$i, $student['student_gender']);
-				$sheet->setCellValue('E'.$i, $student['pending_date']);
-				$sheet->setCellValue('F'.$i, $student['registration_status']);
-				$sheet->setCellValue('G'.$i, $student['registration_fee']);
-				$sheet->setCellValue('H'.$i, $student['registration_last_school_name']);
-				$sheet->setCellValue('I'.$i, $student['registration_last_school_reason_for_leaving']);
-				$sheet->setCellValue('J'.$i, $father['guardian_name']);
-				$sheet->setCellValue('K'.$i, $father['guardian_national_id']);
-				$sheet->setCellValue('L'.$i, $father['guardian_occupation']);
-				$sheet->setCellValue('M'.$i, $father['guardian_designation']);
-				$sheet->setCellValue('N'.$i, $father['guardian_organization']);
-				$sheet->setCellValue('O'.$i, $mother['guardian_name']);
-				$sheet->setCellValue('P'.$i, $mother['guardian_national_id']);
-				$sheet->setCellValue('Q'.$i, $mother['guardian_occupation']);
-				$sheet->setCellValue('R'.$i, $mother['guardian_designation']);
-				$sheet->setCellValue('S'.$i, $mother['guardian_organization']);
-				$sheet->setCellValue('T'.$i, $student['challan_date_created']);
-				$sheet->setCellValue('U'.$i, $student['challan_due_date']);
-				$sheet->setCellValue('V'.$i, $student['challan_fee_month']);
-				$sheet->setCellValue('W'.$i, $student['admission_fee']);
-				$sheet->setCellValue('X'.$i, $student['admission_fee_discount']);
-				$sheet->setCellValue('Y'.$i, $student['challan_admission_fee']);
-				$sheet->setCellValue('Z'.$i, $student['security']);
-				$sheet->setCellValue('AA'.$i, $student['security_discount']);
-				$sheet->setCellValue('AB'.$i, $student['challan_security_fee']);
-				$sheet->setCellValue('AC'.$i, $student['tution_fee']);
-				$sheet->setCellValue('AD'.$i, $student['tution_fee_discount']);
-				$sheet->setCellValue('AE'.$i, $student['challan_monthly_fee']);
-				$sheet->setCellValue('AF'.$i, $student['stationary_fund']);
-				$sheet->setCellValue('AG'.$i, $student['stationary_fund_discount']);
-				$sheet->setCellValue('AH'.$i, $student['challan_annual_stationary_fee']);
-				$sheet->setCellValue('AI'.$i, $student['annual_fund']);
-				$sheet->setCellValue('AJ'.$i, $student['annual_fund_discount']);
-				$sheet->setCellValue('AK'.$i, $student['challan_annual_fee']);
-				$sheet->setCellValue('AL'.$i, $student['challan_monthly_lab_fee']);
-				$sheet->setCellValue('AM'.$i, $student['challan_exam_fee']);
-				$sheet->setCellValue('AN'.$i, $student['challan_registration_fee']);
-				$sheet->setCellValue('AO'.$i, $student['challan_deferred']);
-				$sheet->setCellValue('AP'.$i, $student['challan_house_shirt_fee']);
-				$sheet->setCellValue('AQ'.$i, $student['challan_less_received']);
-				$sheet->setCellValue('AR'.$i, $student['challan_monthly_security_fee']);
-				$sheet->setCellValue('AS'.$i, $student['challan_monthly_computer_fee']);
-				$sheet->setCellValue('AT'.$i, $student['challan_remarks']);
+				$sheet->setCellValue('D'.$i, $student['class_name']);
+				$sheet->setCellValue('E'.$i, $student['student_gender']);
+				$sheet->setCellValue('F'.$i, $student['pending_date']);
+				$sheet->setCellValue('G'.$i, $student['registration_status']);
+				$sheet->setCellValue('H'.$i, $student['registration_fee']);
+				$sheet->setCellValue('I'.$i, $student['registration_last_school_name']);
+				$sheet->setCellValue('J'.$i, $student['registration_last_school_reason_for_leaving']);
+				$sheet->setCellValue('K'.$i, $father['guardian_name']);
+				$sheet->setCellValue('L'.$i, $father['guardian_national_id']);
+				$sheet->setCellValue('M'.$i, $father['guardian_occupation']);
+				$sheet->setCellValue('N'.$i, $father['guardian_designation']);
+				$sheet->setCellValue('O'.$i, $father['guardian_organization']);
+				$sheet->setCellValue('P'.$i, $mother['guardian_name']);
+				$sheet->setCellValue('Q'.$i, $mother['guardian_national_id']);
+				$sheet->setCellValue('R'.$i, $mother['guardian_occupation']);
+				$sheet->setCellValue('S'.$i, $mother['guardian_designation']);
+				$sheet->setCellValue('T'.$i, $mother['guardian_organization']);
+				$sheet->setCellValue('U'.$i, $student['challan_date_created']);
+				$sheet->setCellValue('V'.$i, $student['challan_due_date']);
+				$sheet->setCellValue('W'.$i, $student['challan_fee_month']);
+				$sheet->setCellValue('X'.$i, $student['admission_fee']);
+				$sheet->setCellValue('Y'.$i, $student['admission_fee_discount']);
+				$sheet->setCellValue('Z'.$i, $student['challan_admission_fee']);
+				$sheet->setCellValue('AA'.$i, $student['security']);
+				$sheet->setCellValue('AB'.$i, $student['security_discount']);
+				$sheet->setCellValue('AC'.$i, $student['challan_security_fee']);
+				$sheet->setCellValue('AD'.$i, $student['tution_fee']);
+				$sheet->setCellValue('AE'.$i, $student['tution_fee_discount']);
+				$sheet->setCellValue('AF'.$i, $student['challan_monthly_fee']);
+				$sheet->setCellValue('AG'.$i, $student['stationary_fund']);
+				$sheet->setCellValue('AH'.$i, $student['stationary_fund_discount']);
+				$sheet->setCellValue('AI'.$i, $student['challan_annual_stationary_fee']);
+				$sheet->setCellValue('AJ'.$i, $student['annual_fund']);
+				$sheet->setCellValue('AK'.$i, $student['annual_fund_discount']);
+				$sheet->setCellValue('AL'.$i, $student['challan_annual_fee']);
+				$sheet->setCellValue('AM'.$i, $student['challan_monthly_lab_fee']);
+				$sheet->setCellValue('AN'.$i, $student['challan_exam_fee']);
+				$sheet->setCellValue('AO'.$i, $student['challan_registration_fee']);
+				$sheet->setCellValue('AP'.$i, $student['challan_deferred']);
+				$sheet->setCellValue('AQ'.$i, $student['challan_house_shirt_fee']);
+				$sheet->setCellValue('AR'.$i, $student['challan_less_received']);
+				$sheet->setCellValue('AS'.$i, $student['challan_monthly_security_fee']);
+				$sheet->setCellValue('AT'.$i, $student['challan_monthly_computer_fee']);
+				$sheet->setCellValue('AU'.$i, $student['challan_remarks']);
+				$sheet->setCellValue('AV'.$i, $student['name']);
 			}
 			// exit();
 			$writer = new Xlsx($spreadsheet);
@@ -231,6 +262,7 @@ class Challan extends CI_Controller
 			$challan_fee_month=date_format(date_create($this->input->post('challan_fee_year').'-'.$this->input->post('challan_fee_month').'-'.'01'),"Y-m-d");
 			$challan = array(
 						'student_id' 						=>  $this->input->post('student_id')
+						,'fee_structure_id' 				=>  $this->input->post('fee_structure_id')
 						,'challan_fee_month' 				=>  $challan_fee_month
 						,'challan_date_created' 			=>  $this->dateToday
 						,'challan_due_date' 				=>  $challan_due_date
@@ -301,6 +333,38 @@ class Challan extends CI_Controller
 			redirect('login/');
 		}
 	}
+	public function edit1()
+	{
+		if($this->session->userdata('id'))
+		{
+			$challan_id=$this->input->post('challan_id');
+			if($challan_id>0)
+			{
+				$data['student']=$this->common->select_single_records('challan',array('id'=>$challan_id));
+				$data['registration']=$this->common->select_single_records('registration',array('student_id'=>$data['student']['student_id']));
+				$data['fee_structure']=$this->common->select_single_records('fee_structure',array('class_id'=>$data['registration']['class_id'],'fee_structure_type'=>$this->input->post('fee_structure_type')));
+				$data['challan']=$this->common->select_single_records('challan',array('id'=>$challan_id));
+				$data['student_fees_discounts']=$this->common->select_single_records('student_fees_discounts',array('challan_id'=>$data['challan']['id']));
+				$data['challan_due_day']=date('d',strtotime($data['challan']['challan_due_date']));
+				$data['challan_due_month']=date('M',strtotime($data['challan']['challan_due_date']));
+				$data['challan_due_year']=date('Y',strtotime($data['challan']['challan_due_date']));
+				$data['challan_fee_month']=date('M',strtotime($data['challan']['challan_fee_month']));
+				$data['challan_fee_year']=date('Y',strtotime($data['challan']['challan_fee_month']));
+				$data['student_id']=$data['challan']['student_id'];
+				$data['active']='registeredStudents';
+				$this->load->view('admin/header',$data);
+				$this->load->view('registration/data_entry_update',$data);
+			}
+			else
+			{
+				show_404();
+			}
+		}
+		else
+		{
+			redirect('login/');
+		}
+	}
 	public function update()
 	{
 		if($this->session->userdata('id'))
@@ -309,7 +373,8 @@ class Challan extends CI_Controller
 			$challan_fee_month=date_format(date_create($this->input->post('challan_fee_year').'-'.$this->input->post('challan_fee_month').'-'.'01'),"Y-m-d");
 			$challan_id=$this->input->post('challan_id');
 			$challan = array(
-						'challan_due_date' =>  $challan_due_date
+						'fee_structure_id' 				=>  $this->input->post('fee_structure_id')
+						,'challan_due_date' =>  $challan_due_date
 						,'challan_fee_month' =>  $challan_fee_month
 						,'challan_admission_fee' 			=>  $this->input->post('admission_fee_total')
 						,'challan_registration_fee' 		=>  $this->input->post('registration_charges')

@@ -12,9 +12,17 @@ class Plivo {
     public function __construct() {
 
         $ci = & get_instance();
-        $ci->db->select('S.*');
-        $ci->db->from('sms_settings AS S');
-        $setting = $ci->db->get()->row();
+        $school_id = '';
+         if($ci->session->userdata('school_id')){
+             $school_id = $ci->session->userdata('school_id');
+         }else{
+             $school_id = $ci->input->post('school_id');
+         }
+         
+         $ci->db->select('S.*');
+         $ci->db->from('sms_settings AS S');     
+         $ci->db->where('S.school_id', $school_id);     
+         $setting = $ci->db->get()->row();
 
         $this->plivo_auth_id = $setting->msg91_auth_key;
         $this->plivo_auth_token = $setting->msg91_sender_id;

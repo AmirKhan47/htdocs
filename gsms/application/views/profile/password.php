@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <a href="<?php echo site_url('profile'); ?>"><?php echo $this->lang->line('my_profile'); ?></a> |
                 <a href="<?php echo site_url('profile/password'); ?>"><?php echo $this->lang->line('reset_password'); ?></a> |
                 <a href="<?php echo site_url('auth/logout'); ?>"><?php echo $this->lang->line('logout'); ?></a>                  
@@ -27,18 +27,16 @@
                                <?php echo form_open(site_url('profile/password'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="password"><?php echo $this->lang->line('password'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="password"><?php echo $this->lang->line('password'); ?> <span class="required">*</span> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="password"  id="password" value="" placeholder="<?php echo $this->lang->line('password'); ?>" required="required" type="password">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="password"  id="password" value="" placeholder="<?php echo $this->lang->line('password'); ?>" required="required" type="password" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('password'); ?></div>
                                     </div>
                                 </div>
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="conf_password"><?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="conf_password"><?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="conf_password"  id="conf_password" value="" placeholder="<?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?>" required="required" type="password">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="conf_password"  id="conf_password" value="" placeholder="<?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?>" required="required" type="password" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('conf_password'); ?></div>
                                     </div>
                                 </div>

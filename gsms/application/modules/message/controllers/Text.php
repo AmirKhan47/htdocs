@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Text.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Text
  * @description     : Manage text sms which are send to the users.  
@@ -19,15 +19,14 @@ class Text extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Sms_Model', 'sms', true);
-        $this->data['texts'] = $this->sms->get_sms_list();
-        $this->data['classes'] = $this->sms->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['roles'] = $this->sms->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->load->model('Sms_Model', 'sms', true);       
         $this->load->library('twilio');
         $this->load->library('clickatell');
         $this->load->library('bulk');
         $this->load->library('msg91');
         $this->load->library('plivo');
+        $this->load->library('smscountry');
+        $this->load->library('textlocalsms');
     }
 
             
@@ -42,6 +41,16 @@ class Text extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->sms->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['texts'] = $this->sms->get_sms_list();
+        $this->data['roles'] = $this->sms->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
 
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_sms') . ' | ' . SMS);
@@ -62,7 +71,8 @@ class Text extends MY_Controller {
 
         check_permission(ADD);
 
-        if ($_POST) {
+        if ($_POST) {          
+        
             $this->_prepare_sms_validation();
             if ($this->form_validation->run() === TRUE) {
                 $data = $this->_get_posted_sms_data();
@@ -71,6 +81,9 @@ class Text extends MY_Controller {
                 if ($insert_id) {
                     $data['text_msg_id'] = $insert_id;
                     $this->_send_sms($data);
+                    
+                     create_log('Has been sent a SMS using : '.$data['sms_gateway']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('message/text/index');
                 } else {
@@ -81,10 +94,38 @@ class Text extends MY_Controller {
                 $this->data['post'] = $_POST;
             }
         }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->sms->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['texts'] = $this->sms->get_sms_list();
+        $this->data['roles'] = $this->sms->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
 
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('send') . ' ' . $this->lang->line('sms') . ' | ' . SMS);
         $this->layout->view('sms/index', $this->data);
+    }
+    
+                
+           
+     /*****************Function get_single_sms**********************************
+     * @type            : Function
+     * @function name   : get_single_sms
+     * @description     : "Load single sms information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_sms(){
+        
+       $sms_id = $this->input->post('sms_id');
+       
+       $this->data['sms'] = $this->sms->get_single_sms($sms_id);
+       echo $this->load->view('sms/get-single-sms', $this->data);
     }
 
             
@@ -100,6 +141,7 @@ class Text extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('receiver_type'), 'trim|required');
         if ($this->input->post('role_id') == STUDENT) {
             $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
@@ -151,6 +193,10 @@ class Text extends MY_Controller {
             return true;
         } elseif ($getway == 'plivo') {
             return true;
+       } elseif ($getway == 'text_local') {
+            return true;       
+        } elseif ($getway == 'sms_country') {
+            return true;
         }
     }
 
@@ -167,14 +213,24 @@ class Text extends MY_Controller {
     private function _get_posted_sms_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'role_id';
         $items[] = 'sms_gateway';
         $items[] = 'body';
         $data = elements($items, $_POST);
 
-        $data['academic_year_id'] = $this->academic_year_id;
+        $school = $this->sms->get_school_by_id($data['school_id']);
+        
+        if(!$school->academic_year_id){
+            error($this->lang->line('set_academic_year_for_school'));
+            redirect('message/text/index');
+        }
+        
+        $data['academic_year_id'] = $school->academic_year_id;
+        
         $data['sender_role_id'] = $this->session->userdata('role_id');
         $data['status'] = 1;
+        $data['sms_type'] = 'general';
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['created_by'] = logged_in_user_id();
 
@@ -194,8 +250,13 @@ class Text extends MY_Controller {
 
         check_permission(DELETE);
 
+        $sms = $this->sms->get_single('text_messages', array('id' => $id));
+        
         if ($this->sms->delete('text_messages', array('id' => $id))) {
+            
+            create_log('Has been deleted a SMS sent by : '.$sms->sms_gateway);             
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }
@@ -215,21 +276,22 @@ class Text extends MY_Controller {
     private function _send_sms($data) {
 
         $receivers = '';
-        $users = $this->sms->get_user_list($data['role_id'], $this->input->post('receiver_id'), $this->input->post('class_id'));
+        $users = $this->sms->get_user_list($data['school_id'], $data['role_id'], $this->input->post('receiver_id'), $this->input->post('class_id'));
 
         foreach ($users as $obj) {
 
-            //$message = get_formatted_body($data['body'], $data['role_id'], $obj->id);
-            $message = trim($data['body']);
+            //$message = trim($data['body']);
+            $message = get_formatted_body($data['body'], $data['role_id'], $obj->id);
             $receivers .= $obj->name.',';
-            if ($obj->phone) {
+            if ($obj->phone != '') {
                 $phone = '+' . $obj->phone;
                 $this->_send($data['sms_gateway'], $phone, $message);
             }
         }
-
+      
         // update text_messages table 
-        $this->sms->update('text_messages', array('receivers' => $receivers), array('id' => $data['text_msg_id']));
+        $this->sms->update('text_messages', array('receivers' => $receivers), array('school_id'=>$data['school_id'],'id' => $data['text_msg_id']));
+               
     }
 
             
@@ -262,6 +324,12 @@ class Text extends MY_Controller {
         } elseif ($sms_gateway == 'plivo') {
             
             $response = $this->twilio->send($phone, $message);
+        }elseif ($sms_gateway == 'sms_country') { 
+            
+            $response = $this->smscountry->sendSMS($phone, $message);            
+        } elseif ($sms_gateway == 'text_local') {  
+            
+            $response = $this->textlocalsms->sendSms(array($phone), $message);
         }
     }
 

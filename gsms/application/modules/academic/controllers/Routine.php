@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Routine.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Routine
  * @description     : Manage academic class routine time schedule.  
@@ -20,13 +20,7 @@ class Routine extends MY_Controller {
     
     function __construct() {
         parent::__construct();    
-        $this->load->model('Routine_Model', 'routine', true);
-        
-        // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }       
+        $this->load->model('Routine_Model', 'routine', true);            
         
     }
 
@@ -49,9 +43,44 @@ class Routine extends MY_Controller {
         }
         
         $this->data['class_id'] = $class_id;
-        $this->data['sections'] = $this->routine->get_section_list($class_id);        
-        $this->data['classes'] = $this->routine->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->routine->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+         
+        
+        // for super admin 
+        $school_id = '';
+        if($_POST){
+            
+            $school_id               = $this->input->post('school_id');
+            $this->data['filter_school_id'] = $school_id;
+            $class_id                = $this->input->post('class_id');;
+            $this->data['filter_class_id']  = $class_id;            
+            $this->data['school'] = $this->routine->get_school_by_id($school_id);
+        }
+        
+        $this->data['sections'] = $this->routine->get_section_list($class_id, $school_id); 
+        $this->data['single_class'] = $this->routine->get_single('classes', array('id' => $class_id));      
+        
+        $condition = array();
+        
+        $condition['status'] = 1;  
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['school'] = $this->routine->get_school_by_id($condition['school_id']);
+            $this->data['classes'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->routine->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+            $this->data['class_list'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+        }
+        
+        if($school_id){
+            $condition['school_id'] = $school_id; 
+            $this->data['class_list'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        
+        
+        $this->data['schools'] = $this->schools;
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_routine'). ' | ' . SMS);
@@ -78,11 +107,15 @@ class Routine extends MY_Controller {
 
                 $insert_id = $this->routine->insert('routines', $data);
                 if ($insert_id) {
+                    
+                    $class = $this->routine->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been created a routine for class : '. $class->name);
+                    
                     success($this->lang->line('insert_success'));
-                    redirect('academic/routine/index/'.$data['class_id']);
+                    redirect('academic/routine/index/');
                 } else {
                     error($this->lang->line('insert_failed'));
-                    redirect('academic/routine/add/'.$data['class_id']);
+                    redirect('academic/routine/add/');
                 }
             } else {
                 $this->data['post'] = $_POST;
@@ -93,11 +126,20 @@ class Routine extends MY_Controller {
         if(!$class_id){
           $class_id = $this->input->post('class_id');
         }
-        $this->data['class_id'] = $class_id;
-        $this->data['sections'] = $this->routine->get_section_list($class_id);        
-        $this->data['classes'] = $this->routine->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->routine->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
         
+        $this->data['class_id'] = $class_id;
+        $this->data['sections'] = $this->routine->get_section_list($class_id); 
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->routine->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+            $this->data['class_list'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('routine'). ' | ' . SMS);
         $this->layout->view('routine/index', $this->data);
@@ -128,8 +170,12 @@ class Routine extends MY_Controller {
                 $updated = $this->routine->update('routines', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $class = $this->routine->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been updated a routine for class : '. $class->name);
+                    
                     success($this->lang->line('update_success'));
-                    redirect('academic/routine/index/'.$data['class_id']);                   
+                    redirect('academic/routine/index/');                   
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('academic/routine/edit/' . $this->input->post('id'));
@@ -154,8 +200,21 @@ class Routine extends MY_Controller {
       
         $this->data['class_id'] = $class_id;
         $this->data['sections'] = $this->routine->get_section_list($class_id);        
-        $this->data['classes'] = $this->routine->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->routine->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->routine->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+            $this->data['class_list'] = $this->routine->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        $this->data['school_id'] = $this->data['routine']->school_id;
+        $this->data['school'] = $this->routine->get_school_by_id($this->data['routine']->school_id); 
+        $this->data['single_class'] = $this->routine->get_single('classes', array('id'=>$this->data['routine']->class_id)); 
+        
+        $this->data['schools'] = $this->schools;
         
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('routine'). ' | ' . SMS);
@@ -175,6 +234,7 @@ class Routine extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');   
         $this->form_validation->set_rules('section_id', $this->lang->line('section'), 'trim|required');   
         $this->form_validation->set_rules('subject_id', $this->lang->line('subject'), 'trim|required|callback_subject_id');   
@@ -199,6 +259,7 @@ class Routine extends MY_Controller {
       if($this->input->post('id') == '')
       {   
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'section_id'=> $this->input->post('section_id'),
               'subject_id'=> $this->input->post('subject_id'),
               'day'=> $this->input->post('day')
@@ -213,6 +274,7 @@ class Routine extends MY_Controller {
       }else if($this->input->post('id') != ''){  
           
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'section_id'=> $this->input->post('section_id'),
               'subject_id'=> $this->input->post('subject_id'),
               'day'=> $this->input->post('day')
@@ -242,6 +304,7 @@ class Routine extends MY_Controller {
       if($this->input->post('id') == '')
       {   
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'teacher_id'=> $this->input->post('teacher_id'),
               'day'=> $this->input->post('day'),
               'start_time'=> $this->input->post('start_time'),
@@ -256,6 +319,7 @@ class Routine extends MY_Controller {
       }else if($this->input->post('id') != ''){  
           
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'teacher_id'=> $this->input->post('teacher_id'),
               'day'=> $this->input->post('day'),
               'start_time'=> $this->input->post('start_time')             
@@ -285,6 +349,7 @@ class Routine extends MY_Controller {
       if($this->input->post('id') == '')
       {   
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'room_no'=> $this->input->post('room_no'),
               'day'=> $this->input->post('day'),
               'start_time'=> $this->input->post('start_time'),
@@ -299,6 +364,7 @@ class Routine extends MY_Controller {
       }else if($this->input->post('id') != ''){  
           
           $condition = array(
+              'school_id'=> $this->input->post('school_id'),
               'room_no'=> $this->input->post('room_no'),
               'day'=> $this->input->post('day'),
               'start_time'=> $this->input->post('start_time')            
@@ -326,6 +392,7 @@ class Routine extends MY_Controller {
     private function _get_posted_routine_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'class_id';
         $items[] = 'section_id';
         $items[] = 'subject_id';
@@ -341,12 +408,20 @@ class Routine extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
+            
+            $school = $this->routine->get_school_by_id($data['school_id']);        
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('academic/routine/index'); 
+            }        
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
-            $data['created_by'] = logged_in_user_id();                       
+            $data['created_by'] = logged_in_user_id();
+            
         }
 
-        $data['academic_year_id'] = $this->academic_year_id;
         
         return $data;
     }
@@ -368,16 +443,19 @@ class Routine extends MY_Controller {
             error($this->lang->line('unexpected_error'));
             redirect('academic/routine/index');  
         }
+        
         $routine = $this->routine->get_single('routines', array('id' => $id));
-        if ($this->routine->delete('routines', array('id' => $id))) {            
+        
+        if ($this->routine->delete('routines', array('id' => $id))) { 
+            
+            $class = $this->routine->get_single('classes', array('id' => $routine->class_id, 'school_id'=>$routine->school_id));
+            create_log('Has been delete a routine for class : '. $class->name);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
         redirect('academic/routine/index/'.$routine->class_id);
-    }
-    
-    
-   
+    }  
 
 }

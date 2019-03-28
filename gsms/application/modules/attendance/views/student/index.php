@@ -10,7 +10,7 @@
             </div>
 
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'attendance', 'student')){ ?>
                     <a href="<?php echo site_url('attendance/student'); ?>"><?php echo $this->lang->line('student'); ?> <?php echo $this->lang->line('attendance'); ?></a>
                 <?php } ?>
@@ -20,40 +20,51 @@
                 <?php if(has_permission(VIEW, 'attendance', 'employee')){ ?>
                    | <a href="<?php echo site_url('attendance/employee'); ?>"><?php echo $this->lang->line('employee'); ?> <?php echo $this->lang->line('attendance'); ?></a>                    
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'attendance', 'absentemail')){ ?>
+                   | <a href="<?php echo site_url('attendance/absentemail/index'); ?>"><?php echo $this->lang->line('absent'); ?> <?php echo $this->lang->line('email'); ?></a>                    
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'attendance', 'absentsms')){ ?>
+                   | <a href="<?php echo site_url('attendance/absentsms/index'); ?>"><?php echo $this->lang->line('absent'); ?> <?php echo $this->lang->line('sms'); ?></a>                    
+                <?php } ?>
             </div>
             
             <div class="x_content"> 
                 <?php echo form_open_multipart(site_url('attendance/student/index'), array('name' => 'student', 'id' => 'student', 'class' => 'form-horizontal form-label-left'), ''); ?>
                 <div class="row">
-                    <div class="col-md-3 col-sm-3 col-xs-12">
+                    
+                    <?php $this->load->view('layout/school_list_filter'); ?>
+                    
+                    <div class="col-md-2 col-sm-2 col-xs-12">
                         <div class="item form-group"> 
                             <div><?php echo $this->lang->line('class'); ?> <span class="required">*</span></div>
                             <select  class="form-control col-md-7 col-xs-12" name="class_id" id="class_id"  required="required" onchange="get_section_by_class(this.value, '');">
                                 <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
-                                <?php foreach ($classes as $obj) { ?>
-                                <option value="<?php echo $obj->id; ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                <?php if(isset($classes) && !empty($classes)) { ?>
+                                    <?php foreach ($classes as $obj) { ?>
+                                    <option value="<?php echo $obj->id; ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                    <?php } ?>
                                 <?php } ?>
                             </select>
                             <div class="help-block"><?php echo form_error('class_id'); ?></div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-3 col-xs-12">
+                    <div class="col-md-2 col-sm-2 col-xs-12">
                         <div class="item form-group"> 
-                            <div><?php echo $this->lang->line('section'); ?> <span class="required">*</span></div>
-                            <select  class="form-control col-md-7 col-xs-12" name="section_id" id="section_id" required="required">                                
+                            <div><?php echo $this->lang->line('section'); ?></div>
+                            <select  class="form-control col-md-7 col-xs-12" name="section_id" id="section_id">                                
                                 <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
                             </select>
                             <div class="help-block"><?php echo form_error('section_id'); ?></div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-3 col-xs-12">
+                    <div class="col-md-2 col-sm-2 col-xs-12">
                         <div class="item form-group">  
                             <div><?php echo $this->lang->line('date'); ?> <span class="required">*</span></div>
-                            <input  class="form-control col-md-7 col-xs-12"  name="date"  id="date" value="<?php if(isset($date)){ echo $date;} ?>" placeholder="<?php echo $this->lang->line('date'); ?>" required="required" type="text">
+                            <input  class="form-control col-md-7 col-xs-12"  name="date"  id="date" value="<?php if(isset($date)){ echo $date;} ?>" placeholder="<?php echo $this->lang->line('date'); ?>" required="required" type="text" autocomplete="off">
                             <div class="help-block"><?php echo form_error('date'); ?></div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-3 col-xs-12">
+                    <div class="col-md-2 col-sm-2 col-xs-12">
                         <div class="form-group"><br/>
                             <button id="send" type="submit" class="btn btn-success"><?php echo $this->lang->line('find'); ?></button>
                         </div>
@@ -97,7 +108,7 @@
                         if (isset($students) && !empty($students)) {
                             ?>
                             <?php foreach ($students as $obj) { ?>
-                            <?php  $attendance = get_student_attendance($obj->id, $academic_year_id, $class_id, $section_id, $year, $month, $day ); ?>
+                            <?php  $attendance = get_student_attendance($obj->id, $school_id, $academic_year_id, $class_id, $section_id, $year, $month, $day ); ?>
                                 <tr>
                                     <td><?php echo $count++;  ?></td>
                                     <td>
@@ -133,6 +144,48 @@
  <!-- bootstrap-datetimepicker -->
 <link href="<?php echo VENDOR_URL; ?>datepicker/datepicker.css" rel="stylesheet">
  <script src="<?php echo VENDOR_URL; ?>datepicker/datepicker.js"></script>
+ 
+ <!-- Super admin js START  -->
+ <script type="text/javascript">
+         
+    $("document").ready(function() {
+         <?php if(isset($school_id) && !empty($school_id)){ ?>
+            $(".fn_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();        
+        var class_id = '';
+        
+        <?php if(isset($school_id) && !empty($school_id)){ ?>
+            class_id =  '<?php echo $class_id; ?>';
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               { 
+                   $('#class_id').html(response); 
+               }
+            }
+        });
+    }); 
+
+  </script>
+<!-- Super admin js end -->
+
+ 
  <script type="text/javascript">
      
   $('#date').datepicker();
@@ -142,11 +195,19 @@
     <?php } ?>
     
     function get_section_by_class(class_id, section_id){       
-           
+        
+        
+        var school_id = $('#school_id').val();        
+        
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
         $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_section_by_class'); ?>",
-            data   : { class_id : class_id , section_id: section_id},               
+            data   : {school_id:school_id,  class_id : class_id , section_id: section_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
@@ -198,34 +259,29 @@
            
           var status     = $(this).prop('checked') ? $(this).val() : '';
           var student_id = $(this).prop('checked') ? $(this).attr('itemid') : '';
+          var school_id   = $('#school_id').val();
           var class_id   = $('#class_id').val();
           var section_id = $('#section_id').val();
           var date       = $('#date').val();
+          var obj        = $(this);
           
           $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('attendance/student/update_single_attendance'); ?>",
-            data   : { status : status , student_id: student_id, class_id:class_id, section_id:section_id, date:date},               
+            data   : {school_id:school_id,  status : status , student_id: student_id, class_id:class_id, section_id:section_id, date:date},               
             async  : false,
             success: function(response){ 
-                if(response){
-                     toastr.success('<?php echo $this->lang->line('update_success'); ?>');  
+                if(response == 'ay'){
+                    
+                    toastr.error('<?php echo $this->lang->line('set_academic_year_for_school'); ?>'); 
+                    $(obj).prop('checked', false);
+                    
+                }else if(response == 1){
+                    toastr.success('<?php echo $this->lang->line('update_success'); ?>'); 
                 }else{
-                     toastr.error('<?php echo $this->lang->line('update_failed'); ?>');  
-                }
-                toastr.options = {
-                "closeButton": true,               
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "showDuration": "400",
-                "hideDuration": "400",
-                "timeOut": "5000",              
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-              }
+                    toastr.error('<?php echo $this->lang->line('update_failed'); ?>'); 
+                    $(obj).prop('checked', false);
+                }             
             }
         }); 
                       
@@ -234,34 +290,31 @@
          $('.fn_all_attendnce').click(function(){
            
           var status     = $(this).prop('checked') ? $(this).val() : '';         
+          var school_id   = $('#school_id').val();
           var class_id   = $('#class_id').val();
           var section_id = $('#section_id').val();
           var date       = $('#date').val();
+          var obj        = $(this);
           
           $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('attendance/student/update_all_attendance'); ?>",
-            data   : { status : status , class_id:class_id, section_id:section_id, date:date},               
+            data   : { school_id:school_id, status : status , class_id:class_id, section_id:section_id, date:date},               
             async  : false,
             success: function(response){ 
-                if(response){
-                     toastr.success('<?php echo $this->lang->line('update_success'); ?>');  
+                if(response == 'ay'){
+                    
+                    toastr.error('<?php echo $this->lang->line('set_academic_year_for_school'); ?>'); 
+                    $('.fn_single_attendnce').prop('checked', false);
+                    $(obj).prop('checked', false);
+                    
+                }else if(response == 1){
+                    toastr.success('<?php echo $this->lang->line('update_success'); ?>'); 
                 }else{
-                     toastr.error('<?php echo $this->lang->line('update_failed'); ?>');  
-                }
-                toastr.options = {
-                "closeButton": true,               
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "showDuration": "400",
-                "hideDuration": "400",
-                "timeOut": "5000",              
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-              }
+                    toastr.error('<?php echo $this->lang->line('update_failed'); ?>'); 
+                    $('.fn_single_attendnce').prop('checked', false);
+                    $(obj).prop('checked', false);
+                }           
             }
         }); 
                       

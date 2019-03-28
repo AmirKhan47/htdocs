@@ -41,6 +41,9 @@
                                             <thead>
                                                 <tr>
                                                     <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                                    <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                        <th><?php echo $this->lang->line('school'); ?></th>
+                                                    <?php } ?>
                                                     <th><?php echo $this->lang->line('status'); ?></th>
                                                     <th><?php echo $this->lang->line('receiver'); ?> <?php echo $this->lang->line('name'); ?></th>
                                                     <th><?php echo $this->lang->line('subject'); ?></th>                                       
@@ -52,12 +55,15 @@
                                                     <?php foreach($sents as $obj ){ ?>
                                                     <tr>
                                                         <td class="mailbox-messages"><input class="fn_checkbox" type="checkbox" id="<?php echo $obj->message_id; ?>" value="<?php echo $obj->message_id; ?>" /></td>
+                                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                            <td><?php echo $obj->school_name; ?></td>
+                                                        <?php } ?>
                                                         <td class="mailbox-star"><a id="<?php echo $obj->message_id; ?>" href="javascript:void(0);" ><i class="fa <?php echo $obj->is_favorite == 1 ? 'fa-star' : 'fa-star-o';  ?>  text-yellow"></i></a></td>
                                                         <td class="mailbox-name">
                                                             <a href="<?php echo site_url('message/view/'.$obj->message_id); ?>"><?php  $user = get_user_by_id($obj->receiver_id); echo $user->name; ?></a>
                                                         </td>
                                                         <td class="mailbox-subject">
-                                                            <b><?php echo $obj->subject; ?></b> 
+                                                            <b><a href="<?php echo site_url('message/view/'.$obj->message_id); ?>"><?php echo $obj->subject; ?></a></b> 
                                                         </td>
                                                         <td class="mailbox-date"><?php echo get_nice_time($obj->created_at); ?></td>
                                                     </tr>
@@ -80,6 +86,7 @@
         </div>
     </div>
 </div>
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -93,7 +100,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
 </script> 

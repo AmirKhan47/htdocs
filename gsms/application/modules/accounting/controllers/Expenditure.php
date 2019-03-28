@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Expenditure.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Expenditure
  * @description     : Manage all kind of expenditure of the school.  
@@ -36,7 +36,15 @@ class Expenditure extends MY_Controller {
         
         check_permission(VIEW);
         
-        $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', array('status'=> 1));        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', $condition);  
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }       
+        
+       
         $this->data['expenditures'] = $this->expenditure->get_expenditure_list();  
         $this->data['list'] = TRUE;
         $this->layout->title( $this->lang->line('manage_expenditure'). ' | ' . SMS);
@@ -63,6 +71,9 @@ class Expenditure extends MY_Controller {
 
                 $insert_id = $this->expenditure->insert('expenditures', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been added expenditure : '.$data['amount']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('accounting/expenditure/index');
                 } else {
@@ -74,7 +85,13 @@ class Expenditure extends MY_Controller {
             }
         }
 
-        $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', array('status'=> 1));        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', $condition);  
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }
         $this->data['expenditures'] = $this->expenditure->get_expenditure_list();  
          
         $this->data['add'] = TRUE;
@@ -110,6 +127,9 @@ class Expenditure extends MY_Controller {
                 $updated = $this->expenditure->update('expenditures', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated expenditure : '.$data['amount']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('accounting/expenditure/index');                   
                 } else {
@@ -129,8 +149,17 @@ class Expenditure extends MY_Controller {
             }
         }
         
-        $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', array('status'=> 1));        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', $condition);    
+            $this->data['payments'] = get_payment_methods($condition['school_id']);
+        }
+        
+        $this->data['school_id'] = $this->data['expenditure']->school_id;
         $this->data['expenditures'] = $this->expenditure->get_expenditure_list();  
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('expenditure'). ' | ' . SMS);
         $this->layout->view('expenditure/index', $this->data);
@@ -155,7 +184,13 @@ class Expenditure extends MY_Controller {
             redirect('accounting/expenditure/index');
         }
         
-        $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', array('status'=> 1));        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['expenditure_heads'] = $this->expenditure->get_list('expenditure_heads', $condition);        
+        }
+        
         $this->data['expenditures'] = $this->expenditure->get_expenditure_list();  
         $this->data['expenditure'] = $this->expenditure->get_single_expenditure($id);
         $this->data['detail'] = TRUE;       
@@ -163,6 +198,22 @@ class Expenditure extends MY_Controller {
         $this->layout->view('expenditure/index', $this->data); 
     }
 
+               
+     /*****************Function get_single_expenditure**********************************
+     * @type            : Function
+     * @function name   : get_single_slider
+     * @description     : "Load single expenditure information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_expenditure(){
+        
+       $expenditure_id = $this->input->post('expenditure_id');       
+       $this->data['expenditure'] = $this->expenditure->get_single_expenditure($expenditure_id);
+       echo $this->load->view('expenditure/get-single-expenditure', $this->data);
+    }
+    
     
      /*****************Function _prepare_expenditure_validation**********************************
      * @type            : Function
@@ -176,6 +227,7 @@ class Expenditure extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('expenditure_head_id', $this->lang->line('expenditure_head'), 'trim|required');   
         $this->form_validation->set_rules('amount', $this->lang->line('amount'), 'trim|required|numeric');   
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required');   
@@ -195,6 +247,7 @@ class Expenditure extends MY_Controller {
     private function _get_posted_expenditure_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'expenditure_head_id';
         $items[] = 'amount';
         $items[] = 'expenditure_via';
@@ -210,7 +263,14 @@ class Expenditure extends MY_Controller {
         } else {
             $data['status'] = 1;
             $data['expenditure_type'] = 'general';
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->expenditure->get_school_by_id($data['school_id']);
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('accounting/expenditure/index');
+            }
+            
+            $data['academic_year_id'] = $school->academic_year_id;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();                       
         }
@@ -236,12 +296,70 @@ class Expenditure extends MY_Controller {
             redirect('accounting/expenditure/index');
         }
         
-        if ($this->expenditure->delete('expenditures', array('id' => $id))) {            
+         $expenditure = $this->expenditure->get_single('expenditures', array('id' => $id));
+        
+        if ($this->expenditure->delete('expenditures', array('id' => $id))) {  
+            
+            create_log('Has been deleted expenditure : '.$expenditure->amount); 
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
         redirect('accounting/expenditure/index');
-    }    
+    } 
+    
+    
+    
+    /*****************Function get_expenditure_head_by_school**********************************
+     * @type            : Function
+     * @function name   : get_expenditure_head_by_school
+     * @description     : Load "Expenditure Head Listing" by ajax call                
+     *                    and populate user listing
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    
+    public function get_expenditure_head_by_school() {
+        
+        $school_id  = $this->input->post('school_id');
+        $expenditure_head_id  = $this->input->post('expenditure_head_id');
+         
+        $expenditure_heads = $this->expenditure->get_list('expenditure_heads', array('school_id'=>$school_id));  
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        if (!empty($expenditure_heads)) {
+            foreach ($expenditure_heads as $obj) {   
+                
+                $selected = $expenditure_head_id == $obj->id ? $select : '';
+                $str .= '<option value="' . $obj->id . '" ' . $selected . '>' . $obj->title . '</option>';
+                
+            }
+        }
+
+        echo $str;
+    }
+    
+     public function get_payment_method_by_school(){
+        
+        $school_id  = $this->input->post('school_id');
+        $expenditure_via  = $this->input->post('expenditure_via');
+        $payments = get_payment_methods($school_id);
+        
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        
+        if (!empty($payments)) {
+            foreach ($payments as $key=>$value) {   
+                
+                $selected = $key == $expenditure_via ? $select : '';
+                $str .= '<option value="' . $key . '" ' . $selected . '>' . $value . '</option>';
+            }
+        }
+        echo $str;
+        
+    }
+    
    
 }

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Welcome.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Welcome
  * @description     : This is default class of the application.  
@@ -21,12 +21,14 @@ class Welcome extends CI_Controller {
      * @param           : null; 
      * @return          : null 
      * ********************************************************** */
-
+    public $global_setting = array();
     public function index() {
-
+       
         if (logged_in_user_id()) {
             redirect('dashboard');
         }
+                
+        $this->global_setting = $this->db->get_where('global_setting', array('status'=>1))->row();
         $this->load->view('login');
     }
 

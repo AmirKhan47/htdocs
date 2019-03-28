@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Type.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Type
  * @description     : Manage Certificate Type.  
@@ -37,7 +37,14 @@ class Type extends MY_Controller {
         
         check_permission(VIEW); 
         
-        $this->data['certificates'] = $this->type->get_list('certificates', array('status' => 1), '','', '', 'id', 'ASC'); 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+        } 
+        
+        $this->data['certificates'] = $this->type->get_list('certificates', $condition, '','', '', 'id', 'ASC');
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_certificate_type'). ' | ' . SMS);
         $this->layout->view('type/index', $this->data);  
@@ -62,6 +69,9 @@ class Type extends MY_Controller {
 
                 $insert_id = $this->type->insert('certificates', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a certificate type : '.$data['name']); 
+                    
                     success($this->lang->line('insert_success'));
                     redirect('certificate/type/index');
                 } else {
@@ -73,7 +83,16 @@ class Type extends MY_Controller {
             }
         }
 
-        $this->data['certificates'] = $this->type->get_list('certificates', array('status' => 1), '','', '', 'id', 'ASC'); 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['name'] = $this->session->userdata('school_name');;
+        } 
+        
+        $this->data['certificates'] = $this->type->get_list('certificates', $condition, '','', '', 'id', 'ASC');
+        
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' '. $this->lang->line('certificate') . ' ' . $this->lang->line('type'). ' | ' . SMS);
         $this->layout->view('type/index', $this->data);
@@ -100,6 +119,9 @@ class Type extends MY_Controller {
                 $updated = $this->type->update('certificates', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a certificate type : '.$data['name']);  
+                    
                     success($this->lang->line('update_success'));
                     redirect('certificate/type/index');                   
                 } else {
@@ -119,7 +141,16 @@ class Type extends MY_Controller {
             }
         }
 
-        $this->data['certificates'] = $this->type->get_list('certificates', array('status' => 1), '','', '', 'id', 'ASC'); 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+        } 
+        
+        $this->data['certificates'] = $this->type->get_list('certificates', $condition, '','', '', 'id', 'ASC');
+        
+        $this->data['school_id'] = $this->data['certificate']->school_id;
+        
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit'). ' '. $this->lang->line('certificate') . ' ' . $this->lang->line('type'). ' | ' . SMS);
         $this->layout->view('type/index', $this->data);
@@ -143,9 +174,19 @@ class Type extends MY_Controller {
              redirect('dashboard');  
         }
         
-        $this->data['settings'] = $this->type->get_single('settings', array('status'=>1));
+        
         $this->data['certificate'] = $this->type->get_single('certificates', array('id' => $certificate_id));
-        $this->data['certificates'] = $this->type->get_list('certificates', array('status' => 1), '','', '', 'id', 'ASC'); 
+       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){  
+            $condition['school_id'] = $this->session->userdata('school_id');            
+        } 
+        
+        $this->data['school'] = $this->type->get_single('schools', array('id'=>$this->data['certificate']->school_id, 'status'=>1));
+        
+        $this->data['certificates'] = $this->type->get_list('certificates', $condition, '','', '', 'id', 'ASC');
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('certificate')  . ' ' . $this->lang->line('type'). ' | ' . SMS);
         $this->layout->view('type/index', $this->data);
@@ -165,9 +206,8 @@ class Type extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
         $this->form_validation->set_rules('name', $this->lang->line('certificate') . ' ' .$this->lang->line('type'), 'trim|required|callback_name');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('top_title', $this->lang->line('school') . ' ' .$this->lang->line('name'), 'trim|required');
-        $this->form_validation->set_rules('sub_title_left', $this->lang->line('sub_title_left'), 'trim');
-        $this->form_validation->set_rules('sub_title_right', $this->lang->line('sub_title_right'), 'trim');
         $this->form_validation->set_rules('main_text', $this->lang->line('main_certificate_text'), 'trim|required');
         $this->form_validation->set_rules('footer_left', $this->lang->line('footer_left'), 'trim');
         $this->form_validation->set_rules('footer_middle', $this->lang->line('footer_middle'), 'trim');
@@ -186,7 +226,7 @@ class Type extends MY_Controller {
     * ********************************************************** */ 
     public function name() {
         if ($this->input->post('id') == '') {
-            $type = $this->type->duplicate_check($this->input->post('name'));
+            $type = $this->type->duplicate_check($this->input->post('school_id'), $this->input->post('name'));
             if ($type) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -194,7 +234,7 @@ class Type extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $type = $this->type->duplicate_check($this->input->post('name'), $this->input->post('id'));
+            $type = $this->type->duplicate_check($this->input->post('school_id'),$this->input->post('name'), $this->input->post('id'));
             if ($type) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -217,10 +257,9 @@ class Type extends MY_Controller {
     private function _get_posted_type_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'name';
         $items[] = 'top_title';
-        $items[] = 'sub_title_left';
-        $items[] = 'sub_title_right';
         $items[] = 'main_text';
         $items[] = 'footer_left';
         $items[] = 'footer_middle';
@@ -310,6 +349,7 @@ class Type extends MY_Controller {
         }
         
         $certificate = $this->type->get_single('certificates', array('id' => $id));
+        
         if (!empty($certificate)) {
 
             // delete employee data
@@ -319,8 +359,10 @@ class Type extends MY_Controller {
             if (file_exists($destination . '/certificate/' . $certificate->background)) {
                 @unlink($destination . '/certificate/' . $certificate->background);
             }
-
+            
+            create_log('Has been deleted a certificate type : '.$certificate->name);
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }

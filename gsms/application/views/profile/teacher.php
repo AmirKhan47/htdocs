@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <a href="<?php echo site_url('profile'); ?>"><?php echo $this->lang->line('my_profile'); ?></a> |
                 <a href="<?php echo site_url('profile/password'); ?>"><?php echo $this->lang->line('reset_password'); ?></a> |
                 <a href="<?php echo site_url('auth/logout'); ?>"><?php echo $this->lang->line('logout'); ?></a>                  
@@ -99,23 +99,16 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($profile->name) ?  $profile->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($profile->name) ?  $profile->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="responsibility"><?php echo $this->lang->line('responsibility'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="responsibility"  id="responsibility" value="<?php echo isset($profile->responsibility) ?  $profile->name : $post['responsibility']; ?>" placeholder="<?php echo $this->lang->line('responsibility'); ?>" required="required" type="text">
-                                        <div class="help-block"><?php echo form_error('responsibility'); ?></div>
-                                    </div>
-                                </div>
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="phone"><?php echo $this->lang->line('phone'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="phone"  id="phone" value="<?php echo isset($profile->phone) ?  $profile->phone : '' ?>" placeholder="<?php echo $this->lang->line('phone'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="phone"  id="phone" value="<?php echo isset($profile->phone) ?  $profile->phone : '' ?>" placeholder="<?php echo $this->lang->line('phone'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('phone'); ?></div>
                                     </div>
                                 </div>
@@ -163,7 +156,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="religion"><?php echo $this->lang->line('religion'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="religion"  id="religion" value="<?php echo isset($profile->religion) ?  $profile->religion : ''; ?>" placeholder="<?php echo $this->lang->line('religion'); ?>" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="religion"  id="religion" value="<?php echo isset($profile->religion) ?  $profile->religion : ''; ?>" placeholder="<?php echo $this->lang->line('religion'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('religion'); ?></div>
                                     </div>
                                 </div>
@@ -171,7 +164,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('birth_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="dob"  id="dob" value="<?php echo isset($profile->dob) ?   date('d-m-Y', strtotime($profile->dob)) : ''; ?>" placeholder="<?php echo $this->lang->line('birth_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="dob"  id="dob" value="<?php echo isset($profile->dob) ?   date('d-m-Y', strtotime($profile->dob)) : ''; ?>" placeholder="<?php echo $this->lang->line('birth_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('dob'); ?></div>
                                     </div>
                                 </div>
@@ -179,7 +172,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('join_date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="joining_date"  id="joining_date" value="<?php echo isset($profile->joining_date) ?   date('d-m-Y', strtotime($profile->joining_date)) : ''; ?>" placeholder="<?php echo $this->lang->line('join_date'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12" readonly="readonly"   name="joining_date"  id="joining_date" value="<?php echo isset($profile->joining_date) ?   date('d-m-Y', strtotime($profile->joining_date)) : ''; ?>" placeholder="<?php echo $this->lang->line('join_date'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('joining_date'); ?></div>
                                     </div>
                                 </div>                                
@@ -188,7 +181,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="email"><?php echo $this->lang->line('email'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="email" readonly="readonly"  id="email" value="<?php echo isset($profile->email) ?  $profile->email : ''; ?>" placeholder="<?php echo $this->lang->line('email'); ?>" required="email" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="email" readonly="readonly"  id="email" value="<?php echo isset($profile->email) ?  $profile->email : ''; ?>" placeholder="<?php echo $this->lang->line('email'); ?>" required="email" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('email'); ?></div>
                                     </div>
                                 </div>

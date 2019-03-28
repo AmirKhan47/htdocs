@@ -1,29 +1,41 @@
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-xl-12"><h1 class="page-title"><?php echo $this->lang->line('gallery'); ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('gallery'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href="javascript:void(0);"><?php echo $this->lang->line('galleries'); ?></a></li>
+        </ul>
     </div>
 </section>
 
-<section class="content-area">
+<section class="page-gallery-area">
     <div class="container">
-        <div class="row">
-
-            <?php if (isset($galleries) && !empty($galleries)) { ?>
-                <?php foreach ($galleries as $obj) { ?>
-                    <div class="col-md-4 col-sm-4">
-                        <div class="gallery">
-                            <a href="<?php echo site_url('gallery-image/'.$obj->id); ?>">
-                                <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $obj->image; ?>" alt="Lights" style="width:100%">
+     <div class="row">    
+    <?php if(isset($galleries) && !empty($galleries)){ ?>
+        <?php foreach($galleries AS $obj){ ?>
+        <?php $images = get_gallery_images($obj->school_id, $obj->id); ?> 
+            <?php if(!empty($images)){ ?>
+                <div class="gallery-section-title">
+                    <h2 class="title"><?php echo $obj->title; ?></h2>
+                    <p class="text"><?php echo $obj->note; ?></p>
+                </div>
+                <div class="gallery-carousel owl-carousel">
+                    <?php foreach($images as $img){ ?>
+                        <div class="single-gallery">
+                            <a href="<?php echo UPLOAD_PATH; ?>gallery/<?php echo $img->image; ?>" data-fancybox="images">
+                                <span class="icon"><i class="fas fa-search-plus"></i></span>
+                                <img src="<?php echo UPLOAD_PATH; ?>gallery/<?php echo $img->image; ?>" alt="" />
                             </a>
-                            <div class="gallery-title"><a href="<?php echo site_url('gallery-image/'.$obj->id); ?>"><?php echo $obj->title; ?></a></div>                      
-                        </div> 
-                    </div> 
-                <?php } ?>
-            <?php } else { ?>
-                <div class="col-md-12 col-sm-12"><?php echo $this->lang->line('no_data_found'); ?></div>
-            <?php } ?>
+                        </div>   
+                    <?php } ?> 
+                </div>        
+            <?php } ?> 
+    <?php } ?> 
+    <?php }else{ ?>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-12">
+            <p class="text-center"><strong><?php echo $this->lang->line('no_data_found'); ?></strong></p>
         </div>
+    <?php } ?>
+       </div>  
     </div>
 </section>

@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'certificate', 'type')){ ?>
                     <a href="<?php echo site_url('certificate/type'); ?>"><?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></a>
                 <?php } ?>
@@ -23,16 +23,19 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_type_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'certificate', 'type')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_type"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></a> </li>                          
+                        
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('certificate/type/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('type'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_type"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_type"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></a> </li>                          
-                        <?php } ?>
-                            
+                        <?php } ?>                            
                         <?php if(isset($detail)){ ?>
                             <li  class="active"><a href="#tab_view_type"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('certificate'); ?></a> </li>                          
-                        <?php } ?>      
-                            
+                        <?php } ?>
                     </ul>
                     <br/>
                     
@@ -87,11 +90,13 @@
                                 <div class="col-md-8 col-sm-8 col-xs-12">
                                     <?php echo form_open_multipart(site_url('certificate/type/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                      
+                                    <?php $this->load->view('layout/school_list_form'); ?> 
+                                    
                                     <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                          </label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('name'); ?></div>
                                          </div>
                                      </div>
@@ -99,7 +104,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="top_title"> <?php echo $this->lang->line('school'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="top_title"  id="top_title" value="<?php echo isset($top_title) ?  $top_title : ''; ?>" placeholder="<?php echo $this->lang->line('school'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="top_title"  id="top_title" value="<?php echo isset($top_title) ?  $top_title : ''; ?>" placeholder="<?php echo $this->lang->line('school'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('top_title'); ?></div>
                                          </div>
                                      </div>
@@ -120,7 +125,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_left"> <?php echo $this->lang->line('footer_left'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_left"  id="footer_left" value="<?php echo isset($footer_left) ?  $footer_left : ''; ?>" placeholder="<?php echo $this->lang->line('footer_left'); ?>" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_left"  id="footer_left" value="<?php echo isset($footer_left) ?  $footer_left : ''; ?>" placeholder="<?php echo $this->lang->line('footer_left'); ?>" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_left'); ?></div>
                                          </div>
                                      </div>
@@ -128,7 +133,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_middle"> <?php echo $this->lang->line('footer_middle'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_middle"  id="footer_middle" value="<?php echo isset($footer_middle) ?  $footer_middle : ''; ?>" placeholder="<?php echo $this->lang->line('footer_middle'); ?>"  type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_middle"  id="footer_middle" value="<?php echo isset($footer_middle) ?  $footer_middle : ''; ?>" placeholder="<?php echo $this->lang->line('footer_middle'); ?>"  type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_middle'); ?></div>
                                          </div>
                                      </div>
@@ -136,7 +141,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_right"> <?php echo $this->lang->line('footer_right'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_right"  id="footer_right" value="<?php echo isset($footer_right) ?  $footer_right : ''; ?>" placeholder="<?php echo $this->lang->line('footer_right'); ?>" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_right"  id="footer_right" value="<?php echo isset($footer_right) ?  $footer_right : ''; ?>" placeholder="<?php echo $this->lang->line('footer_right'); ?>" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_right'); ?></div>
                                          </div>
                                      </div>
@@ -172,12 +177,14 @@
                             <div class="x_content"> 
                                 <div class="col-md-8 col-sm-8 col-xs-12">
                                     <?php echo form_open_multipart(site_url('certificate/type/edit/'.$certificate->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                                                    
+                                      
+                                    <?php $this->load->view('layout/school_list_edit_form'); ?>
+                                    
                                     <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"> <?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                          </label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($certificate) ? $certificate->name : $name; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($certificate) ? $certificate->name : $name; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('name'); ?></div>
                                          </div>
                                      </div>
@@ -185,7 +192,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="top_title"><?php echo $this->lang->line('school'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="top_title"  id="top_title" value="<?php echo isset($certificate) ? $certificate->top_title : $top_title; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="top_title"  id="top_title" value="<?php echo isset($certificate) ? $certificate->top_title : $top_title; ?>" placeholder="<?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('top_title'); ?></div>
                                          </div>
                                      </div>
@@ -205,7 +212,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_left"> <?php echo $this->lang->line('footer_left'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_left"  id="footer_left" value="<?php echo isset($certificate) ? $certificate->footer_left : $footer_left; ?>" placeholder="<?php echo $this->lang->line('footer_left'); ?>" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_left"  id="footer_left" value="<?php echo isset($certificate) ? $certificate->footer_left : $footer_left; ?>" placeholder="<?php echo $this->lang->line('footer_left'); ?>" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_left'); ?></div>
                                          </div>
                                      </div>
@@ -213,7 +220,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_middle"> <?php echo $this->lang->line('footer_middle'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_middle"  id="footer_middle" value="<?php echo isset($certificate) ? $certificate->footer_middle : $footer_middle; ?>" placeholder="<?php echo $this->lang->line('footer_middle'); ?>" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_middle"  id="footer_middle" value="<?php echo isset($certificate) ? $certificate->footer_middle : $footer_middle; ?>" placeholder="<?php echo $this->lang->line('footer_middle'); ?>" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_middle'); ?></div>
                                          </div>
                                      </div>
@@ -221,7 +228,7 @@
                                      <div class="item form-group">
                                          <label class="control-label col-md-3 col-sm-3 col-xs-12" for="footer_right"> <?php echo $this->lang->line('footer_right'); ?></label>
                                          <div class="col-md-9 col-sm-9 col-xs-12">
-                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_right"  id="footer_right" value="<?php echo isset($certificate) ? $certificate->footer_right : $footer_right; ?>" placeholder="<?php echo $this->lang->line('footer_right'); ?>" type="text">
+                                             <input  class="form-control col-md-7 col-xs-12"  name="footer_right"  id="footer_right" value="<?php echo isset($certificate) ? $certificate->footer_right : $footer_right; ?>" placeholder="<?php echo $this->lang->line('footer_right'); ?>" type="text" autocomplete="off">
                                              <div class="help-block"><?php echo form_error('footer_right'); ?></div>
                                          </div>
                                      </div>
@@ -278,7 +285,7 @@
                                                         <h2 class="top-heading-title"><?php echo $certificate->top_title; ?></h2>
                                                        <div class="row">
                                                             <span class="sub-title-img">
-                                                                <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $settings->logo; ?>" alt="" width="70" />
+                                                                <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $school->logo; ?>" alt="" width="70" />
                                                             </span> 
                                                        </div>
                                                     </div>
@@ -336,6 +343,7 @@
         }); 
    }
   </script>
+  
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -349,9 +357,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();     
 </script>

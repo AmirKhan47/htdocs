@@ -10,7 +10,8 @@
             </div>         
              <div class="x_content filter-box"> 
                 <?php echo form_open_multipart(site_url('attendance/student/guardian'), array('name' => 'sattendance', 'id' => 'sattendance', 'class' => 'form-horizontal form-label-left'), ''); ?>
-                <div class="row">                    
+                <div class="row">   
+                    <?php $this->load->view('layout/school_list_filter'); ?>
                     <div class="col-md-10 col-sm-10 col-xs-12">
                         <div class="col-md-3 col-sm-3 col-xs-12">
                             <div class="item form-group"> 
@@ -92,7 +93,7 @@
                                         <?php foreach($students as $obj){ ?>
                                         <tr>
                                             <td><?php echo $obj->name; ?></td>
-                                            <?php $attendance = get_student_monthly_attendance($obj->id, $academic_year_id, $class_id, $section_id, $month_number ,$days); ?>
+                                            <?php $attendance = get_student_monthly_attendance($school_id, $obj->id, $academic_year_id, $class_id, $section_id, $month_number ,$days); ?>
                                             <?php if(!empty($attendance)){ ?>
                                                 <?php foreach($attendance AS $key ){ ?>
                                                     <td> <?php echo $key ? $key : '<i style="color:red;">--</i>'; ?></td>
@@ -121,11 +122,19 @@
     <?php } ?>
     
     function get_section_by_class(class_id, section_id){       
-           
+        
+        
+        var school_id = $('#school_id').val();        
+        
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
         $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_section_by_class'); ?>",
-            data   : { class_id : class_id , section_id: section_id},               
+            data   : {school_id:school_id,  class_id : class_id , section_id: section_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
@@ -133,7 +142,7 @@
                   $('#section_id').html(response);
                }
             }
-        });          
+        }); 
     }
     
     $("#sattendance").validate();  

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Exam.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Exam
  * @description     : Manage exam term.  
@@ -19,14 +19,7 @@ class Exam extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Exam_Model', 'exam', true);
-        
-         // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        } 
-               
+        $this->load->model('Exam_Model', 'exam', true);     
     }
 
     
@@ -39,11 +32,18 @@ class Exam extends MY_Controller {
     * @param           : null
     * @return          : null 
     * ********************************************************** */
-    public function index() {
+    public function index($school_id = null) {
 
         check_permission(VIEW);
         
-        $this->data['exams'] = $this->exam->get_exam_list();
+            
+        $school = $this->exam->get_school_by_id($school_id);
+        
+        $this->data['exams'] = $this->exam->get_exam_list($school_id, @$school->academic_year_id);
+        
+        $this->data['filter_school_id'] = $school_id;        
+        $this->data['schools'] = $this->schools;
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('exam_term') . ' | ' . SMS);
         $this->layout->view('exam/index', $this->data);
@@ -69,8 +69,11 @@ class Exam extends MY_Controller {
 
                 $insert_id = $this->exam->insert('exams', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created an Exam : '.$data['title']);  
+                    
                     success($this->lang->line('insert_success'));
-                    redirect('exam/index');
+                    redirect('exam/index/'.$data['school_id']);
                 } else {
                     error($this->lang->line('insert_failed'));
                     redirect('exam/add');
@@ -81,6 +84,8 @@ class Exam extends MY_Controller {
         }
 
         $this->data['exams'] = $this->exam->get_exam_list();
+        $this->data['schools'] = $this->schools;
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('exam_term') . ' | ' . SMS);
         $this->layout->view('exam/index', $this->data);
@@ -112,8 +117,11 @@ class Exam extends MY_Controller {
                 $updated = $this->exam->update('exams', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been udated an Exam : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
-                    redirect('exam/index');
+                    redirect('exam/index/'.$data['school_id']);
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('exam/edit/' . $this->input->post('id'));
@@ -132,7 +140,11 @@ class Exam extends MY_Controller {
             }
         }
 
-        $this->data['exams'] = $this->exam->get_exam_list();
+        $this->data['exams'] = $this->exam->get_exam_list($this->data['exam']->school_id, $this->data['exam']->academic_year_id);
+        $this->data['school_id'] = $this->data['exam']->school_id;
+        $this->data['filter_school_id'] = $this->data['exam']->school_id;
+        $this->data['schools'] = $this->schools;
+        
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('exam_term') . ' | ' . SMS);
         $this->layout->view('exam/index', $this->data);
@@ -176,6 +188,7 @@ class Exam extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         $this->form_validation->set_rules('title', $this->lang->line('exam') . '' . $this->lang->line('title'), 'trim|required|callback_title');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('start_date', $this->lang->line('start_date'), 'trim|required');
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
     }
@@ -190,8 +203,12 @@ class Exam extends MY_Controller {
     * @return          : boolean true/false 
     * ********************************************************** */ 
     public function title() {
+        
+        $school_id = $this->input->post('school_id');
+        $school = $this->exam->get_school_by_id($school_id); 
+        
         if ($this->input->post('id') == '') {
-            $exam = $this->exam->duplicate_check($this->input->post('title'));
+            $exam = $this->exam->duplicate_check($school_id, $school->academic_year_id, $this->input->post('title'));
             if ($exam) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -199,7 +216,7 @@ class Exam extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $exam = $this->exam->duplicate_check($this->input->post('title'), $this->input->post('id'));
+            $exam = $this->exam->duplicate_check($school_id, $school->academic_year_id, $this->input->post('title'), $this->input->post('id'));
             if ($exam) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -221,6 +238,7 @@ class Exam extends MY_Controller {
     private function _get_posted_exam_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'note';
         $data = elements($items, $_POST);
@@ -231,7 +249,17 @@ class Exam extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->exam->get_school_by_id($data['school_id']);
+            
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('exam/index');
+            }
+        
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
@@ -258,7 +286,11 @@ class Exam extends MY_Controller {
              redirect('exam/index');
         }
         
-        if ($this->exam->delete('exams', array('id' => $id))) {
+        $exam = $this->exam->get_single('exams', array('id' => $id));
+        
+        if ($this->exam->delete('exams', array('id' => $id))) {            
+            
+            create_log('Has been deleted an Exam : '.$exam->title); 
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

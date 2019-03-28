@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Grade.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Grade
  * @description     : Manage exam result grade point system.  
@@ -32,11 +32,15 @@ class Grade extends MY_Controller {
     * @param           : null
     * @return          : null 
     * ********************************************************** */
-    public function index() {
+    public function index($school_id = null ) {
 
         check_permission(VIEW);
-
-        $this->data['grades'] = $this->grade->get_list('grades', array('status' => 1), '','', '', 'id', 'ASC');
+       
+        $this->data['grades'] = $this->grade->get_garde_list($school_id);
+        
+        $this->data['filter_school_id'] = $school_id;
+        
+        $this->data['schools'] = $this->schools;
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_grade') . ' | ' . SMS);
         $this->layout->view('grade/index', $this->data);
@@ -62,8 +66,11 @@ class Grade extends MY_Controller {
 
                 $insert_id = $this->grade->insert('grades', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a exam Grade : '.$data['name']);
+                    
                     success($this->lang->line('insert_success'));
-                    redirect('exam/grade/index');
+                    redirect('exam/grade/index/'.$data['school_id']);
                 } else {
                     error($this->lang->line('insert_failed'));
                     redirect('exam/grade/add');
@@ -73,7 +80,8 @@ class Grade extends MY_Controller {
             }
         }
 
-        $this->data['grades'] = $this->grade->get_list('grades', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['grades'] = $this->grade->get_garde_list();
+        $this->data['schools'] = $this->schools;
         
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('exam_grade') . ' | ' . SMS);
@@ -106,8 +114,11 @@ class Grade extends MY_Controller {
                 $updated = $this->grade->update('grades', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a exam Grade : '.$data['name']);
+                    
                     success($this->lang->line('update_success'));
-                    redirect('exam/grade/index');
+                    redirect('exam/grade/index/'.$data['school_id']);
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('exam/grade/edit/' . $this->input->post('id'));
@@ -126,7 +137,11 @@ class Grade extends MY_Controller {
             }
         }
 
-        $this->data['grades'] = $this->grade->get_list('grades', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['grades'] = $this->grade->get_garde_list($this->data['grade']->school_id);
+        
+        $this->data['school_id'] = $this->data['grade']->school_id;
+        $this->data['filter_school_id'] = $this->data['grade']->school_id;
+        $this->data['schools'] = $this->schools;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('exam_grade') . ' | ' . SMS);
@@ -146,7 +161,8 @@ class Grade extends MY_Controller {
 
         check_permission(VIEW);
         
-        $this->data['grades'] = $this->grade->get_list('grades', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['grades'] = $this->grade->get_garde_list();
+        
         $this->data['grade'] = $this->grade->get_single('grades', array('id' => $id));
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('exam_grade') . ' | ' . SMS);
@@ -166,6 +182,7 @@ class Grade extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('name', $this->lang->line('exam_grade'), 'trim|required|callback_name');
         $this->form_validation->set_rules('point', $this->lang->line('grade_point'), 'trim|required|callback_point');
         $this->form_validation->set_rules('mark_from', $this->lang->line('mark_from'), 'trim|required');
@@ -184,7 +201,7 @@ class Grade extends MY_Controller {
     * ********************************************************** */
     public function name() {
         if ($this->input->post('id') == '') {
-            $grade = $this->grade->duplicate_check('name', $this->input->post('name'));
+            $grade = $this->grade->duplicate_check('name',  $this->input->post('school_id'), $this->input->post('name'));
             if ($grade) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -192,7 +209,7 @@ class Grade extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $grade = $this->grade->duplicate_check('name', $this->input->post('name'), $this->input->post('id'));
+            $grade = $this->grade->duplicate_check('name',  $this->input->post('school_id'), $this->input->post('name'), $this->input->post('id'));
             if ($grade) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -212,7 +229,7 @@ class Grade extends MY_Controller {
     * ********************************************************** */
     public function point() {
         if ($this->input->post('id') == '') {
-            $grade = $this->grade->duplicate_check('point', $this->input->post('point'));
+            $grade = $this->grade->duplicate_check('point', $this->input->post('school_id'), $this->input->post('point'));
             if ($grade) {
                 $this->form_validation->set_message('point', $this->lang->line('already_exist'));
                 return FALSE;
@@ -220,7 +237,7 @@ class Grade extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $grade = $this->grade->duplicate_check('point', $this->input->post('point'), $this->input->post('id'));
+            $grade = $this->grade->duplicate_check('point',  $this->input->post('school_id'), $this->input->post('point'), $this->input->post('id'));
             if ($grade) {
                 $this->form_validation->set_message('point', $this->lang->line('already_exist'));
                 return FALSE;
@@ -242,6 +259,7 @@ class Grade extends MY_Controller {
     private function _get_posted_grade_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'name';
         $items[] = 'point';
         $items[] = 'mark_from';
@@ -274,12 +292,17 @@ class Grade extends MY_Controller {
 
         check_permission(DELETE);
 
+        $grade = $this->grade->get_single('grades', array('id' => $id));
+        
         if ($this->grade->delete('grades', array('id' => $id))) {
+            
+            create_log('Has been deleted a exam Grade : '.$grade->name);
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }
-        redirect('exam/grade');
+        redirect('exam/grade/index');
     }
 
 }

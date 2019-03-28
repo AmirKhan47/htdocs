@@ -27,4 +27,13 @@ class Setting_Model extends MY_Model {
         $this->db->order_by('M.id');
         return $this->db->get()->result();
     }
+    
+     function duplicate_school_check($school_name, $id = null ){           
+           
+        if($id){
+            $this->db->where_not_in('id', $id);
+        }
+        $this->db->where('school_name', $school_name);
+        return $this->db->get('schools')->num_rows();            
+    }
 }

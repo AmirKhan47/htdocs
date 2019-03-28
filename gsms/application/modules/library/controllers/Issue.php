@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Issue.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Issue
  * @description     : Manage library book issue and return by student from library.  
@@ -20,12 +20,6 @@ class Issue extends MY_Controller {
     function __construct() {
         parent::__construct();
         $this->load->model('Book_Model', 'book', true);
-        
-       // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }   
     }
 
         
@@ -41,13 +35,21 @@ class Issue extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));        
-        $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1);
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['books'] = $this->book->get_list('books', $condition);
+            $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1, $condition['school_id']);
+        } 
+        
         $this->data['issue_books'] = $this->book->get_book_issued_list();
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('issue_and_return') . ' | ' . SMS);
         $this->layout->view('issue/index', $this->data);
+        
     }
 
     
@@ -70,6 +72,10 @@ class Issue extends MY_Controller {
 
                 $insert_id = $this->book->insert('book_issues', $data);
                 if ($insert_id) {
+                    
+                    $book = $this->book->get_single('books', array('id' => $data['book_id']));
+                    create_log('Has been issued a Book : '.$book->title);
+                    
                     $this->book->update_qty($data['book_id'], 'issue');
                     success($this->lang->line('insert_success'));
                 } else {
@@ -79,10 +85,18 @@ class Issue extends MY_Controller {
             }
         }
 
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));
-        $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1);
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id'); 
+            $this->data['books'] = $this->book->get_list('books', $condition);
+            $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1, $condition['school_id']);
+        } 
+        
+        
         $this->data['issue_books'] = $this->book->get_book_issued_list();
-        $this->data['list'] = TRUE;
+        
+        $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('issue_and_return') . ' | ' . SMS);
         $this->layout->view('issue/index', $this->data);
     }
@@ -103,6 +117,7 @@ class Issue extends MY_Controller {
 
         $this->form_validation->set_rules('library_member_id', $this->lang->line('library') . ' ' . $this->lang->line('member'), 'trim|required');
         $this->form_validation->set_rules('book_id', $this->lang->line('book'), 'trim|required');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
     }
 
        
@@ -117,6 +132,7 @@ class Issue extends MY_Controller {
     private function _get_posted_issue_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'library_member_id';
         $items[] = 'book_id';
 
@@ -128,7 +144,16 @@ class Issue extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->book->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('library/issue');
+            }
+        
+            $data['academic_year_id'] = $school->academic_year_id;
+        
             $data['is_returned'] = 0;
             $data['status'] = 1;
             $data['issue_date'] = date('Y-m-d');
@@ -174,5 +199,55 @@ class Issue extends MY_Controller {
         $this->book->update_qty($book_id, 'return');
         echo TRUE;
     }
+    
+        
+    /*****************Function get_book_by_school**********************************
+     * @type            : Function
+     * @function name   : get_book_by_school
+     * @description     : Load "Book Listing" by ajax call                
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    
+    public function get_book_by_school() {
+        
+        $school_id  = $this->input->post('school_id');
+         
+        $books = $this->book->get_list('books', array('status'=>1, 'school_id'=>$school_id), '','', '', 'id', 'ASC'); 
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        if (!empty($books)) {
+            foreach ($books as $obj) { 
+               
+                $str .= '<option value="' . $obj->id . '" >' . $obj->title . '</option>';                
+            }
+        }
+
+        echo $str;
+    }
+    
+    /*****************Function get_library_member_by_school**********************************
+     * @type            : Function
+     * @function name   : get_library_member_by_school
+     * @description     : Load "Library Member Listing" by ajax call  
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    
+    public function get_library_member_by_school() {
+        
+        $school_id  = $this->input->post('school_id');
+        $membrs =  $this->book->get_library_member_list($is_library_member = 1, $school_id);
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        if (!empty($membrs)) {
+            foreach ($membrs as $obj) { 
+               
+                $str .= '<option value="' . $obj->lm_id . '" >' . $obj->name . '</option>';                
+            }
+        }
+
+        echo $str;
+    }   
 
 }

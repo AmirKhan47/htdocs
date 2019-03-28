@@ -10,16 +10,13 @@
             </div>
             
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'gallery', 'gallery')){ ?>
                     <a href="<?php echo site_url('gallery/index'); ?>"><?php echo $this->lang->line('manage_gallery'); ?> </a>
                 <?php } ?>
                 <?php if(has_permission(VIEW, 'gallery', 'image')){ ?>
                   |  <a href="<?php echo site_url('gallery/image'); ?>"><?php echo $this->lang->line('manage_gallery_image'); ?></a>
-                <?php } ?>
-                <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
-                  |  <a href="<?php echo site_url('frontend/index'); ?>"><?php echo $this->lang->line('manage_frontend'); ?></a>
-                <?php } ?>
+                <?php } ?>               
             </div>
             
             <div class="x_content">
@@ -27,15 +24,19 @@
                     
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_gallery_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
+                        
                         <?php if(has_permission(ADD, 'gallery', 'gallery')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_gallery"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('gallery'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('gallery/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('gallery'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_gallery"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('gallery'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>
+                                
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_gallery"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('gallery'); ?></a> </li>                          
                         <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_gallery"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('gallery'); ?></a> </li>                          
-                        <?php } ?>                
+                                     
                     </ul>
                     <br/>
                     
@@ -46,10 +47,12 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                         <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?></th>
-                                        <th><?php echo $this->lang->line('cover_image'); ?></th>
+                                        <th width="60%"><?php echo $this->lang->line('note'); ?></th>
                                         <th><?php echo $this->lang->line('is_view_on_web'); ?></th>
-                                        <th><?php echo $this->lang->line('note'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -58,21 +61,16 @@
                                         <?php foreach($galleries as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
-                                            <td><?php echo $obj->title; ?></td>
-                                            <td>
-                                                <?php  if($obj->image != ''){ ?>
-                                                <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $obj->image; ?>" alt="" width="70" /> 
-                                                <?php } ?>
-                                            </td>
-                                            <td><?php echo $obj->is_view_on_web ? $this->lang->line('yes') : $this->lang->line('no'); ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
+                                            <td><?php echo $obj->title; ?></td>                                            
                                             <td><?php echo $obj->note; ?></td>
+                                            <td><?php echo $obj->is_view_on_web ? $this->lang->line('yes') : $this->lang->line('no'); ?></td>
                                             <td>
                                                 <?php if(has_permission(EDIT, 'gallery', 'gallery')){ ?>
                                                     <a href="<?php echo site_url('gallery/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
-                                                <?php } ?>
-                                                <?php if(has_permission(VIEW, 'gallery', 'gallery')){ ?>
-                                                    <a href="<?php echo site_url('gallery/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
-                                                <?php } ?>
+                                                <?php } ?>                                                
                                                 <?php if(has_permission(DELETE, 'gallery', 'gallery')){ ?>
                                                     <a href="<?php echo site_url('gallery/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
                                                 <?php } ?>
@@ -89,47 +87,33 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('gallery/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
-
-                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="is_view_on_web"  id="is_view_on_web" required="required">
-                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <option value="1"><?php echo $this->lang->line('yes'); ?></option> 
-                                            <option value="0"><?php echo $this->lang->line('no'); ?></option>                                                                                       
-                                        </select>
-                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
-                                    </div>
-                                </div>
-                                                         
-                                
-                               <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('cover_image'); ?>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <div class="btn btn-default btn-file">
-                                            <i class="fa fa-paperclip"></i> <?php echo $this->lang->line('upload'); ?>
-                                            <input  class="form-control col-md-7 col-xs-12"  name="image"  id="image" type="file">
-                                        </div>
-                                        <div class="text-info"><?php echo $this->lang->line('valid_file_format_img'); ?></div>
-                                        <div class="help-block"><?php echo form_error('image'); ?></div>
-                                    </div>
-                               </div>
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <textarea  class="form-control col-md-7 col-xs-12"  name="note"  id="note" placeholder="<?php echo $this->lang->line('note'); ?>"><?php echo isset($post['note']) ?  $post['note'] : ''; ?></textarea>
                                         <div class="help-block"><?php echo form_error('note'); ?></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <select  class="form-control col-md-7 col-xs-12" name="is_view_on_web" id="is_view_on_web">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                            <option value="1"><?php echo $this->lang->line('yes'); ?></option>                                           
+                                            <option value="0"><?php echo $this->lang->line('no'); ?></option>                                           
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
                                     </div>
                                 </div>
                                
@@ -148,52 +132,34 @@
                         <div class="tab-pane fade in active" id="tab_edit_gallery">
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('gallery/edit/'.$gallery->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
+                               
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($gallery->title) ?  $gallery->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($gallery->title) ?  $gallery->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
-                                </div>
-                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="is_view_on_web"  id="is_view_on_web" required="required" >
-                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
-                                            <option value="1" <?php if($gallery->is_view_on_web == 1){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('yes'); ?></option>
-                                            <option value="0" <?php if($gallery->is_view_on_web == 0){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('no'); ?></option>
-                                        </select>
-                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
-                                    </div>
-                                </div>
-                                                               
-                                                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('cover_image'); ?>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input type="hidden" name="prev_image" id="prev_image" value="<?php echo $gallery->image; ?>" />
-                                        <?php if($gallery->image){ ?>
-                                        <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $gallery->image; ?>" alt="" width="100" /><br/><br/>
-                                        <?php } ?>
-                                        <div class="btn btn-default btn-file">
-                                            <i class="fa fa-paperclip"></i> <?php echo $this->lang->line('upload'); ?>
-                                            <input  class="form-control col-md-7 col-xs-12"  name="image"  id="image" type="file">
-                                        </div>
-                                        <div class="text-info"><?php echo $this->lang->line('valid_file_format_img'); ?></div>
-                                        <div class="help-block"><?php echo form_error('image'); ?></div>
-                                    </div>
-                                </div>
-                                                         
+                                </div>                        
+                                             
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <textarea  class="form-control col-md-7 col-xs-12"  name="note"  id="note" placeholder="<?php echo $this->lang->line('note'); ?>"><?php echo isset($gallery->note) ?  $gallery->note : $post['note']; ?></textarea>
                                         <div class="help-block"><?php echo form_error('note'); ?></div>
+                                    </div>
+                                </div>
+                                
+                                 <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="is_view_on_web"><?php echo $this->lang->line('is_view_on_web'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <select  class="form-control col-md-7 col-xs-12" name="is_view_on_web" id="is_view_on_web">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                           <option value="1" <?php if($gallery->is_view_on_web == 1){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('yes'); ?></option>                                           
+                                           <option value="0" <?php if($gallery->is_view_on_web == 0){ echo 'selected="selected"';} ?>><?php echo $this->lang->line('no'); ?></option>                                                                                  
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('is_view_on_web'); ?></div>
                                     </div>
                                 </div>
                                                              
@@ -208,54 +174,7 @@
                                 <?php echo form_close(); ?>
                             </div>
                         </div>  
-                        <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_gallery">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $gallery->title; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('is_view_on_web'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $gallery->is_view_on_web ? $this->lang->line('yes') : $this->lang->line('no'); ?>
-                                    </div>
-                                </div>
-                                                          
-                                                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('cover_image'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($gallery->image){ ?>
-                                    <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $gallery->image; ?>" alt=""  class="img-responsive" /><br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $gallery->note; ?>
-                                    </div>
-                                </div>                         
-                                <?php if(has_permission(EDIT, 'gallery', 'gallery')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('gallery/edit/'.$gallery->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                        <?php } ?>                        
                     </div>
                 </div>
             </div>
@@ -276,9 +195,11 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+           search: true,            
+           responsive: true
       });
     });
+    
     $("#add").validate();     
     $("#edit").validate();  
   </script> 

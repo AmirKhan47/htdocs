@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Permission.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Permission
  * @description     : Manage system user role permission by admintrator.  
@@ -71,6 +71,9 @@ class Permission extends MY_Controller {
                
                // update config file
                 $this->update_config();
+                
+                $role = $this->role->get_single('roles', array('id' => $role_id));
+                create_log('Has been setting permission for the role : '.$role->name);
                 
                 success($this->lang->line('update_success'));
                 redirect('administrator/permission/index/'.$role_id);

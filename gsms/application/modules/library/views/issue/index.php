@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'library', 'book')){ ?>
                     <a href="<?php echo site_url('library/book/index/'); ?>"><?php echo $this->lang->line('manage_book'); ?></a>
                 <?php } ?>
@@ -39,6 +39,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('photo'); ?></th>
                                         <th><?php echo $this->lang->line('student'); ?></th>
                                         <th><?php echo $this->lang->line('title'); ?></th>
@@ -55,6 +58,9 @@
                                         <?php foreach($issue_books as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                 <?php  if($obj->photo != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/student-photo/<?php echo $obj->photo; ?>" alt="" width="70" /> 
@@ -65,9 +71,9 @@
                                             <td><?php echo $obj->name; ?></td>
                                             <td><?php echo $obj->title; ?></td>
                                             <td><?php echo $obj->custom_id; ?></td>
-                                            <td><?php echo date('M j, Y', strtotime($obj->issue_date)); ?></td>
-                                            <td><?php echo date('M j, Y', strtotime($obj->due_date)); ?></td>
-                                            <td><?php echo $obj->return_date && $obj->return_date != '0000-00-00' ? date('M j, Y', strtotime($obj->return_date)) : ''; ?></td>
+                                            <td><?php echo date($this->global_setting->date_format, strtotime($obj->issue_date)); ?></td>
+                                            <td><?php echo date($this->global_setting->date_format, strtotime($obj->due_date)); ?></td>
+                                            <td><?php echo $obj->return_date && $obj->return_date != '0000-00-00' ? date($this->global_setting->date_format, strtotime($obj->return_date)) : ''; ?></td>
                                             <td>
                                                 <?php  if($obj->cover != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/book-cover/<?php echo $obj->cover; ?>" alt="" width="70" /> 
@@ -94,15 +100,17 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('library/issue/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
-                                
+                                <?php $this->load->view('layout/school_list_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="book_id"><?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('book'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12 fn_get_book" name="book_id" id="book_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
-                                            <?php foreach($books as $obj){ ?>
-                                                <option value="<?php echo $obj->id; ?>"><?php echo $obj->title; ?> [<?php echo $obj->custom_id; ?>]</option>
+                                            <?php if(isset($books) && !empty($books)){ ?>
+                                                <?php foreach($books as $obj){ ?>
+                                                    <option value="<?php echo $obj->id; ?>"><?php echo $obj->title; ?> [<?php echo $obj->custom_id; ?>]</option>
+                                                <?php } ?>
                                             <?php } ?>
                                         </select>
                                         <div class="help-block"><?php echo form_error('book_id'); ?></div>
@@ -113,7 +121,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="isbn_no"><?php echo $this->lang->line('isbn_no'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('isbn_no'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('isbn_no'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('isbn_no'); ?></div>
                                     </div>
                                 </div>
@@ -122,7 +130,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="edition"><?php echo $this->lang->line('edition'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('edition'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('edition'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('edition'); ?></div>
                                     </div>
                                 </div>
@@ -131,7 +139,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="author"><?php echo $this->lang->line('author'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('author'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('author'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('author'); ?></div>
                                     </div>
                                 </div>
@@ -140,7 +148,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="language"><?php echo $this->lang->line('language'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('language'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('language'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('language'); ?></div>
                                     </div>
                                 </div>
@@ -149,7 +157,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price"><?php echo $this->lang->line('price'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('price'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('price'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('price'); ?></div>
                                     </div>
                                 </div>
@@ -158,7 +166,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="qty"><?php echo $this->lang->line('quantity'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('quantity'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('quantity'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('qty'); ?></div>
                                     </div>
                                 </div>
@@ -167,7 +175,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="rack_no"><?php echo $this->lang->line('almira_rack'); ?> 
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="" readonly="readonly" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('rack_no'); ?></div>
                                     </div>
                                 </div>
@@ -180,10 +188,10 @@
                                </div>
                                
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="due_date"><?php echo $this->lang->line('due_date'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="due_date"><?php echo $this->lang->line('return'); ?> <?php echo $this->lang->line('date'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="due_date"  id="due_date" value="" required="required"  placeholder="<?php echo $this->lang->line('due_date'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="due_date"  id="due_date" value="" required="required"  placeholder="<?php echo $this->lang->line('due_date'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('due_date'); ?></div>
                                     </div>
                                 </div>
@@ -194,8 +202,10 @@
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12" name="library_member_id" id="library_member_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
-                                            <?php foreach($members as $obj){ ?>
-                                                <option value="<?php echo $obj->lm_id; ?>"><?php echo $obj->name; ?> [<?php echo $obj->custom_member_id; ?>]</option>
+                                           <?php if(isset($members) && !empty($members)){ ?>
+                                                <?php foreach($members as $obj){ ?>
+                                                    <option value="<?php echo $obj->lm_id; ?>"><?php echo $obj->name; ?> [<?php echo $obj->custom_member_id; ?>]</option>
+                                                <?php } ?>
                                             <?php } ?>
                                         </select>
                                         <div class="help-block"><?php echo form_error('library_member_id'); ?></div>
@@ -221,11 +231,58 @@
 </div>
 <link href="<?php echo VENDOR_URL; ?>datepicker/datepicker.css" rel="stylesheet">
  <script src="<?php echo VENDOR_URL; ?>datepicker/datepicker.js"></script>
+ 
+ <!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val(); 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('library/issue/get_book_by_school'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {                     
+                   $('#book_id').html(response);                                    
+                   get_library_member_by_school(school_id);
+               }
+            }
+        });
+    }); 
+    
+    
+    function get_library_member_by_school(school_id){
+    
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('library/issue/get_library_member_by_school'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {    
+                   $('#library_member_id').html(response);                    
+               }
+            }
+        });
+    }
+    
+  </script>
+<!-- Super admin js end -->
+
+ 
  <script type="text/javascript">
  
   $('#due_date').datepicker();
-  $('#return_date').datepicker();
-
      
       $(document).ready(function(){
           
@@ -284,6 +341,7 @@
         });  
    }
 </script>
+
  <script type="text/javascript">
         $(document).ready(function() {
           $('#datatable-responsive').DataTable( {
@@ -296,8 +354,10 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,             
+              responsive: true
           });
         });
+        
     $("#add").validate();     
 </script>

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Mail.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Mail
  * @description     : Manage email which are sent to student and guardian with student exam mark.  
@@ -19,10 +19,7 @@ class Mail extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Mark_Model', 'mark', true);
-        $this->data['classes'] = $this->mark->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->mark->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
-        $this->data['mark_emails'] = $this->mark->get_mark_emails();
+        $this->load->model('Mark_Model', 'mark', true);        
     }
 
     
@@ -38,8 +35,22 @@ class Mail extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['roles'] = $this->mark->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->mark->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $school = $this->mark->get_school_by_id($this->session->userdata('school_id'));            
+            $condition['academic_year_id'] = $school->academic_year_id;
+            $this->data['exams'] = $this->mark->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['mark_emails'] = $this->mark->get_mark_emails();
+        $this->data['roles'] = $this->mark->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('mark_send_by_email') . ' | ' . SMS);
         $this->layout->view('email/index', $this->data);
@@ -57,13 +68,45 @@ class Mail extends MY_Controller {
     public function view($id = null) {
 
         check_permission(VIEW);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $school = $this->mark->get_school_by_id($this->session->userdata('school_id')); 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');            
+            $this->data['classes'] = $this->mark->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $condition['academic_year_id'] = $school->academic_year_id;
+            $this->data['exams'] = $this->mark->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        } 
+        $this->data['mark_emails'] = $this->mark->get_mark_emails();
+        $this->data['roles'] = $this->mark->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
 
-        $this->data['mail'] = $this->mark->get_single_mark($id);
+        $this->data['mail'] = $this->mark->get_single_email($id);
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('mark_send_by_email') . ' | ' . SMS);
         $this->layout->view('email/index', $this->data);
     }
 
+                
+    /*****************Function get_single_email**********************************
+     * @type            : Function
+     * @function name   : get_single_email
+     * @description     : "Load single email information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_email(){
+        
+       $email_id = $this->input->post('email_id');
+       
+       $this->data['email'] = $this->mark->get_single_email($email_id);
+       echo $this->load->view('email/get-single-email', $this->data);
+    }
+
+    
     
     /*****************Function send**********************************
     * @type            : Function
@@ -78,6 +121,7 @@ class Mail extends MY_Controller {
 
         check_permission(ADD);
 
+        
         if ($_POST) {
             $this->_prepare_email_validation();
             if ($this->form_validation->run() === TRUE) {
@@ -85,7 +129,11 @@ class Mail extends MY_Controller {
 
                 $insert_id = $this->mark->insert('mark_emails', $data);
                 if ($insert_id) {
+                    $data['email_id'] = $insert_id;
                     $this->_send_email($data);
+                    
+                     create_log('Has been send an Mark Email : '.$data['subject']);
+                    
                     success($this->lang->line('email_send_success'));
                     redirect('exam/mail');
                 } else {
@@ -115,11 +163,13 @@ class Mail extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('exam_id', $this->lang->line('exam'), 'trim|required');
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
-        $this->form_validation->set_rules('receiver_role_id', $this->lang->line('receiver_type'), 'trim|required');
+        $this->form_validation->set_rules('role_id', $this->lang->line('receiver_type'), 'trim|required');
+        $this->form_validation->set_rules('receiver_id', $this->lang->line('receiver'), 'trim|required');
         $this->form_validation->set_rules('subject', $this->lang->line('subject'), 'trim|required');
-        $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
+        $this->form_validation->set_rules('body', $this->lang->line('email_body'), 'trim|required');
     }
 
     
@@ -134,14 +184,23 @@ class Mail extends MY_Controller {
     private function _get_posted_email_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'exam_id';
         $items[] = 'class_id';
-        $items[] = 'receiver_role_id';
+        $items[] = 'role_id';
         $items[] = 'subject';
-        $items[] = 'note';
+        $items[] = 'body';
+        
         $data = elements($items, $_POST);
 
-        $data['academic_year_id'] = $this->academic_year_id;
+        $school = $this->mark->get_school_by_id($data['school_id']);
+        
+        if(!$school->academic_year_id){
+            error($this->lang->line('set_academic_year_for_school'));
+            redirect('exam/mail');
+        }
+        
+        $data['academic_year_id'] = $school->academic_year_id;
         $data['sender_role_id'] = $this->session->userdata('role_id');
         $data['status'] = 1;
         $data['created_at'] = date('Y-m-d H:i:s');
@@ -159,10 +218,9 @@ class Mail extends MY_Controller {
     * @return          : null 
     * ********************************************************** */
     private function _send_email($data) {
-
-        $students = $this->mark->get_student_list_by_class($data['exam_id'], $data['class_id']);
-        $setting = $this->mark->get_single('settings', array('status' => 1));
-
+        
+        $school = $this->mark->get_school_by_id($data['school_id']);
+        $students = $this->mark->get_student_list_by_class($data['school_id'], $data['exam_id'], $data['class_id'], $this->input->post('receiver_id'), $school->academic_year_id);
 
         $this->load->library('email');
         $config['protocol'] = 'sendmail';
@@ -172,45 +230,51 @@ class Mail extends MY_Controller {
         $config['mailtype'] = 'html';
         $this->email->initialize($config);
 
-        $from_email = $this->session->userdata('email');
-        $from_name = $this->session->userdata('name');
+        $from_email = $school->email;
+        $from_name  = $school->school_name;
+        
         $this->email->from($from_email, $from_name);
         $this->email->reply_to($from_email, $from_name);
 
+        $receivers = '';
+        
         if (!empty($students)) {
 
             foreach ($students AS $obj) {
 
-                $message = '';
-                $receiver_email = '';
-                // initial message part as per receiver
-                if ($data['receiver_role_id'] == STUDENT) {
-
-                    $message = 'Hi <strong>' . $obj->student_name . '</strong><br/><br/>';
-                    $message .= 'You have obtain following marks at your <strong>' . $obj->exam_name . ' </strong> Exam <br/><br/>';
-                }
-                if ($data['receiver_role_id'] == GUARDIAN) {
-                    $message = 'Hi, Your child <strong>' . $obj->student_name . '</strong><br/><br/>';
-                    $message .= 'has been obtain following marks at his <strong>' . $obj->exam_name . ' </strong> Exam <br/><br/>';
-                }
-
-                $receiver_email = $this->mark->get_receiver_email($data['receiver_role_id'], $obj->student_id);
+                $message = '<br/>';
+                
+                $receiver = $this->mark->get_receiver($data['school_id'], $data['role_id'], $obj->student_id, $obj->guardian_id);
 
                 // message marks parts
-                $marks = $this->mark->get_marks_list_by_student($data['exam_id'], $data['class_id'], $obj->student_id);
-                foreach ($marks as $mark) {
-                    $message .= '<strong>' . $mark->subject . ':</strong> <strong>' . $mark->obtain_mark . '</strong> out of <strong>' . $mark->exam_mark . '</strong><br/><br/>';
-                }
+                $marks = $this->mark->get_marks_list_by_student($data['school_id'], $data['exam_id'], $data['class_id'], $obj->student_id, $school->academic_year_id);
+                                             
+                if(!empty($marks) && $receiver->email != ''){
+                    
+                    foreach ($marks as $mark) {
+                        $message .= '<strong>' . $mark->subject . ':</strong> <strong>' . $mark->obtain_total_mark . '</strong> out of <strong>' . $mark->exam_total_mark . '</strong><br/>';
+                    }
 
-                $message .= $data['note'] . '<br/><br/>';
-                $message .= 'Thank you<br/>';
-                $message .= $setting->school_name;
+                    
+                    $body = get_formatted_body($data['body'], $data['role_id'], $receiver->id);
+                    if (strpos($body, '[exam_mark]') !== false) {
+                        $body = str_replace('[exam_mark]', $message, $body);
+                    }else{
+                        $body = $body . ' ' . $message;
+                    }  
 
-                $this->email->to($receiver_email);
-                $this->email->subject($data['subject']);
-                $this->email->message($message);
-                $this->email->send();
+                    $this->email->to($receiver->email);
+                    $this->email->subject($data['subject']);
+                    $this->email->message($body);
+                    $this->email->send();
+
+                    $receivers .= $receiver->name.',';  
+                  
+                }                 
             }
+            
+            // update emails table 
+            $this->mark->update('mark_emails', array('receivers' => $receivers), array('id' => $data['email_id'])); 
            
         }
     }
@@ -228,12 +292,15 @@ class Mail extends MY_Controller {
 
         check_permission(DELETE);
 
+        $email = $this->mark->get_single('mark_emails', array('id' => $id));
+        
         if ($this->mark->delete('mark_emails', array('id' => $id))) {
+            
+             create_log('Has been deleted an mark Email : '.$email->subject);
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
         redirect('exam/mail');
     }
-
 }

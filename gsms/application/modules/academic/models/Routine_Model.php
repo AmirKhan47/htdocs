@@ -9,15 +9,24 @@ class Routine_Model extends MY_Model {
         parent::__construct();
     }
     
-     public function get_section_list($class_id = null ){
+     public function get_section_list($class_id = null, $school_id = null ){
         
          if(!$class_id){
              return;
          }
+        
+         
         $this->db->select('S.*, C.name AS class_name');
         $this->db->from('sections AS S');
         $this->db->join('classes AS C', 'C.id = S.class_id', 'left');
         $this->db->where('S.class_id', $class_id);
+        
+                
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            $this->db->where('S.school_id', $this->session->userdata('school_id'));
+        }else if($school_id){
+            $this->db->where('S.school_id', $school_id);
+        }
         
         return $this->db->get()->result();
         

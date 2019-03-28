@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Route.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Route
  * @description     : Manage transport route.  
@@ -37,8 +37,14 @@ class Route extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['routes'] = $this->route->get_list('routes', array('status' => 1));
-        $this->data['add_vehicles'] = $this->route->get_vehicle_list();
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id'); 
+            $this->data['add_vehicles'] = $this->route->get_vehicle_list($condition['school_id'], '');
+        }        
+        $this->data['routes'] = $this->route->get_route_list();        
+        
        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_route') . ' | ' . SMS);
@@ -65,6 +71,8 @@ class Route extends MY_Controller {
 
                 $insert_id = $this->route->insert('routes', $data);
                 if ($insert_id) {
+                    
+                    $this->_save_stop($insert_id);
                     success($this->lang->line('insert_success'));
                     redirect('transport/route/index');
                 } else {
@@ -76,8 +84,14 @@ class Route extends MY_Controller {
             }
         }
 
-        $this->data['routes'] = $this->route->get_list('routes', array('status' => 1));
-        $this->data['add_vehicles'] = $this->route->get_vehicle_list();
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['add_vehicles'] = $this->route->get_vehicle_list($condition['school_id'], '');            
+        }        
+        $this->data['routes'] = $this->route->get_route_list();
+        
         
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('route') . ' | ' . SMS);
@@ -110,6 +124,8 @@ class Route extends MY_Controller {
                 $updated = $this->route->update('routes', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     $this->_save_stop($this->input->post('id'));
                     success($this->lang->line('update_success'));
                     redirect('transport/route/index');
                 } else {
@@ -131,9 +147,18 @@ class Route extends MY_Controller {
         }
         
        
-        $this->data['edit_vehicles'] = $this->route->get_vehicle_list($this->data['route']->id); 
-        $this->data['add_vehicles'] = $this->route->get_vehicle_list();
-        $this->data['routes'] = $this->route->get_list('routes', array('status' => 1));
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['edit_vehicles'] = $this->route->get_vehicle_list($condition['school_id'], $this->data['route']->id); 
+            
+        }
+        
+        $this->data['routes'] = $this->route->get_route_list();
+        $this->data['route_stops'] = $this->route->get_list('route_stops', array('status' => 1,'route_id'=>$id), '','', '','','id','ASC');
+        
+        $this->data['school_id'] = $this->data['route']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('route') . ' | ' . SMS);
@@ -158,13 +183,37 @@ class Route extends MY_Controller {
           redirect('transport/route/index');
         }
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+        }        
+        $this->data['routes'] = $this->route->get_route_list();
+        
         $this->data['route'] = $this->route->get_single('routes', array('id' => $id));
-        $this->data['add_vehicles'] = $this->route->get_vehicle_list();
-        $this->data['routes'] = $this->route->get_list('routes', array('status' => 1));
         
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('route') . ' | ' . SMS);
         $this->layout->view('route/index', $this->data);
+    }
+    
+    
+            
+     /*****************Function get_single_route**********************************
+     * @type            : Function
+     * @function name   : get_single_route
+     * @description     : "Load single route information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_route(){
+        
+       $route_id = $this->input->post('route_id');
+       
+       $this->data['route'] = $this->route->get_single_route($route_id);
+       $this->data['route_stops'] = $this->route->get_list('route_stops', array('status' => 1,'route_id'=>$route_id), '','', '','','id','ASC');
+       echo $this->load->view('route/get-single-route', $this->data);
     }
 
         
@@ -180,11 +229,11 @@ class Route extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div route="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('title', $this->lang->line('transport_route'), 'trim|required|callback_title');
         $this->form_validation->set_rules('vehicle_ids', $this->lang->line('assign_vehicle'), 'trim|callback_vehicle_ids');
         $this->form_validation->set_rules('route_start', $this->lang->line('route_start'), 'trim|required');
         $this->form_validation->set_rules('route_end', $this->lang->line('route_end'), 'trim|required');
-        $this->form_validation->set_rules('fare', $this->lang->line('route_fare'), 'trim');
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
     }
 
@@ -217,17 +266,17 @@ class Route extends MY_Controller {
     * ********************************************************** */ 
     public function title() {
         if ($this->input->post('id') == '') {
-            $route = $this->route->duplicate_check($this->input->post('title'));
+            $route = $this->route->duplicate_check($this->input->post('school_id'), $this->input->post('title'));
             if ($route) {
-                $this->form_validation->set_message('title', 'This route title alredy exists');
+                $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $route = $this->route->duplicate_check($this->input->post('title'), $this->input->post('id'));
+            $route = $this->route->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('id'));
             if ($route) {
-                $this->form_validation->set_message('title', 'This route title alredy exists');
+                $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
@@ -249,10 +298,10 @@ class Route extends MY_Controller {
     private function _get_posted_route_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'route_start';
         $items[] = 'route_end';
-        $items[] = 'fare';
         $items[] = 'note';
 
         $data = elements($items, $_POST);
@@ -324,7 +373,12 @@ class Route extends MY_Controller {
         $route = $this->route->get_single('routes', array('id' => $id));
 
         if ($this->route->delete('routes', array('id' => $id))) {
+            
+            
+            // delete route stop
+            $this->route->delete('route_stops', array('route_id' => $id));
 
+            // update vehicle assign status
             $ids = explode(',', $route->vehicle_ids);
             if (!empty($ids)) {
                 foreach ($ids as $key => $value) {
@@ -336,6 +390,102 @@ class Route extends MY_Controller {
             error($this->lang->line('delete_failed'));
         }
         redirect('transport/route/index');
+    }
+    
+    
+        
+    /*****************Function _save_stop**********************************
+    * @type            : Function
+    * @function name   : _save_stop
+    * @description     : delete "Save bus stop " into database                  
+    *                       
+    * @param           : $route_id integer value
+    * @return          : null 
+    * ********************************************************** */
+    private function _save_stop($route_id){
+        
+        $school_id = $this->input->post('school_id');
+        
+        foreach($this->input->post('stop_name') as $key=>$value){
+            
+            if($value){
+                
+                $data = array();
+                $exist = '';
+                //$stop_id = @$this->input->post('stop_id')[$key];
+                $stop_id = @$_POST['stop_id'][$key];
+
+                if($stop_id){
+                   $exist = $this->route->get_single('route_stops', array('route_id'=>$route_id, 'id'=>$stop_id));
+                }  
+
+                $data['school_id'] = $school_id;
+                $data['stop_name'] = $value;
+                $data['stop_km']   = @$_POST['stop_km'][$key];
+                $data['stop_fare'] = @$_POST['stop_fare'][$key];
+
+                if ($this->input->post('id') && $exist) {                
+
+                    $data['modified_at'] = date('Y-m-d H:i:s');
+                    $data['modified_by'] = logged_in_user_id();                
+                    $this->route->update('route_stops', $data, array('id'=>$exist->id));
+
+                } else {
+                    
+                    $data['route_id']   = $route_id;                                   
+                    $data['status']     = 1;
+                    $data['created_at'] = date('Y-m-d H:i:s');
+                    $data['created_by'] = logged_in_user_id(); 
+                    $this->route->insert('route_stops', $data);
+                }
+            }
+        }
+    }
+    
+    
+    public function remove_stop(){
+        
+        $stop_id = $this->input->post('stop_id');
+        echo $this->route->delete('route_stops', array('id' => $stop_id));
+    }
+    
+    
+            
+    /*****************Function get_vehicle_by_school**********************************
+     * @type            : Function
+     * @function name   : get_vehicle_by_school
+     * @description     : Load "Book Listing" by ajax call                
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    
+    public function get_vehicle_by_school() {
+        
+        $school_id  = $this->input->post('school_id');
+        $route_id  = $this->input->post('route_id');
+         
+        $vehicles = $this->route->get_vehicle_list($school_id, $route_id);
+        
+        $str = ' ';
+      
+        if (!empty($vehicles)) {
+            
+            if($route_id){
+                $route = $this->route->get_single('routes', array('id' => $route_id));
+                $ids = explode(',', $route->vehicle_ids);
+                $checked = '';
+                foreach ($vehicles as $obj) { 
+                    $checked = in_array($obj->id, $ids) ? 'checked="checked"': '';
+                    $str .= '<input  class=""  name="vehicle_ids[]" id="vehicle_ids[]"  value="'.$obj->id.'" '.$checked.' type="checkbox" required="required">'.$obj->number.'<br/>';
+                }
+            }else{
+                foreach ($vehicles as $obj) {                
+                    $str .= '<input  class=""  name="vehicle_ids[]" id="vehicle_ids[]" value="'. $obj->id.'" type="checkbox" required="required">'.$obj->number.'<br/>';
+                }
+            }            
+        }
+
+        echo $str;
     }
 
 }

@@ -1,62 +1,60 @@
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-xl-12"><h1 class="page-title"><?php echo $event->title; ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('event'); ?> <?php echo $this->lang->line('detail'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href="<?php echo site_url('events'); ?>"><?php echo $this->lang->line('events'); ?></a></li>
+            <li><a href="javascript:void(0);"><?php echo $this->lang->line('event'); ?> <?php echo $this->lang->line('detail'); ?></a></li>
+        </ul>
     </div>
 </section>
-
-<section class="content-area">
-    <div class="container">       
-            <div class="row">
-                <div class="col-md-12 col-lg-8">  
-                    <div class="detail-event">
-                        <div class="event-detail-img">
-                            <img src="<?php echo UPLOAD_PATH; ?>/event/<?php echo $event->image; ?>" alt="">
-                        </div>
-                        <div class="event-content">
-                            <div class="event-meta">
-                                <div class="event-for"><span><?php echo $this->lang->line('event_for'); ?></span>: <?php echo $event->name ? $event->name : $this->lang->line('all'); ?></div>
-                                <div class="event-place"><span><?php echo $this->lang->line('event_place'); ?></span>: <?php echo $event->event_place; ?></div>
-                                <div class="event-date"><span><?php echo $this->lang->line('start_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($event->event_from)); ?></div>
-                                <div class="event-date"><span><?php echo $this->lang->line('end_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($event->event_to)); ?></div>
-                                <div class="event-info"><span><?php echo $this->lang->line('event_info'); ?></span>: <?php echo $event->note; ?></div>
-                            </div>
-                            
-                        </div>
+<section class="page-event-details-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-12 col-sm-12 col-12">
+                <div class="page-event-details">
+                    <div class="banner">
+                        <img src="<?php echo UPLOAD_PATH; ?>event/<?php echo $event->image; ?>" alt="">
                     </div>
-
+                    <h2 class="title"><?php echo $event->title; ?></h2>
+                    <ul class="event-meta">
+                        <li class="info"><span class="icon"><i class="fas fa-user"></i></span> <?php echo $event->event_for ? $event->event_for : $this->lang->line('all'); ?> (<?php echo $this->lang->line('event_for'); ?>)</li>
+                        <li class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($event->event_from)); ?> (<?php echo $this->lang->line('start_date'); ?>)</li>
+                        <li class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($event->event_to)); ?> (<?php echo $this->lang->line('end_date'); ?>)</li>
+                        <li class="info"><span class="icon"><i class="fas fa-map-marker-alt"></i></span> <?php echo $event->event_place; ?></li>
+                    </ul>
+                    <h2 class="info-title"><?php echo $this->lang->line('event'); ?> <?php echo $this->lang->line('information'); ?> :</h2>
+                    <p class="text"><?php echo $event->note; ?></p>
                 </div>
-
-                <div class="col-md-12 col-lg-4">
-                    <section class="right-pane">
-                        <h2 class="widget-title"><?php echo $this->lang->line('latest'); ?> <?php echo $this->lang->line('event'); ?></h2>                  
-
-                         <?php if(isset($events) && !empty($events)) { ?>
-                            <?php foreach($events as $obj) { ?>
-                            <div class="col-md-12 col-sm-12">
-                                <div class="single-event-list">
-                                    <div class="event-img">
-                                        <a href="<?php echo site_url('event-detail'.$obj->id); ?>">
-                                            <img src="<?php echo UPLOAD_PATH; ?>/event/<?php echo $obj->image; ?>" alt="">
-                                        </a>
-                                    </div>
-                                        <div class="event-content">
-                                            <div class="event-meta">
-                                                <div class="event-title"><?php echo $obj->title; ?></div>
-                                                <div class="event-for"><span><?php echo $this->lang->line('event_for'); ?></span>: <?php echo $obj->name ? $obj->name : $this->lang->line('all'); ?></div>
-                                                <div class="event-place"><span><?php echo $this->lang->line('event_place'); ?></span>: <?php echo $obj->event_place; ?></div>
-                                                <div class="event-date"><span><?php echo $this->lang->line('start_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($obj->event_from)); ?></div>
-                                                <div class="event-date"><span><?php echo $this->lang->line('end_date'); ?></span>: <i class="far fa-clock"></i> <?php echo date('M j, Y', strtotime($obj->event_to)); ?></div>
-                                            </div>
-                                            <div class="more-link"><a href="<?php echo site_url('event-detail'.$obj->id); ?>" class="btn-link"><?php echo $this->lang->line('read_more'); ?> <i class="fa fa-long-arrow-right"></i></a></div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php } ?>
-                        <?php } ?>
-                    </section> 
+            </div>
+            
+            <div class="col-lg-4 offset-lg-0 col-md-6 offset-md-3 col-sm-8 offset-sm-2 col-12">
+                <div class="sidebar">
+                    <div class="sidebar-widget">
+                        <h2 class="sidebar-title"><?php echo $this->lang->line('latest'); ?> <?php echo $this->lang->line('event'); ?></h2>
+                        <ul class="widget-event">
+                            <?php if(isset($events) && !empty($events)){ ?> 
+                                <?php foreach($events AS $obj){ ?>
+                                <li>
+                                    <a href="<?php echo site_url('event-detail/'.$obj->id); ?>">
+                                        <span class="img"><img src="<?php echo UPLOAD_PATH; ?>event/<?php echo $obj->image; ?>" alt=""></span>
+                                        <span class="content">
+                                            <span class="title"><?php echo $obj->title; ?></span>
+                                            <span class="event-meta">
+                                                <span class="info"><span class="icon"><i class="fas fa-user"></i></span> <?php echo $obj->event_for ? $obj->event_for : $this->lang->line('all'); ?> (<?php echo $this->lang->line('event_for'); ?>)</span>
+                                                <span class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($obj->event_from)); ?> (<?php echo $this->lang->line('start_date'); ?>)</span>
+                                                <span class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($obj->event_to)); ?> (<?php echo $this->lang->line('end_date'); ?>)</span>
+                                                <span class="info"><span class="icon"><i class="fas fa-map-marker-alt"></i></span> <?php echo $obj->event_place; ?></span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>    
+                                <?php } ?>
+                            <?php } ?>
+                        </ul>
+                    </div>
                 </div>
-            </div>       
+            </div>
+        </div>
     </div>
 </section>

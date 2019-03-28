@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Sms.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Sms
  * @description     : Manage application sms gateway settings.  
@@ -19,8 +19,14 @@ class Sms extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Setting_Model', 'setting', true);
-        $this->data['setting'] = $this->setting->get_single('sms_settings', array('status' => 1));
+        $this->load->model('Setting_Model', 'setting', true);   
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['setting'] = $this->setting->get_single('sms_settings', $condition);
+        }
     }
 
             
@@ -98,6 +104,7 @@ class Sms extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('clickatell_username', $this->lang->line('username'), 'trim|required');
         $this->form_validation->set_rules('clickatell_password', $this->lang->line('password'), 'trim|required');
         $this->form_validation->set_rules('clickatell_api_key', $this->lang->line('api_key'), 'trim|required');
@@ -163,6 +170,7 @@ class Sms extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('twilio_account_sid', $this->lang->line('account_sid'), 'trim|required');
         $this->form_validation->set_rules('twilio_auth_token', $this->lang->line('auth_token'), 'trim|required');
         $this->form_validation->set_rules('twilio_from_number', $this->lang->line('from_number'), 'trim|required');
@@ -226,6 +234,7 @@ class Sms extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('bulk_username', $this->lang->line('username'), 'trim|required');
         $this->form_validation->set_rules('bulk_password', $this->lang->line('password'), 'trim|required');
         $this->form_validation->set_rules('bulk_status', $this->lang->line('is_active'), 'trim|required');
@@ -288,6 +297,7 @@ class Sms extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('msg91_auth_key', $this->lang->line('auth_key'), 'trim|required');
         $this->form_validation->set_rules('msg91_sender_id', $this->lang->line('sender_id'), 'trim|required');
         $this->form_validation->set_rules('msg91_status', $this->lang->line('is_active'), 'trim|required');
@@ -351,12 +361,147 @@ class Sms extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('plivo_auth_id', $this->lang->line('auth_id'), 'trim|required');
         $this->form_validation->set_rules('plivo_auth_token', $this->lang->line('auth_token'), 'trim|required');
         $this->form_validation->set_rules('plivo_from_number', $this->lang->line('from_number'), 'trim|required');
         $this->form_validation->set_rules('plivo_status', $this->lang->line('is_active'), 'trim|required');
     }
 
+    
+    /*****************Function textlocal**********************************
+    * @type            : Function
+    * @function name   : textlocal
+    * @description     : Load "textlocal Setting Tab" user interface                 
+    *                     and process to save textlocal setting inormation into database  
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function textlocal() {
+
+        check_permission(EDIT);
+
+        if ($_POST) {
+            $this->_prepare_textlocal_validation();
+
+            if ($this->form_validation->run() == TRUE) {
+                $data = $this->_get_posted_sms_data();
+                if ($this->input->post('id')) {
+                    $update = $this->setting->update('sms_settings', $data, array('id' => $this->input->post('id')));
+                    if ($update) {
+                        success($this->lang->line('update_success'));
+                    } else {
+                        error($this->lang->line('update_failed'));
+                    }
+                } else {
+                    $insert_id = $this->setting->insert('sms_settings', $data);
+                    if ($insert_id) {
+                        success($this->lang->line('insert_success'));
+                    } else {
+                        error($this->lang->line('insert_failed'));
+                    }
+                }
+                redirect('setting/sms/textlocal');
+            } else {
+                $this->data = $_POST;
+            }
+        }
+
+        $this->data['textlocal'] = TRUE;
+        $this->layout->title($this->lang->line('sms') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
+        $this->layout->view('sms/index', $this->data);
+    }
+
+    
+                
+    /*****************Function _prepare_textlocal_validation**********************************
+    * @type            : Function
+    * @function name   : _prepare_textlocal_validation
+    * @description     : Process "textlocal Gateway" user input data validation                 
+    *                       
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    private function _prepare_textlocal_validation() {
+        $this->load->library('form_validation');
+        $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
+
+        $this->form_validation->set_rules('textlocal_username', $this->lang->line('text_local').' '.$this->lang->line('username'), 'trim');
+        $this->form_validation->set_rules('textlocal_hash_key', $this->lang->line('text_local').' '.$this->lang->line('hash_key'), 'trim');
+        $this->form_validation->set_rules('textlocal_sender_id', $this->lang->line('text_local').' '.$this->lang->line('sender_id'), 'trim');
+        $this->form_validation->set_rules('textlocal_status', $this->lang->line('text_local').' '.$this->lang->line('is_active'), 'trim');
+        
+    }
+
+  
+        
+    /*****************Function smscountry**********************************
+    * @type            : Function
+    * @function name   : smscountry
+    * @description     : Load "smscountry Setting Tab" user interface                 
+    *                     and process to save smscountry setting inormation into database  
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function smscountry() {
+
+        check_permission(EDIT);
+
+        if ($_POST) {
+            $this->_prepare_smscountry_validation();
+
+            if ($this->form_validation->run() == TRUE) {
+                $data = $this->_get_posted_sms_data();
+                if ($this->input->post('id')) {
+                    $update = $this->setting->update('sms_settings', $data, array('id' => $this->input->post('id')));
+                    if ($update) {
+                        success($this->lang->line('update_success'));
+                    } else {
+                        error($this->lang->line('update_failed'));
+                    }
+                } else {
+                    $insert_id = $this->setting->insert('sms_settings', $data);
+                    if ($insert_id) {
+                        success($this->lang->line('insert_success'));
+                    } else {
+                        error($this->lang->line('insert_failed'));
+                    }
+                }
+                redirect('setting/sms/smscountry');
+            } else {
+                $this->data = $_POST;
+            }
+        }
+
+        $this->data['smscountry'] = TRUE;
+        $this->layout->title($this->lang->line('sms') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
+        $this->layout->view('sms/index', $this->data);
+    }
+
+    
+                
+    /*****************Function _prepare_smscountry_validation**********************************
+    * @type            : Function
+    * @function name   : _prepare_smscountry_validation
+    * @description     : Process "smscountry Gateway" user input data validation                 
+    *                       
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    private function _prepare_smscountry_validation() {
+        $this->load->library('form_validation');
+        $this->form_validation->set_error_delimiters('<div class="error-message" style="text-align: center;color: red;">', '</div>');
+
+        $this->form_validation->set_rules('smscountry_username', $this->lang->line('sms_country').' '.$this->lang->line('username'), 'trim');
+        $this->form_validation->set_rules('smscountry_password', $this->lang->line('sms_country').' '.$this->lang->line('password'), 'trim');
+        $this->form_validation->set_rules('smscountry_sender_id', $this->lang->line('sms_country').' '.$this->lang->line('sender_id'), 'trim');
+        $this->form_validation->set_rules('smscountry_status', $this->lang->line('sms_country').' '.$this->lang->line('is_active'), 'trim');
+        
+    }
+
+    
+    
+        
            
     /*****************Function _get_posted_sms_data**********************************
     * @type            : Function
@@ -397,13 +542,32 @@ class Sms extends MY_Controller {
             $items[] = 'msg91_sender_id';
             $items[] = 'msg91_status';
         }
+        
         if ($this->input->post('plivo')) {
+            
             $items[] = 'plivo_auth_id';
             $items[] = 'plivo_auth_token';
             $items[] = 'plivo_from_number';
             $items[] = 'plivo_status';
         }
+        
+        if ($this->input->post('textlocal')) {
+            
+            $items[] = 'textlocal_username';
+            $items[] = 'textlocal_hash_key';
+            $items[] = 'textlocal_sender_id';
+            $items[] = 'textlocal_status';
+        }
+        
+        if ($this->input->post('smscountry')) {
+            
+            $items[] = 'smscountry_username';
+            $items[] = 'smscountry_password';
+            $items[] = 'smscountry_sender_id';
+            $items[] = 'smscountry_status';
+        }
 
+        $items[] = 'school_id';
         $data = elements($items, $_POST);
 
         if ($this->input->post('id')) {
@@ -417,5 +581,4 @@ class Sms extends MY_Controller {
 
         return $data;
     }
-
 }

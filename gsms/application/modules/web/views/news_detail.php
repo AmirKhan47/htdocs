@@ -1,47 +1,70 @@
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12"><h1 class="page-title"><?php echo $news->title; ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('news'); ?> <?php echo $this->lang->line('detail'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href="<?php echo site_url('news'); ?>"><?php echo $this->lang->line('news'); ?></a></li>
+            <li><a href="javascript:void(0);"><?php echo $this->lang->line('news'); ?> <?php echo $this->lang->line('detail'); ?></a></li>
+        </ul>
     </div>
 </section>
 
-<section class="content-area">
+<section class="page-news-details-area">
     <div class="container">
-
         <div class="row">
-             <div class="col-md-12 col-lg-8"> 
-            <article>
-                <div class="news-content">                   
-                        <img src="<?php echo UPLOAD_PATH; ?>/news/<?php echo $news->image; ?>" alt="Foto" class="img-fluid">                  
-                    <div class="news-date"><i class="fa fa-calendar"></i> <?php echo date('M j, Y', strtotime($news->date)); ?></div>
-                    <p>
-                       <?php echo $news->news; ?>
-                    </p>                   
-                </div>                   
-            </article>
-        </div>
-
-            <div class="col-md-12 col-lg-4">
-                <section class="right-pane">
-                    <h2 class="widget-title"><?php echo $this->lang->line('latest'); ?> <?php echo $this->lang->line('news'); ?></h2>                  
-
-                    <?php if (isset($news_list) && !empty($news_list)) { ?>
-                        <?php foreach ($news_list as $obj) { ?>
-                            <article>
-                                <div class="news-content">
-                                    <a href="<?php echo site_url('news-detail/' . $obj->id); ?>">
-                                        <img src="<?php echo UPLOAD_PATH; ?>/news/<?php echo $obj->image; ?>" alt="Foto" class="img-fluid">
-                                    </a>
-                                    <a href="<?php echo site_url('news-detail/' . $obj->id); ?>"><h3><?php echo $obj->title; ?></h3></a>
-                                    <div class="news-date"><i class="fa fa-calendar"></i> <?php echo date('M j, Y', strtotime($obj->date)); ?></div>                                    
-                                    <div class="more-link"><a href="<?php echo site_url('news-detail/' . $obj->id); ?>" class="btn-link"><?php echo $this->lang->line('read_more'); ?> <i class="fa fa-long-arrow-right"></i></a></div>
-                                </div>                   
-                            </article>
-                        <?php } ?>
-                    <?php } ?>
-                </section> 
+            <div class="col-lg-8 col-md-12 col-sm-12 col-12">
+                <div class="page-news-details">
+                    
+                    <div class="banner">
+                        <img src="<?php echo UPLOAD_PATH; ?>news/<?php echo $news->image; ?>" alt="">
+                    </div>
+                    
+                    <ul class="meta">
+                        <li class="info"><span class="icon"><i class="fas fa-user"></i></span> <?php echo $this->lang->line('by'); ?> / <?php echo $news->name; ?></li>
+                        <li class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($news->date)); ?></li>
+                    </ul>
+                    
+                    <h2 class="title"><?php echo $news->title; ?></h2>                   
+                    <p class="text"><?php echo $news->news; ?></p>                   
+                    <div class="share-news" style="display: none;">
+                        <h4 class="name">Share :</h4>
+                        <ul class="social">
+                            <li><a class="icon" href="#"><i class="fab fa-facebook-f"></i></a></li>
+                            <li><a class="icon" href="#"><i class="fab fa-twitter"></i></a></li>
+                            <li><a class="icon" href="#"><i class="fab fa-linkedin-in"></i></a></li>
+                            <li><a class="icon" href="#"><i class="fab fa-google-plus-g"></i></a></li>
+                        </ul>
+                    </div>                    
+                </div>
             </div>
+            
+            
+            <div class="col-lg-4 offset-lg-0 col-md-6 offset-md-3 col-sm-8 offset-sm-2 col-12">
+                <div class="sidebar">
+                    <div class="sidebar-widget">
+                        <h2 class="sidebar-title"><?php echo $this->lang->line('latest'); ?> <?php echo $this->lang->line('news'); ?></h2>
+                        <ul class="widget-news">
+                           <?php if(isset($latest_news) && !empty($latest_news)){ ?> 
+                                <?php foreach($latest_news AS $obj ){ ?> 
+                                 <li>
+                                     <a href="<?php echo site_url('news-detail/'.$obj->id); ?>">
+                                         <span class="img"><img src="<?php echo UPLOAD_PATH; ?>news/<?php echo $obj->image; ?>" alt=""></span>
+                                         <span class="content">
+                                             <span class="meta">
+                                                 <span class="info"><span class="icon"><i class="fas fa-user"></i></span> <?php echo $this->lang->line('by'); ?> / <?php echo $obj->name; ?></span>
+                                                 <span class="info"><span class="icon"><i class="far fa-calendar-alt"></i></span> <?php echo date($this->global_setting->date_format, strtotime($obj->date)); ?></span>
+                                             </span>
+                                             <span class="title"><?php echo $obj->title; ?></span>
+                                         </span>
+                                     </a>
+                                 </li>    
+                                <?php } ?>
+                           <?php } ?>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 </section>

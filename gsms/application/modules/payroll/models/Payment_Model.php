@@ -13,7 +13,7 @@ class Payment_Model extends MY_Model {
         
         if ($role_id == TEACHER) {
             
-            $this->db->select('T.*, T.responsibility AS designation, SG.*, U.email, U.role_id, U.status AS login_status ');
+            $this->db->select('T.*, T.responsibility AS designation, SG.*, U.username, U.role_id, U.status AS login_status ');
             $this->db->from('teachers AS T');
             $this->db->join('users AS U', 'U.id = T.user_id', 'left');  
             $this->db->join('salary_grades AS SG', 'SG.id = T.salary_grade_id', 'left'); 
@@ -22,7 +22,7 @@ class Payment_Model extends MY_Model {
             
         } else { 
             
-            $this->db->select('E.*, SG.*, U.email, U.role_id, D.name AS designation, U.status AS login_status ');
+            $this->db->select('E.*, SG.*, U.username, U.role_id, D.name AS designation, U.status AS login_status ');
             $this->db->from('employees AS E');
             $this->db->join('users AS U', 'U.id = E.user_id', 'left');
             $this->db->join('designations AS D', 'D.id = E.designation_id', 'left'); 
@@ -43,11 +43,11 @@ class Payment_Model extends MY_Model {
         return $this->db->get('salary_payments')->num_rows();            
     }
     
-    public function get_payment_list($user_id, $payment_to){
+    public function get_payment_list($school_id, $user_id, $payment_to){
         
          if ($payment_to == 'employee') {
              
-            $this->db->select('SP.*, SG.grade_name, E.name, E.photo,  U.email, U.role_id, D.name AS designation, U.status AS login_status ');
+            $this->db->select('SP.*, SG.grade_name, E.name, E.photo,  U.username, U.role_id, D.name AS designation, U.status AS login_status ');
             $this->db->from('salary_payments AS SP');
             $this->db->join('employees AS E', 'E.user_id = SP.user_id', 'left'); 
             $this->db->join('salary_grades AS SG', 'SG.id = E.salary_grade_id', 'left');            
@@ -57,6 +57,8 @@ class Payment_Model extends MY_Model {
                 $this->db->where('SP.user_id', $user_id);
             }
             
+            $this->db->where('SP.school_id', $school_id);
+            
             $this->db->where('SP.payment_to', 'employee');
             $this->db->order_by('SP.salary_month', 'ASC');
            
@@ -64,7 +66,7 @@ class Payment_Model extends MY_Model {
             
          }else{
            
-            $this->db->select('SP.*, SG.grade_name, T.name, T.photo,  T.responsibility AS designation, U.email, U.role_id, U.status AS login_status ');
+            $this->db->select('SP.*, SG.grade_name, T.name, T.photo,  T.responsibility AS designation, U.username, U.role_id, U.status AS login_status ');
             $this->db->from('salary_payments AS SP');
             $this->db->join('teachers AS T', 'T.user_id = SP.user_id', 'left'); 
             $this->db->join('users AS U', 'U.id = T.user_id', 'left');  
@@ -84,12 +86,13 @@ class Payment_Model extends MY_Model {
         
         if ($payment_to == 'employee') {
              
-            $this->db->select('SP.*, SG.grade_name, E.name, E.photo,  U.email, U.role_id, D.name AS designation, U.status AS login_status ');
+            $this->db->select('SP.*, S.school_name, SG.grade_name, E.name, E.photo,  U.username, U.role_id, D.name AS designation, U.status AS login_status ');
             $this->db->from('salary_payments AS SP');
             $this->db->join('employees AS E', 'E.user_id = SP.user_id', 'left'); 
             $this->db->join('salary_grades AS SG', 'SG.id = E.salary_grade_id', 'left');            
             $this->db->join('users AS U', 'U.id = E.user_id', 'left');
-            $this->db->join('designations AS D', 'D.id = E.designation_id', 'left');          
+            $this->db->join('designations AS D', 'D.id = E.designation_id', 'left');  
+            $this->db->join('schools AS S', 'S.id = SP.school_id', 'left');
             $this->db->where('SP.id', $payment_id);
             $this->db->where('SP.payment_to', 'employee');
            
@@ -97,11 +100,12 @@ class Payment_Model extends MY_Model {
             
          }else{
            
-            $this->db->select('SP.*, SG.grade_name, T.name, T.photo,  T.responsibility AS designation, U.email, U.role_id, U.status AS login_status ');
+            $this->db->select('SP.*, S.school_name, SG.grade_name, T.name, T.photo,  T.responsibility AS designation, U.username, U.role_id, U.status AS login_status ');
             $this->db->from('salary_payments AS SP');
             $this->db->join('teachers AS T', 'T.user_id = SP.user_id', 'left'); 
             $this->db->join('users AS U', 'U.id = T.user_id', 'left');  
             $this->db->join('salary_grades AS SG', 'SG.id = T.salary_grade_id', 'left'); 
+            $this->db->join('schools AS S', 'S.id = SP.school_id', 'left');
             $this->db->where('SP.id', $payment_id);             
             $this->db->where('SP.payment_to', 'teacher'); 
             return $this->db->get()->row();

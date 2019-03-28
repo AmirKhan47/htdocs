@@ -22,9 +22,44 @@
     </div>
 </div>
 <div class="portlet-body">
+    <form action="<?php echo base_url(); ?>challan/edit1" id="form_sample_18" class="" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="student_id" value="<?php echo $student_id; ?>">
+        <input type="hidden" name="challan_id" value="<?php echo $challan['id']; ?>">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <div class="form-group">
+                        <label class="control-label col-md-2">Type<span class="required" aria-required="true">*</span></label>
+                        <div class="col-md-4">
+                            <div class="input-icon right">
+                                <i class="fa"></i>
+                                <select onchange="$('#type_btn').click()" type="text" data-rule-required="true" id="fee_structure_type" name="fee_structure_type" class="form-control"  value="">
+                                    <option value="<?php echo $fee_structure['fee_structure_type']; ?>" selected><?php echo $fee_structure['fee_structure_type']; ?>
+                                    <option value="New">New</option>
+                                    <option value="Old">Old</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <div class="form-group">
+                        <!-- <label class="control-label col-md-2"></label> -->
+                        <div class="col-md-2">
+                        <input type="submit" id="type_btn" class="form-group btn btn-primary" name="submit" value="submit" style="display: none;">
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <br>
     <form action="<?php echo base_url(); ?>challan/update" id="form_sample_16" class="form-horizontal" method="post" enctype="multipart/form-data">
         <input type="hidden" name="student_id" value="<?php echo $student_id; ?>">
         <input type="hidden" name="challan_id" value="<?php echo $challan['id']; ?>">
+        <input type="hidden" name="fee_structure_id" value="<?php echo $fee_structure['fee_structure_id']; ?>">
         <div class="form-body">
             <div class="alert alert-danger display-hide">
                 <button class="close" data-close="alert"></button> You have some form errors. Please check below. 
@@ -48,7 +83,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" data-rule-required="true" data-rule-minlength="1" data-rule-maxlength="11"  id="admission_fee" name="admission_fee" class="form-control" placeholder="" value="<?php echo $fee_structure['admission_fee']; ?>" readonly>
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-required="true" data-rule-minlength="1" data-rule-maxlength="11"  id="admission_fee" name="admission_fee" class="form-control" placeholder="" value="<?php echo $fee_structure['admission_fee']; ?>" readonly>
                                                 <span class="help-block"></span>
                                             </div>
                                         </div>
@@ -56,7 +91,7 @@
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <i class="fa"></i>
-                                            <input type="text" pattern="^[0-9]*$" max='100' data-rule-minlength="1" data-rule-maxlength="11" id="admission_fee_discount" name="admission_fee_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['admission_fee_discount']; ?>">
+                                            <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" max='100' data-rule-minlength="1" data-rule-maxlength="11" id="admission_fee_discount" name="admission_fee_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['admission_fee_discount']; ?>">
                                             <span class="input-group-addon">
                                                 <i class="fa fa-percent font-red">%</i>
                                             </span>
@@ -67,7 +102,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" data-rule-required="true" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="admission_fee_total" name="admission_fee_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_admission_fee']; ?>">
+                                                <input type="text" data-rule-required="true" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="admission_fee_total" name="admission_fee_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_admission_fee']; ?>">
                                                 <span class="help-block">Final Amount</span>
                                             </div>
                                         </div>
@@ -83,7 +118,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" data-rule-required="true" data-rule-minlength="1" data-rule-maxlength="11" id="security" name="security" class="form-control" placeholder="" value="<?php echo $fee_structure['security']; ?>" readonly>
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-required="true" data-rule-minlength="1" data-rule-maxlength="11" id="security" name="security" class="form-control" placeholder="" value="<?php echo $fee_structure['security']; ?>" readonly>
                                                 <span class="help-block"></span>
                                             </div>
                                         </div>
@@ -91,7 +126,7 @@
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <i class="fa"></i>
-                                            <input type="text" pattern="^[0-9]*$" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="security" name="security_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['security_discount']; ?>">
+                                            <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="security" name="security_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['security_discount']; ?>">
                                             <span class="input-group-addon">
                                                 <i class="fa fa-percent font-red">%</i>
                                             </span>
@@ -102,7 +137,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" data-rule-required="true" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="security" name="security_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_security_fee']; ?>">
+                                                <input type="text" data-rule-required="true" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="security" name="security_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_security_fee']; ?>">
                                                 <span class="help-block">Final Amount</span>
                                             </div>
                                         </div>
@@ -128,7 +163,7 @@
                                     <div class="col-md-3">
                                         <div class="input-group">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="tution_fee_discount" name="tution_fee_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['tution_fee_discount']; ?>">
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="tution_fee_discount" name="tution_fee_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['tution_fee_discount']; ?>">
                                                 <span class="input-group-addon">
                                                 <i class="fa fa-percent font-red">%</i>
                                             </span>
@@ -139,7 +174,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" data-rule-required="true" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="tution_fee_total" name="tution_fee_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_monthly_fee']; ?>">
+                                                <input type="text" data-rule-required="true" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="tution_fee_total" name="tution_fee_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_monthly_fee']; ?>">
                                                 <span class="help-block">Final Amount</span>
                                             </div>
                                         </div>
@@ -155,7 +190,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund" name="stationary_fund" class="form-control" placeholder="" value="<?php echo $fee_structure['stationary_fund']; ?>" readonly>
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund" name="stationary_fund" class="form-control" placeholder="" value="<?php echo $fee_structure['stationary_fund']; ?>" readonly>
                                                 <span class="help-block"></span>
                                             </div>
                                         </div>
@@ -163,7 +198,7 @@
                                     <div class="col-md-3">
                                         <div class="input-group">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund_discount" name="stationary_fund_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['stationary_fund_discount']; ?>">
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund_discount" name="stationary_fund_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['stationary_fund_discount']; ?>">
                                                 <span class="input-group-addon">
                                                 <i class="fa fa-percent font-red">%</i>
                                             </span>
@@ -174,7 +209,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" data-rule-required="true" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund_total" name="stationary_fund_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_annual_stationary_fee']; ?>">
+                                                <input type="text" data-rule-required="true" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="stationary_fund_total" name="stationary_fund_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_annual_stationary_fee']; ?>">
                                                 <span class="help-block">Final Amount</span>
                                             </div>
                                         </div>
@@ -192,14 +227,14 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund" name="annual_fund" class="form-control" placeholder="" value="<?php echo $fee_structure['annual_fund']; ?>" readonly>
+                                                <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund" name="annual_fund" class="form-control" placeholder="" value="<?php echo $fee_structure['annual_fund']; ?>" readonly>
                                                 <span class="help-block"></span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group">
-                                            <input type="text" pattern="^[0-9]*$" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund_discount" name="annual_fund_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['annual_fund_discount']; ?>">
+                                            <input type="text" pattern="[-+]?[0-9]*[.,]?[0-9]+" max='100' data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund_discount" name="annual_fund_discount" class="form-control" placeholder="%" value="<?php echo $student_fees_discounts['annual_fund_discount']; ?>">
                                             <span class="input-group-addon">
                                                 <i class="fa fa-percent font-red">%</i>
                                             </span>
@@ -210,7 +245,7 @@
                                         <div class="input-group">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <input type="text" data-rule-required="true" pattern="^[0-9]*$" data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund_total" name="annual_fund_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_annual_fee']; ?>">
+                                                <input type="text" data-rule-required="true" pattern="[-+]?[0-9]*[.,]?[0-9]+" data-rule-minlength="1" data-rule-maxlength="11"  id="annual_fund_total" name="annual_fund_total" class="form-control" placeholder="Total" value="<?php echo $challan['challan_annual_fee']; ?>">
                                                 <span class="help-block">Final Amount</span>
                                             </div>
                                         </div>
@@ -538,14 +573,14 @@
     {
         var percentage = $(this).val();
         var price      = $price.val();
-        var calcPrice  = (price - ( price * percentage / 100 )).toFixed();
+        var calcPrice  = (price - ( price * percentage / 100 )).toFixed(2);
         $discount.val( calcPrice );
     }
     function calculatePerc()
     {
         var discount = $(this).val();
         var price    = $price.val();
-        var calcPerc =  (100 - (discount * 100 / price)).toFixed();
+        var calcPerc =  (100 - (discount * 100 / price)).toFixed(2);
         $percentage.val( calcPerc );
     }
 </script>
@@ -558,7 +593,7 @@
     {
         var percentage1 = $(this).val();
         var price1      = $price1.val();
-        var calcPrice1  = (price1 - ( price1 * percentage1 / 100 )).toFixed();
+        var calcPrice1  = (price1 - ( price1 * percentage1 / 100 )).toFixed(2);
         $discount1.val( calcPrice1 );
     }
     function calculatePerc1()
@@ -579,7 +614,7 @@
     {
         var percentage2 = $(this).val();
         var price2      = $price2.val();
-        var calcPrice2  = (price2 - ( price2 * percentage2 / 100 )).toFixed();
+        var calcPrice2  = (price2 - ( price2 * percentage2 / 100 )).toFixed(2);
         $discount2.val( calcPrice2 );
     }
 
@@ -587,7 +622,7 @@
     {
         var discount2 = $(this).val();
         var price2    = $price2.val();
-        var calcPerc =  (100 - (discount2 * 100 / price2)).toFixed();
+        var calcPerc =  (100 - (discount2 * 100 / price2)).toFixed(2);
         $percentage2.val( calcPerc );
     }
 </script>
@@ -600,7 +635,7 @@
     {
         var percentage3 = $(this).val();
         var price3      = $price3.val();
-        var calcPrice3  = (price3 - ( price3 * percentage3 / 100 )).toFixed();
+        var calcPrice3  = (price3 - ( price3 * percentage3 / 100 )).toFixed(2);
         $discount3.val( calcPrice3 );
     }
 
@@ -608,7 +643,7 @@
     {
         var discount3 = $(this).val();
         var price3    = $price3.val();
-        var calcPerc =  (100 - (discount3 * 100 / price3)).toFixed();
+        var calcPerc =  (100 - (discount3 * 100 / price3)).toFixed(2);
         $percentage3.val( calcPerc );
     }
 </script>
@@ -621,7 +656,7 @@
     {
         var percentage4 = $(this).val();
         var price4      = $price4.val();
-        var calcPrice4  = (price4 - ( price4 * percentage4 / 100 )).toFixed();
+        var calcPrice4  = (price4 - ( price4 * percentage4 / 100 )).toFixed(2);
         $discount4.val( calcPrice4 );
     }
 
@@ -629,7 +664,7 @@
     {
         var discount4 = $(this).val();
         var price4    = $price4.val();
-        var calcPerc =  (100 - (discount4 * 100 / price4)).toFixed();
+        var calcPerc =  (100 - (discount4 * 100 / price4)).toFixed(2);
         $percentage4.val( calcPerc );
     }
 </script>

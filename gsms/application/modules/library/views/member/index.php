@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'library', 'book')){ ?>
                     <a href="<?php echo site_url('library/book/index/'); ?>"><?php echo $this->lang->line('manage_book'); ?></a>
                 <?php } ?>
@@ -39,6 +39,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('photo'); ?></th>
                                         <th><?php echo $this->lang->line('library_id'); ?></th>
                                         <th><?php echo $this->lang->line('name'); ?></th>
@@ -53,6 +56,9 @@
                                         <?php foreach($members as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++;  ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                <?php  if($obj->photo != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/student-photo/<?php echo $obj->photo; ?>" alt="" width="70" /> 
@@ -83,6 +89,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('photo'); ?></th>
                                         <th><?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('class'); ?></th>
@@ -96,6 +105,9 @@
                                         <?php foreach($non_members as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                <?php  if($obj->photo != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/student-photo/<?php echo $obj->photo; ?>" alt="" width="70" /> 
@@ -152,6 +164,7 @@
        });       
    });
 </script>
+
  <script type="text/javascript">
         $(document).ready(function() {
           $('#datatable-responsive, .datatable-responsive').DataTable( {
@@ -164,7 +177,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
-          } );
-        } );
+              search: true,             
+              responsive: true
+          });
+        });
 </script>

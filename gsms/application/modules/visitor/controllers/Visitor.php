@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Visitor.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Visitor
  * @description     : Manage visitor information/logs.  
@@ -19,9 +19,7 @@ class Visitor extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Visitor_Model', 'visitor', true);
-        $this->data['visitors'] = $this->visitor->get_visitor_list();
-        $this->data['roles'] = $this->visitor->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->load->model('Visitor_Model', 'visitor', true);        
     }
 
     
@@ -38,6 +36,9 @@ class Visitor extends MY_Controller {
 
         check_permission(VIEW);
 
+        $this->data['visitors'] = $this->visitor->get_visitor_list();
+        $this->data['roles'] = $this->visitor->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_visitor') . ' | ' . SMS);
         $this->layout->view('visitor/index', $this->data);
@@ -73,6 +74,10 @@ class Visitor extends MY_Controller {
             }
         }
 
+        $this->data['visitors'] = $this->visitor->get_visitor_list();
+        $this->data['roles'] = $this->visitor->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('visitor_info') . ' | ' . SMS);
         $this->layout->view('visitor/index', $this->data);
@@ -118,6 +123,11 @@ class Visitor extends MY_Controller {
                 redirect('visitor/index');
             }
         }
+        
+        $this->data['visitors'] = $this->visitor->get_visitor_list();
+        $this->data['roles'] = $this->visitor->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        $this->data['school_id'] = $this->data['visitor']->school_id;
 
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('visitor_info') . ' | ' . SMS);
@@ -139,9 +149,32 @@ class Visitor extends MY_Controller {
         check_permission(VIEW);
 
         $this->data['visitor'] = $this->visitor->get_single_visitor($id);
+        
+        $this->data['visitors'] = $this->visitor->get_visitor_list();
+        $this->data['roles'] = $this->visitor->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('visitor_info') . ' | ' . SMS);
         $this->layout->view('visitor/index', $this->data);
+    }
+    
+            
+           
+     /*****************Function get_single_visitor**********************************
+     * @type            : Function
+     * @function name   : get_single_visitor
+     * @description     : "Load single visitor information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_visitor(){
+        
+       $visitor_id = $this->input->post('visitor_id');
+       
+       $this->data['visitor'] = $this->visitor->get_single_visitor($visitor_id);
+       echo $this->load->view('get-single-visitor', $this->data);
     }
 
     
@@ -158,6 +191,7 @@ class Visitor extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('user') . ' ' . $this->lang->line('type'), 'trim|required');
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required');
         $this->form_validation->set_rules('phone', $this->lang->line('phone'), 'trim|required');
@@ -180,6 +214,7 @@ class Visitor extends MY_Controller {
     private function _get_posted_visitor_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'role_id';
         $items[] = 'name';
         $items[] = 'phone';
@@ -191,12 +226,14 @@ class Visitor extends MY_Controller {
         $data = elements($items, $_POST);
 
         if ($this->input->post('id')) {
-            //$data['check_out'] = date('Y-m-d H:i:s');
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
             $data['status'] = 1;
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->visitor->get_school_by_id($data['school_id']);
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['check_in'] = date('Y-m-d H:i:s');
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
@@ -224,7 +261,7 @@ class Visitor extends MY_Controller {
         } else {
             error($this->lang->line('delete_failed'));
         }
-        redirect('visitor');
+        redirect('visitor/index');
     }
 
         

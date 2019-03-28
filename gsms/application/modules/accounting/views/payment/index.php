@@ -9,31 +9,49 @@
                 <div class="clearfix"></div>
             </div>
            <?php if(logged_in_role_id() != GUARDIAN){ ?> 
-                <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-               <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
-                    <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+            
+            <div class="x_content quick-link">
+                <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+               <?php if(has_permission(VIEW, 'accounting', 'discount')){ ?>
+                    <a href="<?php echo site_url('accounting/discount/index'); ?>"><?php echo $this->lang->line('discount'); ?></a>                  
                 <?php } ?> 
-                <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
-                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('manage_income'); ?></a>                     
+              
+               <?php if(has_permission(VIEW, 'accounting', 'feetype')){ ?>
+                  | <a href="<?php echo site_url('accounting/feetype/index'); ?>"><?php echo $this->lang->line('fee_type'); ?></a>                  
                 <?php } ?> 
+                
                 <?php if(has_permission(VIEW, 'accounting', 'invoice')){ ?>
                    
                    <?php if($this->session->userdata('role_id') == STUDENT || $this->session->userdata('role_id') == GUARDIAN){ ?>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                    <?php }else{ ?>
-                        | <a href="<?php echo site_url('accounting/invoice'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/add'); ?>"><?php echo $this->lang->line('fee'); ?> <?php echo $this->lang->line('collection'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/index'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                     <?php } ?> 
                 <?php } ?> 
+                  
+                <?php if(has_permission(VIEW, 'accounting', 'duefeeemail')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeeemail/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('email'); ?></a>                  
+                <?php } ?>
+                 <?php if(has_permission(VIEW, 'accounting', 'duefeesms')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeesms/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('sms'); ?></a>                  
+                <?php } ?>         
+                        
+                 <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
+                  | <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+                <?php } ?> 
+                 <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
+                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('income'); ?></a>                     
+                <?php } ?>  
                 <?php if(has_permission(VIEW, 'accounting', 'exphead')){ ?>
                    | <a href="<?php echo site_url('accounting/exphead/index'); ?>"><?php echo $this->lang->line('expenditure_head'); ?></a>                  
                 <?php } ?> 
                 <?php if(has_permission(VIEW, 'accounting', 'expenditure')){ ?>
-                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('manage_expenditure'); ?></a>                  
-                <?php } ?> 
-                
-            </div>
+                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('expenditure'); ?></a>                  
+                <?php } ?>                 
+             </div>
+            
              <?php } ?>  
             
             <div class="x_content">
@@ -46,7 +64,9 @@
                          <div  class="tab-pane fade in active" id="tab_fee_list" >
                         <div class="x_content"> 
                            <?php echo form_open(site_url('accounting/payment/paid/'.$invoice_id), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
-
+                            
+                            <?php $this->load->view('layout/school_list_form'); ?>
+                            
                             <div class="item form-group">
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="amount"><?php echo $this->lang->line('amount'); ?> <span class="required">*</span>
                                 </label>
@@ -64,11 +84,11 @@
                                         <?php $payments = get_payment_methods(); ?>
                                         <?php foreach($payments as $key=>$value ){ ?>
                                             <?php if($this->session->userdata('role_id') == GUARDIAN || $this->session->userdata('role_id') == STUDENT){ ?>
-                                                <?php if(in_array($key, array('paypal', 'payumoney'))){ ?>
+                                                <?php if(in_array($key, array('paypal', 'payumoney', 'ccavenue', 'paytm'))){ ?>
                                                     <option value="<?php echo $key; ?>" <?php if(isset($post) && $post['payment_method'] == $key){ echo 'selected="selected"';} ?>><?php echo $value; ?></option>
                                                 <?php } ?>
                                             <?php }else{ ?>
-                                                    <?php if(!in_array($key, array('paypal', 'payumoney'))){ ?>
+                                                    <?php if(!in_array($key, array('paypal', 'payumoney', 'ccavenue', 'paytm', 'stripe'))){ ?>
                                                      <option value="<?php echo $key; ?>" <?php if(isset($post) && $post['payment_method'] == $key){ echo 'selected="selected"';} ?>><?php echo $value; ?></option>
                                                 <?php } ?>                                               
                                             <?php } ?>
@@ -84,7 +104,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="bank_name"><?php echo $this->lang->line('bank'); ?> <?php echo $this->lang->line('name'); ?><span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="bank_name"  id="bank_name" value="" placeholder="<?php echo $this->lang->line('bank'); ?> <?php echo $this->lang->line('name'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="bank_name"  id="bank_name" value="" placeholder="<?php echo $this->lang->line('bank'); ?> <?php echo $this->lang->line('name'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('bank_name'); ?></div>
                                 </div>
                             </div> 
@@ -92,7 +112,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="cheque_no"><?php echo $this->lang->line('cheque'); ?> <?php echo $this->lang->line('number'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="cheque_no"  id="cheque_no" value="" placeholder="<?php echo $this->lang->line('cheque'); ?> <?php echo $this->lang->line('number'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="cheque_no"  id="cheque_no" value="" placeholder="<?php echo $this->lang->line('cheque'); ?> <?php echo $this->lang->line('number'); ?>"  type="text"  autocomplete="off">
                                     <div class="help-block"><?php echo form_error('cheque_no'); ?></div>
                                 </div>
                             </div>
@@ -106,7 +126,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="stripe_card_number"><?php echo $this->lang->line('card'); ?> <?php echo $this->lang->line('number'); ?><span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="stripe_card_number"  id="stripe_card_number" value="" placeholder="<?php echo $this->lang->line('card'); ?> <?php echo $this->lang->line('number'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="stripe_card_number"  id="stripe_card_number" value="" placeholder="<?php echo $this->lang->line('card'); ?> <?php echo $this->lang->line('number'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('stripe_card_number'); ?></div>
                                 </div>
                             </div> 
@@ -114,7 +134,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="stripe_cvv"><?php echo $this->lang->line('cvv'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="stripe_cvv"  id="stripe_cvv" value="" placeholder="<?php echo $this->lang->line('cvv'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="stripe_cvv"  id="stripe_cvv" value="" placeholder="<?php echo $this->lang->line('cvv'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('stripe_cvv'); ?></div>
                                 </div>
                             </div>
@@ -122,11 +142,11 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="expire"><?php echo $this->lang->line('expire'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-3 col-sm-3 col-xs-6">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="expire_month"  id="expire_month" value="" placeholder="<?php echo $this->lang->line('expire'); ?> <?php echo $this->lang->line('month'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="expire_month"  id="expire_month" value="" placeholder="<?php echo $this->lang->line('expire'); ?> <?php echo $this->lang->line('month'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('expire_month'); ?></div>
                                 </div>
                                 <div class="col-md-3 col-sm-3 col-xs-6">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="expire_year"  id="expire_year" value="" placeholder="<?php echo $this->lang->line('expire'); ?> <?php echo $this->lang->line('year'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="expire_year"  id="expire_year" value="" placeholder="<?php echo $this->lang->line('expire'); ?> <?php echo $this->lang->line('year'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('expire_year'); ?></div>
                                 </div>
                             </div>
@@ -140,7 +160,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="pum_first_name"><?php echo $this->lang->line('first_name'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_first_name"  id="pum_first_name" value="" placeholder="<?php echo $this->lang->line('first_name'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_first_name"  id="pum_first_name" value="" placeholder="<?php echo $this->lang->line('first_name'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('pum_first_name'); ?></div>
                                 </div>
                             </div> 
@@ -148,7 +168,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="pum_email"><?php echo $this->lang->line('email'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_email"  id="pum_email" value="" placeholder="<?php echo $this->lang->line('email'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_email"  id="pum_email" value="" placeholder="<?php echo $this->lang->line('email'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('pum_email'); ?></div>
                                 </div>
                             </div>
@@ -156,7 +176,7 @@
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12" for="pum_phone"><?php echo $this->lang->line('phone'); ?> <span class="required">*</span>
                                 </label>
                                 <div class="col-md-6 col-sm-6 col-xs-12">
-                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_phone"  id="pum_phone" value="" placeholder="<?php echo $this->lang->line('phone'); ?>"  type="text">
+                                    <input  class="form-control col-md-7 col-xs-12"  name="pum_phone"  id="pum_phone" value="" placeholder="<?php echo $this->lang->line('phone'); ?>"  type="text" autocomplete="off">
                                     <div class="help-block"><?php echo form_error('pum_phone'); ?></div>
                                 </div>
                             </div>

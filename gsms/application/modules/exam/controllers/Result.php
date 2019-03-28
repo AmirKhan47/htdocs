@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Result.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Result
  * @description     : Manage exam final result and prepare promotion to next class.  
@@ -20,9 +20,6 @@ class Result extends MY_Controller {
     function __construct() {
         parent::__construct();
         $this->load->model('Result_Model', 'result', true);
-        $this->data['classes'] = $this->result->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->result->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->result->get_list('grades', array('status' => 1), '', '', '', 'id', 'ASC');
     }
 
     
@@ -41,17 +38,26 @@ class Result extends MY_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $exam_id = $this->input->post('exam_id');
             $class_id = $this->input->post('class_id');
             $section_id = $this->input->post('section_id');
-
-            $this->data['students'] = $this->result->get_student_list($exam_id, $class_id, $section_id);
+            
+            $school = $this->result->get_school_by_id($school_id);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('exam/result');
+            }            
+             
+            $this->data['students'] = $this->result->get_student_list($school_id, $exam_id, $class_id, $section_id, $school->academic_year_id);
 
             $condition = array(
+                'school_id' => $school_id,
                 'exam_id' => $exam_id,
                 'class_id' => $class_id,
                 'section_id' => $section_id,
-                'academic_year_id' => $this->academic_year_id
+                'academic_year_id' => $school->academic_year_id
             );
 
             $data = $condition;
@@ -72,10 +78,26 @@ class Result extends MY_Controller {
                 }
             }
 
+            $this->data['grades'] = $this->result->get_list('grades', array('status' => 1, 'school_id'=>$school_id), '', '', '', 'id', 'ASC');
+            
+            $this->data['school_id'] = $school_id;
             $this->data['exam_id'] = $exam_id;
             $this->data['class_id'] = $class_id;
             $this->data['section_id'] = $section_id;
         }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            
+            $school = $this->result->get_school_by_id($condition['school_id']); 
+            
+            $this->data['classes'] = $this->result->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $condition['academic_year_id'] = $school->academic_year_id;
+            $this->data['exams'] = $this->result->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        } 
 
         $this->layout->title($this->lang->line('exam') . ' ' . $this->lang->line('result') . ' | ' . SMS);
         $this->layout->view('result/index', $this->data);
@@ -97,15 +119,19 @@ class Result extends MY_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $exam_id = $this->input->post('exam_id');
             $class_id = $this->input->post('class_id');
             $section_id = $this->input->post('section_id');
-
+            
+            $school = $this->result->get_school_by_id($school_id); 
+             
             $condition = array(
+                'school_id' => $school_id,
                 'exam_id' => $exam_id,
                 'class_id' => $class_id,
                 'section_id' => $section_id,
-                'academic_year_id' => $this->academic_year_id,
+                'academic_year_id' => $school->academic_year_id,
             );
 
             $data = $condition;

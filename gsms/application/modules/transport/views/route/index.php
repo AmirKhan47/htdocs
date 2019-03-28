@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'transport', 'vehicle')){ ?>
                     <a href="<?php echo site_url('transport/vehicle/index/'); ?>"><?php echo $this->lang->line('transport'); ?> <?php echo $this->lang->line('vehicle'); ?></a>
                 <?php } ?>
@@ -27,14 +27,15 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_route_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'transport', 'route')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_route"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('transport_route'); ?></a> </li>                          
+                             <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('transport/route/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('transport_route'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_route"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('transport_route'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>  
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_route"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('transport_route'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_route"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('transport_route'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?> 
                     </ul>
                     <br/>
                     
@@ -45,11 +46,13 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('route_start'); ?></th>
                                         <th><?php echo $this->lang->line('route_end'); ?></th>
-                                        <th><?php echo $this->lang->line('route_fare'); ?></th>
-                                        <th><?php echo $this->lang->line('assign_vehicle'); ?></th>
+                                        <th><?php echo $this->lang->line('vehicle_for_route'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -58,17 +61,19 @@
                                         <?php foreach($routes as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->title; ?></td>
                                             <td><?php echo $obj->route_start; ?></td>
                                             <td><?php echo $obj->route_end; ?></td>
-                                            <td><?php echo $this->session->userdata('currency_symbol'); ?><?php echo $obj->fare; ?></td>
                                             <td><?php echo get_vehicle_by_ids($obj->vehicle_ids); ?></td>
                                             <td>
                                                 <?php if(has_permission(EDIT, 'transport', 'route')){ ?>
                                                     <a href="<?php echo site_url('transport/route/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(VIEW, 'transport', 'route')){ ?>
-                                                    <a href="<?php echo site_url('transport/route/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                    <a href="javascript:void(0);" onclick="get_route_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-route-modal-lg" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a><br/>
                                                 <?php } ?>
                                                 <?php if(has_permission(DELETE, 'transport', 'route')){ ?>
                                                     <a href="<?php echo site_url('transport/route/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
@@ -85,6 +90,8 @@
                         <div  class="tab-pane fade in <?php if(isset($add)){ echo 'active'; }?>" id="tab_add_route">
                             <div class="x_content"> 
                                <?php echo form_open(site_url('transport/route/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
+                                
+                                <?php $this->load->view('layout/school_list_form'); ?> 
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
@@ -109,29 +116,55 @@
                                         <input  class="form-control col-md-7 col-xs-12"  name="route_end"  id="route_end" value="<?php echo isset($post['route_end']) ?  $post['route_end'] : ''; ?>" placeholder="<?php echo $this->lang->line('route_end'); ?>" required="required" type="text">
                                         <div class="help-block"><?php echo form_error('route_end'); ?></div>
                                     </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="fare"><?php echo $this->lang->line('route_fare'); ?> (<?php echo $this->session->userdata('currency_symbol'); ?>)
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="fare"  id="fare" value="<?php echo isset($post['fare']) ?  $post['fare'] : ''; ?>" placeholder="<?php echo $this->lang->line('route_fare'); ?>" type="text">
-                                        <div class="help-block"><?php echo form_error('fare'); ?></div>
-                                    </div>
-                                </div>
+                                </div>                                
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="vehicle_ids"><?php echo $this->lang->line('assign_vehicle'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="vehicle_ids"><?php echo $this->lang->line('vehicle_for_route'); ?> <span class="required">*</span>
                                     </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php foreach($add_vehicles as $obj){ ?>
-                                            <input  class=""  name="vehicle_ids[]" id="vehicle_ids[]" value="<?php echo $obj->id; ?>" type="checkbox" required="required"> <?php echo $obj->number; ?> <br/>
-                                        <?php } ?>
+                                    <div class="col-md-6 col-sm-6 col-xs-12 ">
+                                        <div class="fn_add_vehicles">
+                                            <?php if(isset($add_vehicles) && !empty($add_vehicles)){ ?>
+                                                <?php foreach($add_vehicles as $obj){ ?>
+                                                    <input  class=""  name="vehicle_ids[]" id="vehicle_ids[]" value="<?php echo $obj->id; ?>" type="checkbox" required="required"> <?php echo $obj->number; ?> <br/>
+                                                <?php } ?>
+                                            <?php } ?>
+                                        </div>
                                         <label id="vehicle_ids[]-error" class="error" for="vehicle_ids[]" style="display: inline-block;"></label>
                                         <div class="help-block"><?php echo form_error('vehicle_ids'); ?></div>
                                     </div>
                                 </div>
-                                                               
+                                 
                                 
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('route_stop_fare'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                         <table style="width:100%;" class="fn_add_stop_container responsive"> 
+                                             <tr>               
+                                                 <td><?php echo $this->lang->line('stop_name'); ?></td>
+                                                 <td><?php echo $this->lang->line('stop_km'); ?></td>
+                                                 <td><?php echo $this->lang->line('stop_fare'); ?></td>
+                                             </tr>
+                                            <tr>               
+                                              <td>
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type="text" name="stop_name[]" placeholder="<?php echo $this->lang->line('stop_name'); ?>" />
+                                              </td>
+                                              <td>
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type='text' name="stop_km[]" value="" placeholder="<?php echo $this->lang->line('stop_km'); ?>"/>
+                                              </td>
+                                              <td>
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type='text' name="stop_fare[]" value="" placeholder="<?php echo $this->lang->line('stop_fare'); ?>"/>
+                                              </td>
+                                              <td>
+                                              </td>
+                                            </tr>                                           
+                                          </table>
+                                        <div class="help-block">
+                                            <?php echo form_error('answer'); ?>
+                                            <a href="javascript:void(0);" class="btn btn-success btn-xs" onclick="add_more('fn_add_stop_container');"><?php echo $this->lang->line('add_more'); ?></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
@@ -155,6 +188,8 @@
                         <div class="tab-pane fade in active" id="tab_edit_route">
                             <div class="x_content"> 
                                <?php echo form_open(site_url('transport/route/edit/'.$route->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
+                                
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
@@ -180,26 +215,62 @@
                                         <div class="help-block"><?php echo form_error('route_end'); ?></div>
                                     </div>
                                 </div>                          
+                                                     
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="fare"><?php echo $this->lang->line('route_fare'); ?> (<?php echo $this->session->userdata('currency_symbol'); ?>)
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="vehicle_ids"><?php echo $this->lang->line('vehicle_for_route'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="fare"  id="fare" value="<?php echo isset($route->fare) ?  $route->fare : $post['fare']; ?>" placeholder="<?php echo $this->lang->line('route_fare'); ?>"  type="text">
-                                        <div class="help-block"><?php echo form_error('fare'); ?></div>
-                                    </div>
-                                </div>                          
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="vehicle_ids"><?php echo $this->lang->line('assign_vehicle'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php $ids = explode(',', $route->vehicle_ids); ?>
-                                        <?php foreach($edit_vehicles as $obj){ ?>
-                                            <input  class=""  name="vehicle_ids[]" id="vehicle_ids[]"  value="<?php echo $obj->id; ?>" <?php if(in_array($obj->id, $ids)){ echo 'checked="checked"';} ?>  type="checkbox" required="required"> <?php echo $obj->number; ?> <br/>
+                                        <div class="fn_edit_vehicles">
+                                        <?php if(isset($edit_vehicles) && !empty($edit_vehicles)){ ?>
+                                            <?php $ids = explode(',', $route->vehicle_ids); ?>
+                                            <?php foreach($edit_vehicles as $obj){ ?>
+                                                <input  class=""  name="vehicle_ids[]" id="vehicle_ids[]"  value="<?php echo $obj->id; ?>" <?php if(in_array($obj->id, $ids)){ echo 'checked="checked"';} ?>  type="checkbox" required="required"> <?php echo $obj->number; ?> <br/>
+                                            <?php } ?> 
                                         <?php } ?> 
+                                        </div>   
                                         <label id="vehicle_ids[]-error" class="error" for="vehicle_ids[]" style="display: inline-block;"></label>
                                         <div class="help-block"><?php echo form_error('vehicle_ids'); ?></div>
                                     </div>
                                 </div>                         
+                                
+                                   
+                                   <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('route_stop_fare'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                         <table style="width:100%;" class="fn_edit_stop_container responsive"> 
+                                             <tr>               
+                                                 <td><?php echo $this->lang->line('stop_name'); ?></td>
+                                                 <td><?php echo $this->lang->line('stop_km'); ?></td>
+                                                 <td><?php echo $this->lang->line('stop_fare'); ?></td>
+                                             </tr>
+                                            <?php $couter = 1; foreach($route_stops as $obj){ ?> 
+                                            <tr>               
+                                              <td>                                                  
+                                                  <input type="hidden" name="stop_id[]" value="<?php echo $obj->id; ?>" />
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type="text" name="stop_name[]" value="<?php echo $obj->stop_name; ?>" placeholder="<?php echo $this->lang->line('stop_name'); ?>" />
+                                              </td>
+                                              <td>
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type='text' name="stop_km[]" value="<?php echo $obj->stop_km; ?>" placeholder="<?php echo $this->lang->line('stop_km'); ?>"/>
+                                              </td>
+                                              <td>
+                                                  <input  class="form-control col-md-12 col-xs-12" style="width:auto;" type='text' name="stop_fare[]" value="<?php echo $obj->stop_fare; ?>" placeholder="<?php echo $this->lang->line('stop_fare'); ?>"/>
+                                              </td>
+                                              <td>
+                                                  <?php if($couter > 1){ ?>
+                                                  <a  class="btn btn-danger btn-md " onclick="remove(this, <?php echo $obj->id; ?>);" style="margin-bottom: -0px;" > - </a>
+                                                  <?php } ?>
+                                              </td>
+                                            </tr> 
+                                            <?php $couter++; } ?>
+                                            
+                                          </table>
+                                        <div class="help-block">
+                                            <?php echo form_error('answer'); ?>
+                                            <a href="javascript:void(0);" class="btn btn-success btn-xs" onclick="add_more('fn_edit_stop_container');"><?php echo $this->lang->line('add_more'); ?></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
@@ -220,64 +291,7 @@
                                 <?php echo form_close(); ?>
                             </div>
                         </div>  
-                        <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_route">
-                            <div class="x_content"> 
-                               <?php echo form_open(site_url(), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $route->title; ?>
-                                    </div>
-                                </div> 
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('route_start'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $route->route_start; ?>
-                                    </div>
-                                </div> 
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('route_end'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $route->route_end; ?>
-                                    </div>
-                                </div> 
-                                                         
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('route_fare'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $this->session->userdata('currency_symbol'); ?><?php echo $route->fare; ?>
-                                    </div>
-                                </div> 
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('assign_vehicle'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo get_vehicle_by_ids($route->vehicle_ids); ?>
-                                    </div>
-                                </div> 
-                               
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $route->note; ?>
-                                    </div>
-                                </div> 
-                               
-                                <?php if(has_permission(EDIT, 'transport', 'route')){ ?>
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a  href="<?php echo site_url('transport/route/edit/'.$route->id); ?>"  class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
+                        <?php } ?>                     
                         
                     </div>
                 </div>
@@ -285,6 +299,136 @@
         </div>
     </div>
 </div>
+
+
+
+
+<script type="text/javascript">
+     function add_more(fn_stop_container){
+         var data = '<tr>'                
+                    +'<td style="width:50%;">'                   
+                    +'<input  class="form-control col-md-12 col-xs-12" style="width:auto;" type="text" name="stop_name[]" class="answer" placeholder="<?php echo $this->lang->line('stop_name'); ?>" />' 
+                    +'</td>'
+                    +'<td>'  
+                    +'<input  class="form-control col-md-12 col-xs-12" style="width:auto;" type="text" name="stop_km[]" value="" placeholder="<?php echo $this->lang->line('stop_km'); ?>"/>'
+                    +'</td>'
+                    +'<td>'  
+                    +'<input  class="form-control col-md-12 col-xs-12" style="width:auto;" type="text" name="stop_fare[]" value="" placeholder="<?php echo $this->lang->line('stop_fare'); ?>"/>'
+                    +'</td>'
+                    +'<td>'  
+                    +'<a  class="btn btn-danger btn-md " onclick="remove(this);" style="margin-bottom: -0px;" > - </a>'
+                    +'</td>'
+                    +'</tr>';
+            $('.'+fn_stop_container).append(data);
+     }
+     
+     
+     function remove(obj, stop_id){ 
+        
+        // remove stop from database
+        if(stop_id)
+        {
+            if(confirm('<?php echo $this->lang->line('confirm_alert'); ?>')){
+                $.ajax({       
+                    type   : "POST",
+                    url    : "<?php echo site_url('transport/route/remove_stop'); ?>",
+                    data   : { stop_id : stop_id},               
+                    async  : false,
+                    success: function(response){                                                   
+                       if(response)
+                       {
+                          $(obj).parent().parent('tr').remove();   
+                       }
+                    }
+                });   
+            }            
+        }else{
+            
+            $(obj).parent().parent('tr').remove(); 
+        }
+     }
+     
+    
+    
+</script>
+
+<div class="modal fade bs-route-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('transport_route'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_route_data">            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_route_modal(route_id){
+         
+        $('.fn_route_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('transport/route/get_single_route'); ?>",
+          data   : {route_id : route_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_route_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
+ <!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+     var edit = false;
+    <?php if(isset($edit)){ ?>
+        edit = true;
+    <?php } ?>
+         
+    $("document").ready(function() {
+         <?php if(isset($route) && !empty($route)){ ?>
+            $(".fn_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();        
+        var route_id = '';      
+        
+        <?php if(isset($route) && !empty($route)){ ?>
+            route_id =  '<?php echo $route->id; ?>';
+         <?php } ?> 
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('transport/route/get_vehicle_by_school'); ?>",
+            data   : { school_id:school_id, route_id:route_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {      
+                   if(edit){
+                       $('.fn_edit_vehicles').html(response);  
+                   }else{
+                       $('.fn_add_vehicles').html(response);  
+                   }                                                     
+               }
+            }
+        });
+    }); 
+
+  </script>
+<!-- Super admin js end -->
+
+
  <script type="text/javascript">
         $(document).ready(function() {
           $('#datatable-responsive').DataTable( {
@@ -297,9 +441,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();
 </script>

@@ -11,9 +11,18 @@ class Bulk {
     protected $port;
 
     public function __construct() {
+        
         $ci = & get_instance();   
+        $school_id = '';
+        if($ci->session->userdata('school_id')){
+            $school_id = $ci->session->userdata('school_id');
+        }else{
+            $school_id = $ci->input->post('school_id');
+        }
+
         $ci->db->select('S.*');
         $ci->db->from('sms_settings AS S');     
+        $ci->db->where('S.school_id', $school_id);     
         $setting = $ci->db->get()->row();
 
         $this->username = $setting->bulk_username;

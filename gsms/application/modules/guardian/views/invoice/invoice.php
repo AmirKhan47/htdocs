@@ -66,6 +66,7 @@
     </div>
 </div>
 </div>
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -79,7 +80,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,             
+              responsive: true
           });
         });
 </script>

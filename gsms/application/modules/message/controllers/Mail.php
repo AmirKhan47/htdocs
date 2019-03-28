@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Mail.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Mail
  * @description     : Manage email which are send to all type of system users.  
@@ -19,10 +19,7 @@ class Mail extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Mail_Model', 'mail', true);
-        $this->data['emails'] = $this->mail->get_email_list();
-        $this->data['classes'] = $this->mail->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['roles'] = $this->mail->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->load->model('Mail_Model', 'mail', true);       
     }
 
         
@@ -37,6 +34,16 @@ class Mail extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->mail->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['roles'] = $this->mail->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['emails'] = $this->mail->get_email_list();
 
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_email') . ' | ' . SMS);
@@ -65,6 +72,9 @@ class Mail extends MY_Controller {
                 if ($insert_id) {
                     $data['email_id'] = $insert_id;
                     $this->_send_email($data);
+                    
+                    create_log('Has been sent an Email : '.$data['subject']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('message/mail/index');
                 } else {
@@ -75,6 +85,16 @@ class Mail extends MY_Controller {
                 $this->data['post'] = $_POST;
             }
         }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->mail->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['roles'] = $this->mail->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['emails'] = $this->mail->get_email_list();
 
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('send') . ' ' . $this->lang->line('email') . ' | ' . SMS);
@@ -101,10 +121,39 @@ class Mail extends MY_Controller {
                 redirect('email/index');
             }
         }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->mail->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['roles'] = $this->mail->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['emails'] = $this->mail->get_email_list();
 
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('email') . ' | ' . SMS);
         $this->layout->view('mail/view', $this->data);
+    }
+    
+    
+        
+        
+    /*****************Function get_single_email**********************************
+     * @type            : Function
+     * @function name   : get_single_email
+     * @description     : "Load single email information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_email(){
+        
+       $email_id = $this->input->post('email_id');
+       
+       $this->data['email'] = $this->mail->get_single_email($email_id);
+       echo $this->load->view('mail/get-single-email', $this->data);
     }
 
         
@@ -120,10 +169,13 @@ class Mail extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('receiver_type'), 'trim|required');
+        
         if ($this->input->post('role_id') == STUDENT) {
             $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
         }
+        
         $this->form_validation->set_rules('receiver_id', $this->lang->line('receiver'), 'trim|required');
         $this->form_validation->set_rules('subject', $this->lang->line('subject'), 'trim|required');
         $this->form_validation->set_rules('body', $this->lang->line('email_body'), 'trim|required');
@@ -141,14 +193,22 @@ class Mail extends MY_Controller {
     private function _get_posted_email_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'role_id';
         $items[] = 'subject';
         $items[] = 'body';
         $data = elements($items, $_POST);
 
-        $data['academic_year_id'] = $this->academic_year_id;
-        $data['sender_role_id'] = $this->session->userdata('role_id');
+        $school = $this->mail->get_school_by_id($data['school_id']);
+        if(!$school->academic_year_id){
+            error($this->lang->line('set_academic_year_for_school'));
+            redirect('message/mail/index');
+        }
+        $data['academic_year_id'] = $school->academic_year_id;
+        
+        $data['sender_role_id'] = $this->session->userdata('role_id');        
         $data['status'] = 1;
+        $data['email_type'] = 'general';
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['created_by'] = logged_in_user_id();
 
@@ -222,6 +282,8 @@ class Mail extends MY_Controller {
             if (file_exists($destination . '/email-attachment/' . $mail->attachment)) {
                 @unlink($destination . '/email-attachment/' . $mail->attachment);
             }
+            
+            create_log('Has been deleted an Email : '.$mail->subject);
 
             success($this->lang->line('delete_success'));
         } else {
@@ -250,37 +312,41 @@ class Mail extends MY_Controller {
         $config['mailtype'] = 'html';
         $this->email->initialize($config);
 
-        $setting = $this->mail->get_single('settings', array('status' => 1));
-        $from_email = $setting->email;
-        $from_name  = $setting->school_name;
+        $school = $this->mail->get_school_by_id($data['school_id']);
+        $from_email = $school->email;
+        $from_name  = $school->school_name;
       
 
         $receivers = '';
-        $users = $this->mail->get_user_list($data['role_id'], $this->input->post('receiver_id'), $this->input->post('class_id'));
+        $users = $this->mail->get_user_list($data['school_id'], $data['role_id'], $this->input->post('receiver_id'), $this->input->post('class_id'));
 
-
+        
         foreach ($users as $obj) {
 
-            $data['body'] = get_formatted_body($data['body'], $data['role_id'], $obj->id);
-            $receivers .= $obj->name.',';
+            if($obj->email != ''){ 
+               
+                $data['body'] = get_formatted_body($data['body'], $data['role_id'], $obj->id);
+                $receivers .= $obj->name.',';
 
-            $this->email->from($from_email, $from_name);
-            $this->email->reply_to($from_email, $from_name);
+                $this->email->from($from_email, $from_name);
+                $this->email->reply_to($from_email, $from_name);
 
-            $this->email->to($obj->email);
-            $this->email->subject($data['subject']);
-            $this->email->message($data['body']);
+                $this->email->to($obj->email);
+                
+                $this->email->subject($data['subject']);
+                $this->email->message($data['body']);
 
-            if (isset($data['attachment'])) {
-                $attachment = UPLOAD_PATH . '/email-attachment/' . $data['attachment'];
-                $this->email->attach($attachment);
+                if (isset($data['attachment'])) {
+                    $attachment = UPLOAD_PATH . '/email-attachment/' . $data['attachment'];
+                    $this->email->attach($attachment);
+                }
+
+               $this->email->send();
             }
-
-            $this->email->send();
         }
 
         // update emails table 
-        $this->mail->update('emails', array('receivers' => $receivers), array('id' => $data['email_id']));
+        $this->mail->update('emails', array('receivers' => $receivers), array('id' => $data['email_id'], 'school_id'=>$data['school_id']));
     }
 
 }

@@ -25,7 +25,7 @@ if (!function_exists('get_enrollment')) {
 
 if (!function_exists('get_student_monthly_attendance')) {
 
-    function get_student_monthly_attendance($student_id, $academic_year_id, $class_id, $section_id, $month, $days) {
+    function get_student_monthly_attendance($school_id, $student_id, $academic_year_id, $class_id, $section_id, $month, $days) {
 
         $fields = '';
 
@@ -40,6 +40,7 @@ if (!function_exists('get_student_monthly_attendance')) {
         $ci = & get_instance();
         $ci->db->select($fields);
         $ci->db->from('student_attendances AS SA');
+        $ci->db->where('SA.school_id', $school_id);
         $ci->db->where('SA.student_id', $student_id);
         $ci->db->where('SA.academic_year_id', $academic_year_id);
         $ci->db->where('SA.class_id', $class_id);
@@ -52,7 +53,7 @@ if (!function_exists('get_student_monthly_attendance')) {
 
 if (!function_exists('get_teacher_monthly_attendance')) {
 
-    function get_teacher_monthly_attendance($teacher_id, $academic_year_id, $month, $days) {
+    function get_teacher_monthly_attendance($school_id, $teacher_id, $academic_year_id, $month, $days) {
 
         $fields = '';
 
@@ -67,6 +68,7 @@ if (!function_exists('get_teacher_monthly_attendance')) {
         $ci = & get_instance();
         $ci->db->select($fields);
         $ci->db->from('teacher_attendances AS TA');
+        $ci->db->where('TA.school_id', $school_id);
         $ci->db->where('TA.teacher_id', $teacher_id);
         $ci->db->where('TA.academic_year_id', $academic_year_id);
         $ci->db->where('TA.month', $month);
@@ -78,7 +80,7 @@ if (!function_exists('get_teacher_monthly_attendance')) {
 
 if (!function_exists('get_employee_monthly_attendance')) {
 
-    function get_employee_monthly_attendance($employee_id, $academic_year_id, $month, $days) {
+    function get_employee_monthly_attendance($school_id, $employee_id, $academic_year_id, $month, $days) {
 
         $fields = '';
 
@@ -93,6 +95,7 @@ if (!function_exists('get_employee_monthly_attendance')) {
         $ci = & get_instance();
         $ci->db->select($fields);
         $ci->db->from('employee_attendances AS EA');
+        $ci->db->where('EA.school_id', $school_id);
         $ci->db->where('EA.employee_id', $employee_id);
         $ci->db->where('EA.academic_year_id', $academic_year_id);
         $ci->db->where('EA.month', $month);

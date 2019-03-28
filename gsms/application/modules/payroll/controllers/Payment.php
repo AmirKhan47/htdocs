@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Payment.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Payment
  * @description     : Manage Employee and Teacher Salary.  
@@ -41,9 +41,11 @@ class Payment extends MY_Controller {
         
          if ($_POST) {
              
+            $school_id  = $this->input->post('school_id');
             $payment_to  = $this->input->post('payment_to');
             $user_id  = $this->input->post('user_id');
         
+            $this->data['school_id'] = $school_id;
             $this->data['payment_to'] = $payment_to;
             $this->data['user_id'] = $user_id;
             
@@ -51,7 +53,8 @@ class Payment extends MY_Controller {
             $this->data['payment'] = $this->payment->get_single_payment_user($this->data['user']->role_id, $user_id); 
             $this->data['add'] = TRUE;   
             
-            $this->data['payments'] = $this->payment->get_payment_list($user_id, $payment_to);
+            $this->data['payments'] = $this->payment->get_payment_list($school_id, $user_id, $payment_to);            
+            $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1, 'school_id'=>$school_id));
             
          }else{
              
@@ -63,15 +66,17 @@ class Payment extends MY_Controller {
                
                 $this->data['payment_to'] = $payment_to;
                 $this->data['user_id'] = $user_id;
+                $this->data['school_id'] = $this->data['user']->school_id;
 
                 $this->data['payment'] = $this->payment->get_single_payment_user($this->data['user']->role_id, $user_id); 
-                $this->data['payments'] = $this->payment->get_payment_list($user_id, $payment_to);
+                $this->data['payments'] = $this->payment->get_payment_list($this->data['school_id'], $user_id, $payment_to);
+                $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1, 'school_id'=>$this->data['school_id']));
             }
             
             $this->data['list'] = TRUE;
-        }
+        }        
+       
         
-        $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1));
         $this->layout->title( $this->lang->line('manage_payment'). ' | ' . SMS);
         $this->layout->view('payment/index', $this->data);            
        
@@ -106,6 +111,7 @@ class Payment extends MY_Controller {
                 }
             } else {
                 
+                $school_id  = $this->input->post('school_id');
                 $payment_to  = $this->input->post('payment_to');
                 $user_id  = $this->input->post('user_id');
                 
@@ -114,13 +120,14 @@ class Payment extends MY_Controller {
 
                 $this->data['user']    = $this->payment->get_single('users', array('id' => $user_id));        
                 $this->data['payment'] = $this->payment->get_single_payment_user($this->data['user']->role_id, $user_id); 
-                $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1));
-                $this->data['payments'] = $this->payment->get_payment_list($user_id, $payment_to);
+                $this->data['payments'] = $this->payment->get_payment_list($school_id, $user_id, $payment_to);
+                $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1, 'school_id'=>$school_id));
+                
                 $this->data['post'] = $_POST;
             }
         }
 
-        $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1));          
+                
          
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('payment'). ' | ' . SMS);
@@ -161,10 +168,9 @@ class Payment extends MY_Controller {
                     error($this->lang->line('update_failed'));
                     redirect('payroll/payment/edit/' . $this->input->post('id'));
                 }
-            } else {
-                
-                  error($this->lang->line('unexpected_error'));
-                 // redirect('payroll/payment/edit/' . $this->input->post('id'));
+            } else {                
+                error($this->lang->line('unexpected_error'));
+                // redirect('payroll/payment/edit/' . $this->input->post('id'));
             }
         }
         
@@ -186,10 +192,14 @@ class Payment extends MY_Controller {
             $payment_to  = $user->role_id == TEACHER ? 'teacher' : 'employee';
             $this->data['payment_to'] = $payment_to;
             $this->data['user_id'] = $user->id;
+          
             
-            $this->data['payment'] = $this->payment->get_single_payment_user($user->role_id, $user->id); 
-            $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1));
-            $this->data['payments'] = $this->payment->get_payment_list($user->id, $payment_to);
+            $this->data['payment'] = $this->payment->get_single_payment_user($user->role_id, $user->id);
+            
+            $this->data['school_id'] = $this->data['payment']->school_id;
+            
+            $this->data['exp_heads'] = $this->payment->get_list('expenditure_heads', array('status'=> 1, 'school_id'=>$this->data['school_id']));
+            $this->data['payments'] = $this->payment->get_payment_list($this->data['school_id'], $user->id, $payment_to);
         }
        
         
@@ -261,6 +271,7 @@ class Payment extends MY_Controller {
     private function _get_posted_payment_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'user_id';
         $items[] = 'salary_grade_id';       
         $items[] = 'salary_type';
@@ -322,14 +333,23 @@ class Payment extends MY_Controller {
             
         } else {
             
+            $school = $this->payment->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('payroll/payment/index');
+            }
+            
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['status'] = 1;
-            $data['academic_year_id'] = $this->academic_year_id;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id(); 
             
             // Insert data into Expenditure table
             $exp_data = array();
             
+            $exp_data['school_id'] = $this->input->post('school_id');
             $exp_data['expenditure_head_id'] = $this->input->post('expenditure_head_id');
             $exp_data['status'] = 1;
             $exp_data['expenditure_type'] = 'salary';
@@ -407,7 +427,7 @@ class Payment extends MY_Controller {
      * @return          : null 
      * ********************************************************** */
     
-    public function history() {
+    public function history_xx() {
         
         check_permission(VIEW);
         

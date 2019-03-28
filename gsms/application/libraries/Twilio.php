@@ -28,11 +28,20 @@ class Twilio {
     protected $number;
 
     function __construct() {
-         $ci = & get_instance();   
+        
+         $ci = & get_instance(); 
+         $school_id = '';
+         if($ci->session->userdata('school_id')){
+             $school_id = $ci->session->userdata('school_id');
+         }else{
+             $school_id = $ci->input->post('school_id');
+         }
+         
          $ci->db->select('S.*');
          $ci->db->from('sms_settings AS S');     
+         $ci->db->where('S.school_id', $school_id);     
          $setting = $ci->db->get()->row();
-
+         
         $this->mode = 'prod';
         $this->account_sid = $setting->twilio_account_sid;
         $this->auth_token = $setting->twilio_auth_token;

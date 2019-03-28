@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Book.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Book
  * @description     : Manage library books information.  
@@ -35,9 +35,11 @@ class Book extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
+      
         
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));
-        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['books'] = $this->book->get_book_list();  
+        
+        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');        
         $this->data['custom_id'] = $this->book->get_custom_id('books', 'BK');
         
         $this->data['list'] = TRUE;
@@ -65,6 +67,9 @@ class Book extends MY_Controller {
 
                 $insert_id = $this->book->insert('books', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been added a Book : '.$data['title']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('library/book/index');
                 } else {
@@ -76,10 +81,10 @@ class Book extends MY_Controller {
             }
         }
 
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));
-        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['books'] = $this->book->get_book_list();         
+        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');        
         $this->data['custom_id'] = $this->book->get_custom_id('books', 'BK');
-        
+                
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('book') . ' | ' . SMS);
         $this->layout->view('book/index', $this->data);
@@ -111,6 +116,9 @@ class Book extends MY_Controller {
                 $updated = $this->book->update('books', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a Book : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('library/book/index');
                 } else {
@@ -128,11 +136,13 @@ class Book extends MY_Controller {
             if (!$this->data['book']) {
                 redirect('library/book/index');
             }
-        }
-
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));
-        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        }        
+        
+        $this->data['books'] = $this->book->get_book_list();         
+        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');        
         $this->data['custom_id'] = $this->book->get_custom_id('books', 'BK');
+        
+        $this->data['school_id'] = $this->data['book']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('book') . ' | ' . SMS);
@@ -158,14 +168,32 @@ class Book extends MY_Controller {
             redirect('library/book/index');
         }
         
-        $this->data['books'] = $this->book->get_list('books', array('status' => 1));
-        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['books'] = $this->book->get_book_list();        
+        $this->data['roles'] = $this->book->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');        
         $this->data['custom_id'] = $this->book->get_custom_id('books', 'BK');
-
+        
         $this->data['book'] = $this->book->get_single('books', array('id' => $id));
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('book') . ' | ' . SMS);
         $this->layout->view('book/index', $this->data);
+    }
+    
+    
+               
+    /*****************Function get_single_book**********************************
+     * @type            : Function
+     * @function name   : get_single_book
+     * @description     : "Load single book information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_book(){
+        
+        $book_id = $this->input->post('book_id');
+       
+        $this->data['book'] = $this->book->get_single_book($book_id);
+        echo $this->load->view('book/get-single-book', $this->data);
     }
 
     
@@ -182,6 +210,7 @@ class Book extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('custom_id', $this->lang->line('book_id'), 'trim|required');
         $this->form_validation->set_rules('title', $this->lang->line('book') . ' ' . $this->lang->line('title'), 'trim|required');
         $this->form_validation->set_rules('isbn_no', $this->lang->line('isbn_no'), 'trim');
@@ -230,6 +259,7 @@ class Book extends MY_Controller {
     private function _get_posted_book_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'custom_id';
         $items[] = 'title';
         $items[] = 'isbn_no';
@@ -329,6 +359,8 @@ class Book extends MY_Controller {
             if (file_exists($destination . '/book-cover/' . $book->cover)) {
                 @unlink($destination . '/book-cover/' . $book->cover);
             }
+            
+            create_log('Has been deleted a Book : '.$book->title);
 
             success($this->lang->line('delete_success'));
         } else {

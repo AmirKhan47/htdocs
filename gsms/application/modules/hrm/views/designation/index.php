@@ -9,13 +9,13 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+                <?php if(has_permission(VIEW, 'hrm', 'designation')){ ?>
                     <a href="<?php echo site_url('hrm/designation'); ?>"><?php echo $this->lang->line('manage_designation'); ?></a>
                 <?php } ?>
-                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
+                <?php if(has_permission(VIEW, 'hrm', 'employee')){ ?>
                    | <a href="<?php echo site_url('hrm/employee'); ?>"><?php echo $this->lang->line('manage_employee'); ?></a>
-                <?php } ?>
+                <?php } ?>               
             </div>
             <div class="x_content">
                 <div class="" data-example-id="togglable-tabs">
@@ -23,7 +23,11 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_designation_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('designation'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'hrm', 'designation')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_designation"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('designation'); ?></a> </li>                          
+                             <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('hrm/designation/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('designation'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_designation"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('designation'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?> 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_designation"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('designation'); ?></a> </li>                          
@@ -39,6 +43,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('designation'); ?></th>
                                         <th><?php echo $this->lang->line('note'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
@@ -49,6 +56,9 @@
                                         <?php foreach($designations as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo ucfirst($obj->name); ?></td>
                                             <td><?php echo $obj->note; ?></td>
                                             <td>
@@ -70,11 +80,14 @@
                         <div  class="tab-pane fade in <?php if(isset($add)){ echo 'active'; }?>" id="tab_add_designation">
                             <div class="x_content"> 
                                <?php echo form_open(site_url('hrm/designation/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
+                               
+                                <?php $this->load->view('layout/school_list_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('designation'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('designation'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('designation'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -100,12 +113,14 @@
                         <div class="tab-pane fade in active" id="tab_edit_designation">
                             <div class="x_content"> 
                                <?php echo form_open(site_url('hrm/designation/edit/'.$designation->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
+                                
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('designation'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($designation) ? $designation->name : $name; ?>"  placeholder="<?php echo $this->lang->line('designation'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($designation) ? $designation->name : $name; ?>"  placeholder="<?php echo $this->lang->line('designation'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -119,7 +134,7 @@
                                 <div class="ln_solid"></div>
                                 <div class="form-group">
                                     <div class="col-md-6 col-md-offset-3">
-                                        <input type="hidden" value="<?php echo isset($designation) ? $designation->id : $designation; ?>" name="id" />
+                                        <input type="hidden" value="<?php echo isset($designation) ? $designation->id : ''; ?>" name="id" />
                                         <a href="<?php echo site_url('hrm/designation'); ?>" class="btn btn-primary"><?php echo $this->lang->line('cancel'); ?></a>
                                         <button id="send" type="submit" class="btn btn-success"><?php echo $this->lang->line('update'); ?></button>
                                     </div>
@@ -134,6 +149,7 @@
         </div>
     </div>
 </div> 
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -147,9 +163,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();     
 </script>

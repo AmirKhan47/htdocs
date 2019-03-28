@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Attendance.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Attendance
  * @description     : Manage attendance for student who attend in the exam.  
@@ -19,9 +19,7 @@ class Attendance extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Attendance_Model', 'attendance', true);
-        $this->data['classes'] = $this->attendance->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->attendance->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
+        $this->load->model('Attendance_Model', 'attendance', true);        
     }
 
     
@@ -37,22 +35,36 @@ class Attendance extends MY_Controller {
 
         check_permission(VIEW);
 
+        $school_id = '';
+        
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $exam_id = $this->input->post('exam_id');
             $class_id = $this->input->post('class_id');
             $section_id = $this->input->post('section_id');
             $subject_id = $this->input->post('subject_id');
 
-            $this->data['students'] = $this->attendance->get_student_list($exam_id, $class_id, $section_id, $subject_id);
+            $school = $this->attendance->get_school_by_id($school_id);            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('exam/attendance');
+            }
+            
+            
+            $this->data['students'] = $this->attendance->get_student_list($school_id, $exam_id, $class_id, $section_id, $subject_id, $school->academic_year_id);
 
             $condition = array(
+                'school_id' => $school_id,
                 'exam_id' => $exam_id,
                 'class_id' => $class_id,
-                'section_id' => $section_id,
-                'academic_year_id' => $this->academic_year_id,
+                'academic_year_id' => $school->academic_year_id,
                 'subject_id' => $subject_id
             );
+            
+            if($section_id){
+               $condition['section_id'] = $section_id;
+            }
 
             $data = $condition;
             if (!empty($this->data['students'])) {
@@ -72,14 +84,41 @@ class Attendance extends MY_Controller {
                 }
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['exam_id'] = $exam_id;
             $this->data['class_id'] = $class_id;
             $this->data['section_id'] = $section_id;
             $this->data['subject_id'] = $subject_id;
+            $this->data['academic_year_id'] = $school->academic_year_id;
+            
+           $exam = $this->attendance->get_single('exams', array('id'=>$exam_id));
+           $class = $this->attendance->get_single('classes', array('id'=>$class_id));
+           $subject = $this->attendance->get_single('subjects', array('id'=>$subject_id));
+            
+            create_log('Has been process exam attendance for : '.$exam->title. ', '. $class->name.', '. $subject->name);
         }
-
+        
+        
+        
+        $condition = array();
+        $condition['status'] = 1; 
+        if($school_id){
+            $condition['school_id'] = $school_id;
+        }else{
+            $condition['school_id'] = $this->session->userdata('school_id');
+        }
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $school = $this->attendance->get_school_by_id($this->session->userdata('school_id'));
+            
+            $this->data['classes'] = $this->attendance->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $condition['academic_year_id'] = $school->academic_year_id;
+            $this->data['exams'] = $this->attendance->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }           
+       
         $this->layout->title($this->lang->line('exam') . ' ' . $this->lang->line('attendance') . ' | ' . SMS);
-        $this->layout->view('attendance/index', $this->data);
+        $this->layout->view('attendance/index', $this->data);        
     }
 
 
@@ -95,12 +134,22 @@ class Attendance extends MY_Controller {
     public function update_single() {
 
         $status = $this->input->post('status');
+        $condition['school_id'] = $this->input->post('school_id');
         $condition['student_id'] = $this->input->post('student_id');
         $condition['exam_id'] = $this->input->post('exam_id');
         $condition['class_id'] = $this->input->post('class_id');
-        $condition['section_id'] = $this->input->post('section_id');
+        if($this->input->post('section_id')){
+            $condition['section_id'] = $this->input->post('section_id');
+        }
         $condition['subject_id'] = $this->input->post('subject_id');
-        $condition['academic_year_id'] = $this->academic_year_id;
+        
+        $school = $this->attendance->get_school_by_id($condition['school_id']);  
+        if(!$school->academic_year_id){
+           echo 'ay';
+           die();
+        }
+        
+        $condition['academic_year_id'] = $school->academic_year_id;
 
         $data['is_attend'] = $status ? 1 : 0;
         $data['modified_at'] = date('Y-m-d H:i:s');
@@ -126,11 +175,21 @@ class Attendance extends MY_Controller {
 
         $status = $this->input->post('status');
 
+        $condition['school_id'] = $this->input->post('school_id');
         $condition['exam_id'] = $this->input->post('exam_id');
         $condition['class_id'] = $this->input->post('class_id');
-        $condition['section_id'] = $this->input->post('section_id');
+        if($this->input->post('section_id')){
+            $condition['section_id'] = $this->input->post('section_id');
+        }
         $condition['subject_id'] = $this->input->post('subject_id');
-        $condition['academic_year_id'] = $this->academic_year_id;
+        
+        $school = $this->attendance->get_school_by_id($condition['school_id']); 
+        if(!$school->academic_year_id){
+           echo 'ay';
+           die();
+        }
+        
+        $condition['academic_year_id'] = $school->academic_year_id;
 
         $data['is_attend'] = $status ? 1 : 0;
         $data['modified_at'] = date('Y-m-d H:i:s');

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Designation.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Designation
  * @description     : Manage employee designation.  
@@ -35,8 +35,10 @@ class Designation extends MY_Controller {
     * ********************************************************** */
     public function index() {
         
-        check_permission(VIEW);    
-        $this->data['designations'] = $this->designation->get_list('designations', array('status' => 1), '','', '', 'id', 'ASC'); 
+        check_permission(VIEW);
+        
+        $this->data['designations'] = $this->designation->get_designation(); 
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_designation'). ' | ' . SMS);
         $this->layout->view('designation/index', $this->data);  
@@ -61,6 +63,9 @@ class Designation extends MY_Controller {
 
                 $insert_id = $this->designation->insert('designations', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a Designation : '.$data['name']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('hrm/designation/index');
                 } else {
@@ -72,7 +77,8 @@ class Designation extends MY_Controller {
             }
         }
 
-        $this->data['designations'] = $this->designation->get_list('designations', array('status' => 1), '','', '', 'id', 'ASC'); 
+        $this->data['designations'] = $this->designation->get_designation(); 
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('designation'). ' | ' . SMS);
         $this->layout->view('designation/index', $this->data);
@@ -98,6 +104,9 @@ class Designation extends MY_Controller {
                 $updated = $this->designation->update('designations', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a Designation : '.$data['name']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('hrm/designation/index');                   
                 } else {
@@ -117,7 +126,10 @@ class Designation extends MY_Controller {
             }
         }
 
-        $this->data['designations'] = $this->designation->get_list('designations', array('status' => 1), '','', '', 'id', 'ASC'); 
+        $this->data['school_id'] = $this->data['designation']->school_id;
+        
+        $this->data['designations'] = $this->designation->get_designation(); 
+        
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('designation'). ' | ' . SMS);
         $this->layout->view('designation/index', $this->data);
@@ -136,6 +148,7 @@ class Designation extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('name', $this->lang->line('designation'), 'trim|required|callback_name');
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
     }
@@ -151,7 +164,7 @@ class Designation extends MY_Controller {
     * ********************************************************** */ 
     public function name() {
         if ($this->input->post('id') == '') {
-            $designation = $this->designation->duplicate_check($this->input->post('name'));
+            $designation = $this->designation->duplicate_check($this->input->post('school_id'), $this->input->post('name'));
             if ($designation) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -159,7 +172,7 @@ class Designation extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $designation = $this->designation->duplicate_check($this->input->post('name'), $this->input->post('id'));
+            $designation = $this->designation->duplicate_check($this->input->post('school_id'), $this->input->post('name'), $this->input->post('id'));
             if ($designation) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -182,6 +195,7 @@ class Designation extends MY_Controller {
     private function _get_posted_designation_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'name';
         $data = elements($items, $_POST);        
         $data['note'] = $this->input->post('note');
@@ -215,15 +229,19 @@ class Designation extends MY_Controller {
          
         if(!is_numeric($id)){
              error($this->lang->line('unexpected_error'));
-             redirect('hrm/designation');        
+             redirect('hrm/designation/index');        
         }
         
-        if ($this->designation->delete('designations', array('id' => $id))) {            
+        $designation = $this->designation->get_single('designations', array('id' => $id));
+        
+        if ($this->designation->delete('designations', array('id' => $id))) { 
+            
+            create_log('Has been deleted a Designation : '.$designation->name);
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
-        redirect('hrm/designation');
+        redirect('hrm/designation/index');
     }
 
 }

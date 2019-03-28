@@ -15,14 +15,18 @@
         <link href="<?php echo VENDOR_URL; ?>font-awesome/css/font-awesome.min.css" rel="stylesheet">     
         <!-- Custom Theme Style -->
         <link href="<?php echo CSS_URL; ?>custom.css" rel="stylesheet">
-    </head>
-
+    </head>    
     <body class="login">     
 
         <div class="login_wrapper">
             <section>
                 <center>
-                    <img  width="100" height="100" src="<?php echo IMG_URL; ?>/sms-logo.png">
+                    <?php  if(UPLOAD_PATH.'logo/'.$this->global_setting->brand_logo){ ?>
+                        <img  src="<?php echo UPLOAD_PATH.'logo/'.$this->global_setting->brand_logo; ?>" style="max-width: 100px;" alt="">
+                    <?php }else{ ?>
+                        <img  width="100" height="100" src="<?php echo IMG_URL; ?>/sms-logo.png">
+                    <?php } ?>
+                    
                 </center>
             </section>
             <div class="form login_form">
@@ -34,11 +38,11 @@
                     </div>
                     <?php echo form_open(site_url('auth/login'), array('name' => 'login', 'id' => 'login'), ''); ?>
                     <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
-                        <input type="text" name="email" class="form-control has-feedback-left" placeholder="<?php echo $this->lang->line('email'); ?>">
-                        <span class="fa fa-envelope form-control-feedback left" aria-hidden="true"></span>
+                        <input type="text" name="username" class="form-control has-feedback-left" placeholder="<?php echo $this->lang->line('username'); ?>" autocomplete="off">
+                        <span class="fa fa-user form-control-feedback left" aria-hidden="true"></span>
                     </div>
                     <div class="col-md-12 col-sm-12 col-xs-12 form-group has-feedback">
-                        <input type="password" name="password" class="form-control has-feedback-left" id="inputSuccess2" placeholder="<?php echo $this->lang->line('password'); ?>">
+                        <input type="password" name="password" class="form-control has-feedback-left" id="inputSuccess2" placeholder="<?php echo $this->lang->line('password'); ?>" autocomplete="off">
                         <span class="fa fa-asterisk form-control-feedback left" aria-hidden="true"></span>
                     </div>                    
                    

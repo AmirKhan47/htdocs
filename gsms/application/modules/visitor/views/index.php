@@ -13,15 +13,17 @@
                     
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_visitor_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('visitor_info'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
-                        <?php if(has_permission(ADD, 'visitor', 'visitor')){ ?> 
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_visitor"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('visitor_info'); ?></a> </li>                          
+                        <?php if(has_permission(ADD, 'visitor', 'visitor')){ ?>
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('visitor/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('visitor_info'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                 <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_visitor"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('visitor_info'); ?></a> </li>                          
+                             <?php } ?>
+                           
                         <?php } ?>
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_visitor"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('visitor_info'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_visitor"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('visitor_info'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>     
                     </ul>
                     <br/>
                     
@@ -32,6 +34,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('phone'); ?></th>
                                         <th><?php echo $this->lang->line('to_meet'); ?></th>
@@ -46,20 +51,23 @@
                                         <?php foreach($visitors as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td  data-toggle="tooltip" data-original-title="<?php echo $obj->note; ?>">
                                                 <a><?php echo $obj->name; ?></a>
                                             </td>
                                             <td><?php echo $obj->phone; ?></td>
-                                            <td><?php $user = get_user_by_role($obj->role_id, $obj->user_id); echo $user->name; ?><br/>(<?php echo $obj->role; ?>)</td>
+                                            <td><?php $user = get_user_by_role($obj->role_id, $obj->user_id); echo @$user->name; ?><br/>(<?php echo $obj->role; ?>)</td>
                                             <td><?php echo $this->lang->line($obj->reason); ?></td>                                           
                                             <td><?php echo $obj->check_in; ?></td>                                           
                                             <td><?php echo $obj->check_out ? $obj->check_out : '<a style="color:red;" href="javascript:void(0);" onclick="check_out('.$obj->id.');">'.$this->lang->line('check_out').'</a>'; ?></td>                                           
                                             <td>
-                                                <?php if(has_permission(EDIT, 'visitor', 'visitor')){ ?>
+                                                <?php if(has_permission(EDIT, 'visitor', 'visitor') && !$obj->check_out){ ?>
                                                     <a href="<?php echo site_url('visitor/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
-                                                <?php if(has_permission(VIEW, 'visitor', 'visitor')){ ?>
-                                                    <a href="<?php echo site_url(-'visitor/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                 <?php if(has_permission(VIEW, 'visitor', 'visitor')){ ?>
+                                                    <a  onclick="get_visitor_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-visitor-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(DELETE, 'visitor', 'visitor')){ ?>
                                                     <a href="<?php echo site_url('visitor/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
@@ -77,6 +85,7 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('visitor/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
@@ -103,10 +112,10 @@
                                 </div>
 
                                  <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('to_meet'); ?> <?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="role_id"  id="role_id" required="required" onchange="get_user_by_role(this.value, '');">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="role_id"  id="add_role_id" required="required" onchange="get_user_by_role(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($roles as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
@@ -117,7 +126,7 @@
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="user_id"><?php echo $this->lang->line('to_meet'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="user_id"><?php echo $this->lang->line('to_meet'); ?> <?php echo $this->lang->line('user'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12"  name="user_id"  id="add_user_id" required="required" >
@@ -166,8 +175,9 @@
                         <?php if(isset($edit)){ ?>
                         <div class="tab-pane fade in active" id="tab_edit_visitor">
                             <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url('visitor/edit'), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
+                               <?php echo form_open_multipart(site_url('visitor/edit/'.$visitor->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
@@ -194,10 +204,10 @@
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('to_meet'); ?> <?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="role_id"  id="role_id" required="required" onchange="get_user_by_role(this.value, '<?php echo $visitor->user_id; ?>');">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="role_id"  id="edit_role_id" required="required" onchange="get_user_by_role(this.value, '<?php echo $visitor->user_id; ?>');">
                                              <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
                                             <?php foreach($roles as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php if($visitor->role_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $obj->name; ?></option>
@@ -208,7 +218,7 @@
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="user_id"><?php echo $this->lang->line('to_meet'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="user_id"><?php echo $this->lang->line('to_meet'); ?> <?php echo $this->lang->line('user'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12"  name="user_id"  id="edit_user_id" required="required" >
@@ -253,82 +263,7 @@
                                 <?php echo form_close(); ?>
                             </div>
                         </div>  
-                        <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_visitor">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('name'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->name; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('phone'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->phone; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('coming_from'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->coming_from; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->role; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('to_meet'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                        
-                                    : <?php $user = get_user_by_role($visitor->role_id, $visitor->user_id); echo $user->name; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('reason_to_meet'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $this->lang->line($visitor->reason); ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('check_in'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->check_in; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('check_out'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->check_out; ?>
-                                    </div>
-                                </div>
-                                                                                                                 
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $visitor->note; ?>
-                                    </div>
-                                </div>
-                                <?php if(has_permission(EDIT, 'visitor', 'visitor')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('visitor/edit/'.$visitor->id); ?>"  class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                        <?php } ?>                    
                     </div>
                 </div>
             </div>
@@ -336,18 +271,68 @@
     </div>
 </div>
 
+
+<div class="modal fade bs-visitor-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('visitor_info'); ?> </h4>
+        </div>
+        <div class="modal-body fn_visitor_data">            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_visitor_modal(visitor_id){
+         
+        $('.fn_visitor_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('visitor/get_single_visitor'); ?>",
+          data   : {visitor_id : visitor_id},  
+          success: function(response){                                                   
+            if(response)
+            {
+               $('.fn_visitor_data').html(response);
+            }
+          }
+       });
+    }
+</script>
+
+
  <script type="text/javascript">
      
-  <?php if(isset($edit)){ ?>
+   <?php if(isset($edit)){ ?>
         get_user_by_role('<?php echo $visitor->role_id; ?>', "<?php echo $visitor->user_id; ?>");
     <?php } ?>
     
+    $('.fn_school_id').on('change', function(){
+         $('#add_role_id').prop('selectedIndex',0);
+         $('#edit_role_id').prop('selectedIndex',0);
+         $('#add_user_id').prop('selectedIndex',0);
+         $('#edit_user_id').prop('selectedIndex',0);
+    });
+    
     function get_user_by_role(role_id, user_id){       
-           
+       
+       <?php if(isset($edit)){ ?>
+            var school_id = $('#edit_school_id').val();
+        <?php }else{ ?>
+            var school_id = $('#add_school_id').val();
+        <?php } ?>
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
         $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_user_by_role'); ?>",
-            data   : { role_id : role_id , user_id: user_id},               
+            data   : {school_id:school_id, role_id : role_id , user_id: user_id, message:true},               
             async  : false,
             success: function(response){                                                   
                if(response)
@@ -361,6 +346,7 @@
             }
         });  
    }
+   
     function check_out(visitor_id){       
            
         $.ajax({       
@@ -374,20 +360,7 @@
                       location.reload();
                 }else{
                      toastr.error('<?php echo $this->lang->line('update_failed'); ?>');  
-                }
-                toastr.options = {
-                "closeButton": true,               
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "showDuration": "400",
-                "hideDuration": "400",
-                "timeOut": "5000",              
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-              }               
+                }                               
             }
         });  
    }
@@ -405,9 +378,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();  
 </script>

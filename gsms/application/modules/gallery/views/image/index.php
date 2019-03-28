@@ -9,16 +9,13 @@
                 <div class="clearfix"></div>
             </div>
              <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'gallery', 'gallery')){ ?>
                     <a href="<?php echo site_url('gallery/index'); ?>"><?php echo $this->lang->line('manage_gallery'); ?> </a>
                 <?php } ?>
                 <?php if(has_permission(VIEW, 'gallery', 'image')){ ?>
                   |  <a href="<?php echo site_url('gallery/image'); ?>"><?php echo $this->lang->line('manage_gallery_image'); ?></a>
-                <?php } ?>
-                <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
-                  |  <a href="<?php echo site_url('frontend/index'); ?>"><?php echo $this->lang->line('manage_frontend'); ?></a>
-                <?php } ?>
+                <?php } ?>                
             </div>
             
             <div class="x_content">
@@ -27,14 +24,15 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_image_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'gallery', 'image')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_image"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('image'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('gallery/image/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('image'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_image"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('image'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?> 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_image"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('image'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_image"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('image'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>  
                     </ul>
                     <br/>
                     
@@ -45,9 +43,12 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
+                                        <th><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('image'); ?></th>
                                         <th><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?></th>
-                                        <th><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -56,19 +57,22 @@
                                         <?php foreach($images as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
+                                            <td><?php echo $obj->title; ?></td>
                                             <td>
                                                 <?php  if($obj->image != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $obj->image; ?>" alt="" width="100" /> 
                                                 <?php } ?>
                                             </td>
                                             <td><?php echo $obj->caption; ?></td>
-                                            <td><?php echo $obj->title; ?></td>
                                             <td>
                                                 <?php if(has_permission(EDIT, 'gallery', 'image')){ ?>
                                                     <a href="<?php echo site_url('gallery/image/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(VIEW, 'gallery', 'image')){ ?>
-                                                    <a href="<?php echo site_url('gallery/image/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                    <a  onclick="get_image_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-image-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(DELETE, 'gallery', 'image')){ ?>
                                                     <a href="<?php echo site_url('gallery/image/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
@@ -86,14 +90,18 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('gallery/image/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="gallery_id"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?><span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="gallery_id"  id="gallery_id" required="required">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="gallery_id"  id="add_gallery_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <?php foreach($galleries as $obj){ ?>
-                                             <option value="<?php echo $obj->id; ?>" <?php echo isset($post['caption']) ?  'selected="selected"' : ''; ?>><?php echo $obj->title; ?></option> 
+                                            <?php if(isset($galleries) && !empty($galleries)){ ?>
+                                                <?php foreach($galleries as $obj){ ?>
+                                                 <option value="<?php echo $obj->id; ?>" <?php echo isset($post['caption']) ?  'selected="selected"' : ''; ?>><?php echo $obj->title; ?></option> 
+                                                <?php } ?>                                                                              
                                             <?php } ?>                                                                              
                                         </select>
                                         <div class="help-block"><?php echo form_error('gallery_id'); ?></div>
@@ -116,7 +124,7 @@
                                <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="caption"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="caption"  id="caption" value="<?php echo isset($post['caption']) ?  $post['caption'] : ''; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?>" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="caption"  id="caption" value="<?php echo isset($post['caption']) ?  $post['caption'] : ''; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('caption'); ?></div>
                                     </div>
                                 </div>
@@ -138,14 +146,17 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('gallery/image/edit/'.$image->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="gallery_id"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?><span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="gallery_id"  id="gallery_id" required="required">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="gallery_id"  id="edit_gallery_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <?php foreach($galleries as $obj){ ?>
-                                             <option value="<?php echo $obj->id; ?>" <?php echo isset($post['caption']) || $obj->id == $image->gallery_id ?  'selected="selected"' : ''; ?>><?php echo $obj->title; ?></option> 
+                                            <?php if(isset($galleries) && !empty($galleries)){ ?>
+                                                <?php foreach($galleries as $obj){ ?>
+                                                 <option value="<?php echo $obj->id; ?>" <?php echo isset($post['caption']) || $obj->id == $image->gallery_id ?  'selected="selected"' : ''; ?>><?php echo $obj->title; ?></option> 
+                                                <?php } ?>                                                                              
                                             <?php } ?>                                                                              
                                         </select>
                                         <div class="help-block"><?php echo form_error('gallery_id'); ?></div>
@@ -172,7 +183,7 @@
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="caption"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="caption"  id="caption" value="<?php echo isset($image->caption) ?  $image->caption : $post['caption']; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?>" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="caption"  id="caption" value="<?php echo isset($image->caption) ?  $image->caption : $post['caption']; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('caption'); ?></div>
                                     </div>
                                 </div>
@@ -189,47 +200,7 @@
                                 <?php echo form_close(); ?>
                             </div>
                         </div>  
-                        <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_image">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $image->title; ?>
-                                    </div>
-                                </div>
-                                                                                        
-                                                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('gallery'); ?> <?php echo $this->lang->line('image'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($image->image){ ?>
-                                    <img src="<?php echo UPLOAD_PATH; ?>/gallery/<?php echo $image->image; ?>" alt=""  class="img-responsive" /><br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('caption'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $image->caption; ?>
-                                    </div>
-                                </div>                         
-                                <?php if(has_permission(EDIT, 'gallery', 'image')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('gallery/image/edit/'.$image->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
+                        <?php } ?>               
                         
                     </div>
                 </div>
@@ -237,6 +208,84 @@
         </div>
     </div>
 </div>
+
+
+
+<div class="modal fade bs-image-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_image_data"></div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_image_modal(image_id){
+         
+        $('.fn_news_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('gallery/image/get_single_image'); ?>",
+          data   : {image_id : image_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_image_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
+
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $("document").ready(function() {
+         <?php if(isset($edit) && !empty($edit)){ ?>
+            $(".fn_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();       
+        var gallery_id = '';
+        <?php if(isset($edit) && !empty($edit)){ ?>         
+            gallery_id =  '<?php echo $image->gallery_id; ?>';
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
+         $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_gallery_by_school'); ?>",
+            data   : { school_id:school_id, gallery_id : gallery_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {    
+                   if(gallery_id){
+                       $('#edit_gallery_id').html(response);
+                   }else{
+                       $('#add_gallery_id').html(response); 
+                   }
+               }
+            }
+        });       
+     
+    }); 
+    
+  </script>
+  <!-- Super admin js end -->
 
  <script type="text/javascript"> 
   
@@ -251,9 +300,11 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+            search: true,            
+            responsive: true
       });
     });
+    
     $("#add").validate();     
     $("#edit").validate();  
   </script> 

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Notice.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Notice
  * @description     : Manage school academic notice for student, guardian, teacer and employee.  
@@ -34,9 +34,10 @@ class Notice extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
-
+        
         $this->data['notices'] = $this->notice->get_notice_list();
         $this->data['roles'] = $this->notice->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_notice') . ' | ' . SMS);
         $this->layout->view('notice/index', $this->data);
@@ -62,6 +63,9 @@ class Notice extends MY_Controller {
 
                 $insert_id = $this->notice->insert('notices', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been created a notice : '.$data['title']);   
+                     
                     success($this->lang->line('insert_success'));
                     redirect('announcement/notice/index');
                 } else {
@@ -107,6 +111,9 @@ class Notice extends MY_Controller {
                 $updated = $this->notice->update('notices', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a notice : '.$data['title']);  
+                    
                     success($this->lang->line('update_success'));
                     redirect('announcement/notice/index');
                 } else {
@@ -128,7 +135,8 @@ class Notice extends MY_Controller {
 
         $this->data['notices'] = $this->notice->get_notice_list();
         $this->data['roles'] = $this->notice->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-      
+        $this->data['school_id'] = $this->data['notice']->school_id;
+        
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('notice') . ' | ' . SMS);
         $this->layout->view('notice/index', $this->data);
@@ -163,6 +171,24 @@ class Notice extends MY_Controller {
 
     
         
+           
+     /*****************Function get_single_notice**********************************
+     * @type            : Function
+     * @function name   : get_single_notice
+     * @description     : "Load single notice information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_notice(){
+        
+       $notice_id = $this->input->post('notice_id');
+       
+       $this->data['notice'] = $this->notice->get_single_notice($notice_id);
+       echo $this->load->view('notice/get-single-notice', $this->data);
+    }
+
+        
     /*****************Function _prepare_notice_validation**********************************
     * @type            : Function
     * @function name   : _prepare_notice_validation
@@ -175,6 +201,7 @@ class Notice extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('notice_for'), 'trim|required');
         $this->form_validation->set_rules('title', $this->lang->line('notice') . ' ' . $this->lang->line('title'), 'trim|required|callback_title');
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required');
@@ -192,7 +219,7 @@ class Notice extends MY_Controller {
     * ********************************************************** */ 
     public function title() {
         if ($this->input->post('id') == '') {
-            $notice = $this->notice->duplicate_check($this->input->post('title'), $this->input->post('date'));
+            $notice = $this->notice->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('date'));
             if ($notice) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -200,7 +227,7 @@ class Notice extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $notice = $this->notice->duplicate_check($this->input->post('title'), $this->input->post('date'), $this->input->post('id'));
+            $notice = $this->notice->duplicate_check($this->input->post('school_id'),$this->input->post('title'), $this->input->post('date'), $this->input->post('id'));
             if ($notice) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -222,9 +249,12 @@ class Notice extends MY_Controller {
     private function _get_posted_notice_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'role_id';
         $items[] = 'title';
         $items[] = 'notice';
+        $items[] = 'is_view_on_web';
+        
         $data = elements($items, $_POST);
 
         $data['date'] = date('Y-m-d', strtotime($this->input->post('date')));
@@ -259,8 +289,13 @@ class Notice extends MY_Controller {
             redirect('announcement/notice/index');
         }
         
+        $notice = $this->notice->get_single('notices', array('id' => $id));
+        
         if ($this->notice->delete('notices', array('id' => $id))) {
+            
+            create_log('Has been deleted a notice : '.$notice->title);
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }

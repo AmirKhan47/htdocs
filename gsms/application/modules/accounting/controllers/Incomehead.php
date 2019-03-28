@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Incomehead.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Incomehead
  * @description     : Manage all income type/head/title as per accounting term.  
@@ -36,11 +36,12 @@ class Incomehead extends MY_Controller {
     public function index() {
         
         check_permission(VIEW);
-        $this->data['incomeheads'] = $this->incomehead->get_list('income_heads', array('status'=> 1), '', '', '', 'is_default', 'DESC');  
+            
+        $this->data['incomeheads'] = $this->incomehead->get_incomehead_list();  
+       
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_income_head'). ' | ' . SMS);
-        $this->layout->view('income_head/index', $this->data);            
-       
+        $this->layout->view('income_head/index', $this->data);
     }
 
     
@@ -63,6 +64,9 @@ class Incomehead extends MY_Controller {
 
                 $insert_id = $this->incomehead->insert('income_heads', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a income head : '. $data['title']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('accounting/incomehead/index');
                 } else {
@@ -74,7 +78,8 @@ class Incomehead extends MY_Controller {
             }
         }
 
-        $this->data['incomeheads'] = $this->incomehead->get_list('income_heads', array('status'=> 1), '', '', '', 'is_default', 'DESC');  
+        $this->data['incomeheads'] = $this->incomehead->get_incomehead_list();  
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('income_head'). ' | ' . SMS);
         $this->layout->view('income_head/index', $this->data);
@@ -107,6 +112,9 @@ class Incomehead extends MY_Controller {
                 $updated = $this->incomehead->update('income_heads', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a income head : '. $data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('accounting/incomehead/index');                   
                 } else {
@@ -126,7 +134,9 @@ class Incomehead extends MY_Controller {
             }
         }
 
-        $this->data['incomeheads'] = $this->incomehead->get_list('income_heads', array('status'=> 1), '', '', '', 'is_default', 'DESC');  
+        $this->data['incomeheads'] = $this->incomehead->get_incomehead_list();  
+        $this->data['school_id'] = $this->data['incomehead']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('income_head'). ' | ' . SMS);
         $this->layout->view('income_head/index', $this->data);
@@ -146,6 +156,7 @@ class Incomehead extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('title', $this->lang->line('income_head'), 'trim|required|callback_title');   
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');   
     }
@@ -165,7 +176,7 @@ class Incomehead extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $incomehead = $this->incomehead->duplicate_check('title',$this->input->post('title')); 
+          $incomehead = $this->incomehead->duplicate_check($this->input->post('school_id'), $this->input->post('title')); 
           if($incomehead){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -173,7 +184,7 @@ class Incomehead extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $incomehead = $this->incomehead->duplicate_check('title', $this->input->post('title'), $this->input->post('id')); 
+         $incomehead = $this->incomehead->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('id')); 
           if($incomehead){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -195,6 +206,7 @@ class Incomehead extends MY_Controller {
     private function _get_posted_incomehead_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'note';
         $data = elements($items, $_POST);  
@@ -203,7 +215,7 @@ class Incomehead extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
-            $data['is_default'] = 0;
+            $data['head_type'] = 'income';
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();                       
@@ -231,7 +243,11 @@ class Incomehead extends MY_Controller {
             redirect('accounting/incomehead/index');   
         }
         
-        if ($this->incomehead->delete('income_heads', array('id' => $id))) {            
+        $income_head = $this->incomehead->get_single('income_heads', array('id' => $id));
+        
+        if ($this->incomehead->delete('income_heads', array('id' => $id))) { 
+            
+            create_log('Has been deleted a income head : '. $income_head->title);
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

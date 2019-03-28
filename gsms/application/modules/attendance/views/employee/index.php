@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'attendance', 'student')){ ?>
                     <a href="<?php echo site_url('attendance/student'); ?>"><?php echo $this->lang->line('student'); ?> <?php echo $this->lang->line('attendance'); ?></a>
                 <?php } ?>
@@ -19,15 +19,22 @@
                 <?php if(has_permission(VIEW, 'attendance', 'employee')){ ?>
                    | <a href="<?php echo site_url('attendance/employee'); ?>"><?php echo $this->lang->line('employee'); ?> <?php echo $this->lang->line('attendance'); ?></a>                    
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'attendance', 'absentemail')){ ?>
+                   | <a href="<?php echo site_url('attendance/absentemail/index'); ?>"><?php echo $this->lang->line('absent'); ?> <?php echo $this->lang->line('email'); ?></a>                    
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'attendance', 'absentsms')){ ?>
+                   | <a href="<?php echo site_url('attendance/absentsms/index'); ?>"><?php echo $this->lang->line('absent'); ?> <?php echo $this->lang->line('sms'); ?></a>                    
+                <?php } ?>
             </div>
 
             <div class="x_content"> 
                 <?php echo form_open_multipart(site_url('attendance/employee/index'), array('name' => 'employee', 'id' => 'employee', 'class' => 'form-horizontal form-label-left'), ''); ?>
                 <div class="row"> 
-                    <div class="col-md-3 col-sm-3 col-xs-12 col-sm-offset-4">
+                    <?php $this->load->view('layout/school_list_filter'); ?>
+                    <div class="col-md-3 col-sm-3 col-xs-12">                        
                         <div class="item form-group">  
                             <div><?php echo $this->lang->line('date'); ?> <span class="required">*</span></div>
-                            <input  class="form-control col-md-7 col-xs-12"  name="date"  id="date" value="<?php if(isset($date)){ echo $date;} ?>" placeholder="<?php echo $this->lang->line('date'); ?>" required="required" type="text">
+                            <input  class="form-control col-md-7 col-xs-12"  name="date"  id="date" value="<?php if(isset($date)){ echo $date;} ?>" placeholder="<?php echo $this->lang->line('date'); ?>" required="required" type="text" autocomplete="off">
                             <div class="help-block"><?php echo form_error('date'); ?></div>
                         </div>
                     </div>
@@ -75,7 +82,7 @@
                         if (isset($employees) && !empty($employees)) {
                             ?>
                             <?php foreach ($employees as $obj) { ?>
-                            <?php  $attendance = get_employee_attendance($obj->id, $academic_year_id, $year, $month, $day ); ?>
+                            <?php  $attendance = get_employee_attendance($obj->id, $school_id, $academic_year_id, $year, $month, $day ); ?>
                                 <tr>
                                     <td><?php echo $count++;  ?></td>
                                     <td>
@@ -156,35 +163,31 @@
            
           var status     = $(this).prop('checked') ? $(this).val() : '';
           var employee_id = $(this).prop('checked') ? $(this).attr('itemid') : '';
+          var school_id   = $('#school_id').val();
           var class_id   = $('#class_id').val();
           var section_id = $('#section_id').val();
           var date       = $('#date').val();
-          
+          var obj        = $(this);
           $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('attendance/employee/update_single_attendance'); ?>",
-            data   : { status : status , employee_id: employee_id, class_id:class_id, section_id:section_id, date:date},               
+            data   : {school_id:school_id, status : status , employee_id: employee_id, class_id:class_id, section_id:section_id, date:date},               
             async  : false,
             success: function(response){ 
                
-                if(response){
-                     toastr.success('<?php echo $this->lang->line('update_success'); ?>');  
+                if(response == 'ay'){
+                    toastr.error('<?php echo $this->lang->line('set_academic_year_for_school'); ?>'); 
+                    $(obj).prop('checked', false);
+                    
+                }else if(response == 1){
+                    
+                    toastr.success('<?php echo $this->lang->line('update_success'); ?>'); 
+                    
                 }else{
-                     toastr.error('<?php echo $this->lang->line('update_failed'); ?>');  
+                    
+                    toastr.error('<?php echo $this->lang->line('update_failed'); ?>'); 
+                    $(obj).prop('checked', false);
                 }
-                toastr.options = {
-                "closeButton": true,               
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "showDuration": "400",
-                "hideDuration": "400",
-                "timeOut": "5000",              
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-              }
             }
         }); 
                       
@@ -193,34 +196,31 @@
          $('.fn_all_attendnce').click(function(){
            
           var status     = $(this).prop('checked') ? $(this).val() : '';         
+          var school_id   = $('#school_id').val();
           var class_id   = $('#class_id').val();
           var section_id = $('#section_id').val();
           var date       = $('#date').val();
+          var obj        = $(this);
           
           $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('attendance/employee/update_all_attendance'); ?>",
-            data   : { status : status , class_id:class_id, section_id:section_id, date:date},               
+            data   : { school_id:school_id, status : status , class_id:class_id, section_id:section_id, date:date},               
             async  : false,
             success: function(response){ 
-                if(response){
-                     toastr.success('<?php echo $this->lang->line('update_success'); ?>');  
+                if(response == 'ay'){
+                    
+                    toastr.error('<?php echo $this->lang->line('set_academic_year_for_school'); ?>'); 
+                    $('.fn_single_attendnce').prop('checked', false);
+                    $(obj).prop('checked', false);
+                    
+                }else if(response == 1){
+                    toastr.success('<?php echo $this->lang->line('update_success'); ?>'); 
                 }else{
-                     toastr.error('<?php echo $this->lang->line('update_failed'); ?>');  
-                }
-                toastr.options = {
-                "closeButton": true,               
-                "newestOnTop": false,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "showDuration": "400",
-                "hideDuration": "400",
-                "timeOut": "5000",              
-                "showEasing": "swing",
-                "hideEasing": "linear",
-                "showMethod": "fadeIn",
-                "hideMethod": "fadeOut"
-              }
+                    toastr.error('<?php echo $this->lang->line('update_failed'); ?>'); 
+                    $('.fn_single_attendnce').prop('checked', false);
+                    $(obj).prop('checked', false);
+                }              
             }
         }); 
                       

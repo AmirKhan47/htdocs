@@ -11,9 +11,13 @@
             
             <?php $this->load->view('quick_report'); ?>   
             
-             <div class="x_content filter-box"> 
+             <div class="x_content filter-box no-print"> 
                 <?php echo form_open_multipart(site_url('report/payroll'), array('name' => 'payroll', 'id' => 'payroll', 'class' => 'form-horizontal form-label-left'), ''); ?>
-                <div class="row">                    
+                <div class="row"> 
+                    
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                        <?php $this->load->view('layout/school_list_filter'); ?>
+                        
                         <div class="col-md-2 col-sm-2 col-xs-12">
                             <div class="item form-group"> 
                                 <div><?php echo $this->lang->line('academic_year'); ?></div>
@@ -26,7 +30,7 @@
                             </div>
                         </div>
                     
-                        <div class="col-md-2 col-sm-2 col-xs-12">
+                        <div class="col-md-3 col-sm-3 col-xs-12">
                         <div class="item form-group"> 
                             <div><?php echo $this->lang->line('group_by_data'); ?> <span class="required">*</span></div>
                             <select  class="form-control col-md-7 col-xs-12" name="group_by" id="group_by" required="required">
@@ -55,7 +59,8 @@
                                 <input  class="form-control col-md-12 col-xs-12 "  name="month"  id="month" value="<?php echo isset($month) ? $month : ''; ?>" placeholder="<?php echo $this->lang->line('month'); ?>" type="text">
                                 <div class="help-block"><?php echo form_error('month'); ?></div>
                             </div>
-                        </div>                        
+                        </div> 
+                    </div>
                 
                     <div class="col-md-2 col-sm-2 col-xs-12">
                         <div class="form-group"><br/>
@@ -69,7 +74,40 @@
             <div class="x_content">
                 <div class="" data-example-id="togglable-tabs">
                     
-                    <ul  class="nav nav-tabs bordered">
+                    <?php if(isset($school) && !empty($school)){ ?>
+                    <div class="x_content">             
+                       <div class="row">
+                           <div class="col-sm-3 col-xs-3">&nbsp;</div>
+                           <div class="col-sm-6  col-xs-6 layout-box">
+                               <div>
+                                   <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $school->logo; ?>" alt="" width="70" />
+                                   <h4><?php echo $school->school_name; ?></h4>
+                                   <div><?php echo $school->address; ?></div>
+                                   <h3 class="head-title ptint-title" style="width: 100%;"><i class="fa fa-bar-chart"></i><small> <?php echo $this->lang->line('payroll'); ?> <?php echo $this->lang->line('invoice'); ?> <?php echo $this->lang->line('report'); ?></small></h3>                
+                                   <?php if(isset($academic_year)){ ?>
+                                   <div class="clearfix">&nbsp;</div>
+                                   <div><?php echo $this->lang->line('academic_year'); ?>: <?php echo $academic_year; ?></div>                                   
+                                   <?php  $group_by = $group_by == 'expenditure_by' ? 'expenditure' : $group_by; ?>
+                                        <div><?php echo $this->lang->line('report'); ?>: <?php echo $this->lang->line($group_by); ?></div>
+                                        <?php if(isset($payment_to) && $payment_to != ''){ ?>                                        
+                                        <div><?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('type'); ?>: <?php echo $this->lang->line($payment_to); ?></div>
+                                        <?php } ?>
+                                        <?php if(isset($month) && $month != ''){ ?>
+                                        <div><?php echo $this->lang->line('month'); ?> : <?php echo date('F, Y', strtotime('1-'.$month)); ?></div>
+                                        <?php } ?>
+                                   
+                                   <?php } ?>
+                                   
+                                   
+                                   <div class="clearfix">&nbsp;</div>
+                               </div>
+                           </div>
+                            <div class="col-sm-3  col-xs-3">&nbsp;</div>
+                       </div>            
+                    </div>
+                    <?php } ?>
+                  
+                    <ul  class="nav nav-tabs bordered no-print">
                         <li class=""><a href="#tab_tabular"   role="tab" data-toggle="tab"   aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('tabular'); ?> <?php echo $this->lang->line('report'); ?></a> </li>
                         <li  class="active"><a href="#tab_graphical"   role="tab" data-toggle="tab"  aria-expanded="false"><i class="fa fa-line-chart"></i> <?php echo $this->lang->line('graphical'); ?> <?php echo $this->lang->line('report'); ?></a> </li>                          
                     </ul>
@@ -178,6 +216,13 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="row no-print">
+                <div class="col-xs-12 text-right">
+                    <button class="btn btn-default " onclick="window.print();"><i class="fa fa-print"></i> <?php echo $this->lang->line('print'); ?></button>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
@@ -192,24 +237,48 @@
         minViewMode: "months"
     });
      
-    $("#expenditure").validate();      
-    <?php if(isset($payment_to) && isset($user_id)){ ?>
-        get_user_list('<?php echo $payment_to; ?>', <?php echo $user_id; ?>)
-    <?php } ?>
-    function get_user_list(payment_to, user_id){
-           
-       $.ajax({       
+    $("#payroll").validate(); 
+    
+    $("document").ready(function() {
+         <?php if(isset($school_id) && !empty($school_id)){ ?>
+            $(".fn_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();
+        var academic_year_id = '';       
+        
+        <?php if(isset($school_id) && !empty($school_id)){ ?>
+            academic_year_id =  '<?php echo $academic_year_id; ?>';           
+         <?php } ?>          
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
+        get_academic_year_by_school(school_id, academic_year_id);
+       
+    });
+    
+            
+    function get_academic_year_by_school(school_id, academic_year_id){       
+         
+        $.ajax({       
             type   : "POST",
-            url    : "<?php echo site_url('ajax/get_user_list_by_type'); ?>",
-            data   : { payment_to : payment_to, user_id : user_id},               
+            url    : "<?php echo site_url('ajax/get_academic_year_by_school'); ?>",
+            data   : { school_id:school_id, academic_year_id :academic_year_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
-               {
-                   $('#user_id').html(response); 
+               { 
+                    $('#academic_year_id').html(response); 
                }
             }
-        }); 
+        });
    } 
+
        
 </script>

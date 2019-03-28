@@ -8,38 +8,59 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
-            <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-               <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
-                    <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+             <div class="x_content quick-link">
+                <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+               <?php if(has_permission(VIEW, 'accounting', 'discount')){ ?>
+                    <a href="<?php echo site_url('accounting/discount/index'); ?>"><?php echo $this->lang->line('discount'); ?></a>                  
                 <?php } ?> 
-                <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
-                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('manage_income'); ?></a>                     
+              
+               <?php if(has_permission(VIEW, 'accounting', 'feetype')){ ?>
+                  | <a href="<?php echo site_url('accounting/feetype/index'); ?>"><?php echo $this->lang->line('fee_type'); ?></a>                  
                 <?php } ?> 
+                
                 <?php if(has_permission(VIEW, 'accounting', 'invoice')){ ?>
                    
                    <?php if($this->session->userdata('role_id') == STUDENT || $this->session->userdata('role_id') == GUARDIAN){ ?>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                    <?php }else{ ?>
-                        | <a href="<?php echo site_url('accounting/invoice'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/add'); ?>"><?php echo $this->lang->line('fee'); ?> <?php echo $this->lang->line('collection'); ?></a>
+                        | <a href="<?php echo site_url('accounting/invoice/index'); ?>"><?php echo $this->lang->line('manage_invoice'); ?></a>
                         | <a href="<?php echo site_url('accounting/invoice/due'); ?>"><?php echo $this->lang->line('due_invoice'); ?></a>                    
                     <?php } ?> 
                 <?php } ?> 
+                  
+                <?php if(has_permission(VIEW, 'accounting', 'duefeeemail')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeeemail/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('email'); ?></a>                  
+                <?php } ?>
+                 <?php if(has_permission(VIEW, 'accounting', 'duefeesms')){ ?>
+                   | <a href="<?php echo site_url('accounting/duefeesms/index'); ?>"><?php echo $this->lang->line('due_fee'); ?> <?php echo $this->lang->line('sms'); ?></a>                  
+                <?php } ?>         
+                        
+                 <?php if(has_permission(VIEW, 'accounting', 'incomehead')){ ?>
+                  | <a href="<?php echo site_url('accounting/incomehead/index'); ?>"><?php echo $this->lang->line('income_head'); ?></a>                  
+                <?php } ?> 
+                 <?php if(has_permission(VIEW, 'accounting', 'income')){ ?>
+                   | <a href="<?php echo site_url('accounting/income/index'); ?>"><?php echo $this->lang->line('income'); ?></a>                     
+                <?php } ?>  
                 <?php if(has_permission(VIEW, 'accounting', 'exphead')){ ?>
                    | <a href="<?php echo site_url('accounting/exphead/index'); ?>"><?php echo $this->lang->line('expenditure_head'); ?></a>                  
                 <?php } ?> 
                 <?php if(has_permission(VIEW, 'accounting', 'expenditure')){ ?>
-                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('manage_expenditure'); ?></a>                  
+                   | <a href="<?php echo site_url('accounting/expenditure/index'); ?>"><?php echo $this->lang->line('expenditure'); ?></a>                  
                 <?php } ?> 
-                
             </div>
+            
             <div class="x_content">
                 <div class="" data-example-id="togglable-tabs">
                     
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_incomehead_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('income_head'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'accounting', 'incomehead')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_incomehead"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('income_head'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('accounting/incomehead/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('income_head'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_incomehead"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('income_head'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_incomehead"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('income_head'); ?></a> </li>                          
@@ -54,9 +75,11 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('income_head'); ?></th>
                                         <th><?php echo $this->lang->line('note'); ?></th>
-                                        <th><?php echo $this->lang->line('is_default'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
                                     </tr>
                                 </thead>
@@ -65,22 +88,20 @@
                                         <?php foreach($incomeheads as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
-                                            <?php if($obj->is_default){ ?>
-                                                <td><?php echo $this->lang->line($obj->title); ?></td>
-                                             <?php }else{ ?>
-                                                <td><?php echo $obj->title; ?></td>
-                                             <?php } ?>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
+                                           
+                                            <td><?php echo $obj->title; ?></td>
+                                             
                                             <td><?php echo $obj->note; ?></td>
-                                            <td><?php echo $obj->is_default ? $this->lang->line('yes') : $this->lang->line('no'); ?></td>
-                                            <td>
-                                                <?php if(!$obj->is_default){ ?>
-                                                    <?php if(has_permission(EDIT, 'accounting', 'incomehead')){ ?>
-                                                        <a href="<?php echo site_url('accounting/incomehead/edit/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
-                                                    <?php } ?>
-                                                    <?php if(has_permission(DELETE, 'accounting', 'incomehead')){ ?>
-                                                        <a href="<?php echo site_url('accounting/incomehead/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
-                                                    <?php } ?>
-                                                 <?php } ?>
+                                            <td>                                                
+                                                <?php if(has_permission(EDIT, 'accounting', 'incomehead')){ ?>
+                                                    <a href="<?php echo site_url('accounting/incomehead/edit/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
+                                                <?php } ?>
+                                                <?php if(has_permission(DELETE, 'accounting', 'incomehead')){ ?>
+                                                    <a href="<?php echo site_url('accounting/incomehead/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
+                                                <?php } ?>                                                
                                             </td>
                                         </tr>
                                         <?php } ?>
@@ -94,11 +115,12 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('accounting/incomehead/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('income_head'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('income_head'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('income_head'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>                                
@@ -128,11 +150,12 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('accounting/incomehead/edit/'.$incomehead->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('income_head'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($incomehead->title) ?  $incomehead->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('income_head'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($incomehead->title) ?  $incomehead->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('income_head'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -165,6 +188,7 @@
         </div>
     </div>
 </div>
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -178,9 +202,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();  
 </script>

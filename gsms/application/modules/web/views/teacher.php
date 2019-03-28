@@ -1,65 +1,71 @@
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-xl-12"><h1 class="page-title"><?php echo $this->lang->line('teacher'); ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('teacher'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href="javascript:void(0);"><?php echo $this->lang->line('teacher'); ?></a></li>
+        </ul>
     </div>
 </section>
 
-<section class="content-area">
+<section class="page-teacher-area">
     <div class="container">
         <div class="row">
-
-            <?php if (isset($teachers) && !empty($teachers)) { ?>
-                <?php foreach ($teachers as $obj) { ?>
-
-                    <div class="col-md-4 col-sm-4 col-xs-12">
-                        <div class=" profile-details">                       
-                            <div class="text-center">
-                                <?php  if($obj->photo != ''){ ?>
-                                <img src="<?php echo UPLOAD_PATH; ?>/teacher-photo/<?php echo $obj->photo; ?>" alt="" width="120" class="img-circle img-responsive"/> 
-                                <?php }else{ ?>
-                                <img src="<?php echo IMG_URL; ?>/default-user.png" alt="" width="120" class="img-circle img-responsive"/> 
-                                <?php } ?>
-                            </div>
-                            <h4><?php echo $obj->name; ?></h4>                          
-                            <h5><?php echo $obj->responsibility; ?></h5>                          
-                            <ul class="list-unstyled">
-                                <li><div  class="left-part"><i class="fa fa-map-marker"></i></div> <div  class="right-part"><?php echo $obj->present_address; ?></div></li>
-                                <li><div class="left-part"><i class="fa fa-phone"></i></div> <div  class="right-part"><?php echo $obj->phone; ?></div></li>
-                                <li><div class="left-part"><i class="fa fa-envelope"></i></div> <div  class="right-part"><?php echo $obj->email; ?></div></li>
-                                <li><div class="left-part"><i class="fa fa-tint"></i></div> <div class="right-part"><?php echo $this->lang->line($obj->blood_group); ?></div></li>
-                            </ul> 
-
-                            <ul class="social">
-                                <?php if($obj->facebook_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->facebook_url; ?>"><i class="fa fa-facebook-square"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->linkedin_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->linkedin_url; ?>"><i class="fa fa-linkedin-square"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->google_plus_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->google_plus_url; ?>"><i class="fa fa-google-plus-square"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->instagram_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->instagram_url; ?>"><i class="fa fa-instagram"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->pinterest_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->pinterest_url; ?>"><i class="fa fa-pinterest-square"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->twitter_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->twitter_url; ?>"><i class="fa fa-twitter-square"></i></a></li>
-                                <?php } ?>
-                                <?php if($obj->youtube_url){ ?>
-                                <li><a target="_blank" href="<?php echo $obj->youtube_url; ?>"><i class="fa fa-youtube-square"></i></a></li>
-                                <?php } ?>
-                            </ul>
-                        </div>
+        <?php if(isset($teachers) && !empty($teachers)){ ?>
+            <?php foreach($teachers as $obj){ ?>            
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                <div class="single-team">
+                    <div class="st-upper">
+                        <h4 class="type"><?php echo $obj->name; ?></h4>
+                       
                     </div>
-                <?php } ?>
-            <?php } else { ?>
-                <div class="col-md-12 col-sm-12"><?php echo $this->lang->line('no_data_found'); ?></div>
-            <?php } ?>
+                    <div class="st-img">
+                        <?php if($obj->photo){ ?>
+                            <img src="<?php echo UPLOAD_PATH; ?>teacher-photo/<?php echo $obj->photo; ?>" alt="">
+                        <?php }else{ ?>
+                            <img src="<?php echo IMG_URL; ?>default-user.png" alt="">
+                        <?php } ?>
+                    </div>
+                    <div class="st-content">
+                        <h5 class="name"><a href="#"><?php echo $obj->responsibility; ?></a></h5>
+                         <ul class="social">
+                            <?php if($obj->facebook_url){ ?>
+                                <li><a target="_blank" href="<?php echo $obj->facebook_url; ?>"><i class="fab fa-facebook-f"></i></a></li>
+                            <?php } ?>
+                            <?php if($obj->linkedin_url){ ?>    
+                                <li><a target="_blank" href="<?php echo $obj->linkedin_url; ?>"><i class="fab fa-linkedin-in"></i></a></li>
+                             <?php } ?>
+                            <?php if($obj->twitter_url){ ?>
+                                <li><a target="_blank" href="<?php echo $obj->twitter_url; ?>"><i class="fab fa-twitter"></i></a></li>
+                             <?php } ?>
+                            <?php if($obj->google_plus_url){ ?>    
+                                <li><a target="_blank" href="<?php echo $obj->google_plus_url; ?>"><i class="fab fa-google-plus-g"></i></a></li>
+                             <?php } ?>
+                            <?php if($obj->instagram_url){ ?>    
+                                <li><a target="_blank" href="<?php echo $obj->instagram_url; ?>"><i class="fab fa-instagram"></i></a></li>
+                             <?php } ?>
+                            <?php if($obj->pinterest_url){ ?>
+                                <li><a target="_blank" href="<?php echo $obj->pinterest_url; ?>"><i class="fab fa-pinterest"></i></a></li>
+                            <?php } ?>
+                            <?php if($obj->youtube_url){ ?>
+                                <li><a target="_blank" href="<?php echo $obj->youtube_url; ?>"><i class="fab fa-youtube"></i></a></li>
+                            <?php } ?>                            
+                        </ul>
+                        <ul class="contact">                           
+                            <li><span class="icon"><i class="fas fa-map-marker-alt"></i></span><?php echo $obj->present_address ? $obj->present_address : '&nbsp;'; ?></li>
+                            <li><span class="icon"><i class="fas fa-phone-volume"></i></span><?php echo $obj->phone ? $obj->phone : '&nbsp;'; ?></li>                           
+                            <li><span class="icon"><i class="fas fa-envelope"></i></span><span style="word-break: break-all;"><?php echo $obj->email ? $obj->email : '&nbsp;'; ?></span></li>
+                            <li><span class="icon"><i class="fas fa-tint"></i></span><?php echo $obj->blood_group ? $this->lang->line($obj->blood_group) : '&nbsp;'; ?></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <?php } ?>   
+        <?php }else{ ?>
+            <div class="col-lg-12 col-md-12 col-sm-12 col-12">
+                <p class="text-center"><strong><?php echo $this->lang->line('no_data_found'); ?></strong></p>
+            </div>
+        <?php } ?>
         </div>
     </div>
 </section>

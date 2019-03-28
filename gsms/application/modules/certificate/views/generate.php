@@ -58,7 +58,7 @@
                             <h2 class="top-heading-title"><?php echo $certificate->top_title; ?></h2>
                            <div class="row">
                                 <span class="sub-title-img">
-                                    <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $settings->logo; ?>" alt="" width="70" />
+                                    <img src="<?php echo UPLOAD_PATH; ?>/logo/<?php echo $school->logo; ?>" alt="" width="70" />
                                 </span> 
                            </div>
                         </div>

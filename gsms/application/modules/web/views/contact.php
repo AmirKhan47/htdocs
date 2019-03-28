@@ -1,101 +1,121 @@
-<section class="page-title-area">
-    <div class="container">       
-            <?php $this->load->view('layout/message'); ?>       
-    </div>
-</section>
-<section class="page-title-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12"><h1 class="page-title"><?php echo $this->lang->line('contact_us'); ?></h1></div>
-        </div>
+<section class="page-breadcumb-area bg-with-black">
+    <div class="container text-center">
+        <h2 class="title"><?php echo $this->lang->line('contact_us'); ?></h2>
+        <ul class="links">
+            <li><a href="<?php echo site_url(); ?>"><?php echo $this->lang->line('home'); ?></a></li>
+            <li><a href="javascript:void(0);"><?php echo $this->lang->line('contact_us'); ?></a></li>
+        </ul>
     </div>
 </section>
 
-<section class="content-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-xl-12">
-                <div id="map" style="height: 400px; margin-bottom: 30px;"></div>
-                <script>
-                    function myMap() {
-                        var myCenter = new google.maps.LatLng(<?php echo $settings->school_geocode; ?>);
-                        var mapCanvas = document.getElementById("map");
-                        var mapOptions = {center: myCenter, zoom: 16};
-                        var map = new google.maps.Map(mapCanvas, mapOptions);
-                        var marker = new google.maps.Marker({position: myCenter});
-                        marker.setMap(map);
-                        //infowindow.open(map, marker);
-                    }
-                </script>
-                <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCwNfbMeqVjiM6GstU-IfuyXvg0R1F2UaY&callback=myMap"></script>
-            </div>
-        </div>
+<section>
+    <div class="container text-center">        
+        <?php $this->load->view('layout/message'); ?> 
     </div>
 </section>
 
-<section class="content-area">
+<section class="page-contact-area">
     <div class="container">
+        <div id="mymap"></div>
         <div class="row">
-            <div class="col-lg-8 col-md-12">
-                <div class="contact-form">
-                    <form action="<?php echo site_url('contact'); ?>" method="post" name="contact" id="contact">
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="first_name" class="col-form-label"><?php echo $this->lang->line('first_name'); ?></label>
-                                <input type="text" class="form-control" id="first_name" placeholder="<?php echo $this->lang->line('first_name'); ?>" name="first_name" required="required">
+            <div class="col-lg-6 col-12">
+                <div class="contact-form-area">
+                    <h2 class="contact-page-title"><?php echo $this->lang->line('contact_us'); ?></h2>
+                    <form action="<?php echo site_url('contact'); ?>" method="post" id="contact_us" name="contact_us" >
+                        <div class="row">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                                <div class="contact-input-box">
+                                    <input type="text" name="name" id="name" required="required" placeholder="<?php echo $this->lang->line('name'); ?> *">
+                                </div>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label for="last_name" class="col-form-label"><?php echo $this->lang->line('last_name'); ?></label>
-                                <input type="text" class="form-control" id="last_name" placeholder="<?php echo $this->lang->line('last_name'); ?>" name="last_name">
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                                <div class="contact-input-box">
+                                    <input type="email" name="email" id="email" required="required"  placeholder="<?php echo $this->lang->line('email'); ?> *">
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                                <div class="contact-input-box">
+                                    <input  type="text" name="phone" id="phone" placeholder="<?php echo $this->lang->line('phone'); ?>">
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                                <div class="contact-input-box">
+                                    <input type="text" name="subject" id="subject"  placeholder="<?php echo $this->lang->line('subject'); ?>">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="contact-input-box">
+                                    <textarea name="message" id="message" required="required"  placeholder="<?php echo $this->lang->line('message'); ?> *"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="contact-input-box text-right">
+                                    <input class="glbscl-link-btn hvr-bs" type="submit" name="submit" id="submit" value="<?php echo $this->lang->line('submit'); ?>">
+                                </div>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="email" class="col-form-label"><?php echo $this->lang->line('email'); ?></label>
-                                <input type="email" class="form-control" id="email" placeholder="<?php echo $this->lang->line('email'); ?>" name="email" required="required">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="phone" class="col-form-label"><?php echo $this->lang->line('phone'); ?></label>
-                                <input type="text" class="form-control" id="phone" placeholder="<?php echo $this->lang->line('phone'); ?>" name="phone">
-                            </div>
-                        </div>  
-                        <div class="form-row">
-                            <div class="form-group col-md-12">
-                                <label for="comment"><?php echo $this->lang->line('comment'); ?></label>
-                                <textarea class="form-control" id="comment" rows="5" name="comment" required="required" placeholder="<?php echo $this->lang->line('comment'); ?>"></textarea>
-                            </div>                           
-                        </div>                           
-                        <button type="submit" class="btn btn-primary" style="margin-left: 16px;"><?php echo $this->lang->line('submit'); ?></button>
-                        
                     </form>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-12">
-                <section class="right-pane">
-                    <h2 class="widget-title"><?php echo $this->lang->line('get_in_touch'); ?></h2> 
-
-                    <div class="col-md-12 col-sm-12">
-                        <ul>
-                            <li>
-                                <p><strong><?php echo $this->lang->line('address'); ?>: </strong><?php echo $settings->address; ?></p>
-                            </li>
-                            <li>
-                                <p><strong><?php echo $this->lang->line('email'); ?>: </strong><?php echo $settings->email; ?></p>
-                            </li>
-                            <li>
-                                <p><strong><?php echo $this->lang->line('phone'); ?>: </strong><?php echo $settings->phone; ?></p>
-                            </li>
-                            <li>
-                                <p><strong><?php echo $this->lang->line('school_fax'); ?>: </strong><?php echo $settings->school_fax; ?></p>
-                            </li>
-                        </ul>
-                    </div> 
-                </section>
+            <div class="col-lg-6 col-12">
+                <h2 class="contact-page-title"><?php echo $this->lang->line('get_in_touch'); ?></h2>
+                <div class="row">
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                        <div class="single-contact-info">
+                            <span class="icon"><i class="fas fa-map-marker-alt"></i></span>
+                            <p class="info">
+                                <?php if(isset($school->address)){ ?>
+                                     <?php echo $school->address; ?>
+                                <?php } ?>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                        <div class="single-contact-info">
+                            <span class="icon"><i class="fas fa-envelope"></i></span>
+                            <a class="info" href="mailto:<?php echo $school->email; ?>"><?php echo $this->lang->line('email'); ?>: <?php echo $school->email; ?></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                        <div class="single-contact-info">
+                            <span class="icon"><i class="fas fa-phone-volume"></i></span>
+                            <a class="info" href="tel:<?php echo $school->phone; ?>"><?php echo $this->lang->line('phone'); ?>: <?php echo $school->phone; ?></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-6 col-12">
+                        <div class="single-contact-info">
+                            <span class="icon"><i class="fas fa-fax"></i></span>
+                            <p class="info"><?php echo $this->lang->line('school_fax'); ?>: <?php echo $school->school_fax; ?></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<script type="text/javascript">
-    $('#contact').validate();
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAH5RWCDq3WYxQy9XSPDrreRX-CY8rxJcY&callback=initMap"></script>
+<script>
+function initMap() {
+    var locationRio = { lat: -<?php echo $school->school_lat; ?>, lng: <?php echo $school->school_lng; ?> };
+    var map = new google.maps.Map(document.getElementById('mymap'), {
+        zoom: 13,
+        center: locationRio,
+        gestureHandling: 'cooperative'
+    });
+    var marker = new google.maps.Marker({
+        position: locationRio,
+        map: map,
+        title: '<?php echo $school->school_name; ?>'
+    });
+}
+
+$('#contact_us').validate();
+
 </script>
+<style type="text/css">
+    label.error{
+        color: red;
+    }
+</style>

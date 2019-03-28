@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Subject.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Subject
  * @description     : Manage academic subject for each academic class.  
@@ -33,7 +33,7 @@ class Subject extends MY_Controller {
     * @param           : $id integer value
     * @return          : null 
     * ********************************************************** */
-    public function index($class_id = null) {
+    public function index($class_id = null, $school_id = null) {
         
         check_permission(VIEW);
         
@@ -43,11 +43,19 @@ class Subject extends MY_Controller {
         }
         
         $this->data['class_id'] = $class_id;
-        $this->data['subjects'] = $this->subject->get_subject_list($class_id);        
-        $this->data['classes'] = $this->subject->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->subject->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
-         
+        $this->data['filter_school_id'] = $school_id;
+        $this->data['subjects'] = $this->subject->get_subject_list($class_id, $school_id);        
+       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->subject->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->subject->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
+        
         $this->data['list'] = TRUE;
+        $this->data['schools'] = $this->schools;
         $this->layout->title($this->lang->line('manage_subject'). ' | ' . SMS);
         $this->layout->view('subject/index', $this->data); 
     }
@@ -71,6 +79,10 @@ class Subject extends MY_Controller {
 
                 $insert_id = $this->subject->insert('subjects', $data);
                 if ($insert_id) {
+                    
+                    $class = $this->subject->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been added a sucject : '. $data['name'].' for class : '. $class->name);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('academic/subject/index/'.$data['class_id']);
                 } else {
@@ -89,9 +101,16 @@ class Subject extends MY_Controller {
         
         $this->data['class_id'] = $class_id;
         $this->data['subjects'] = $this->subject->get_subject_list($class_id);        
-        $this->data['classes'] = $this->subject->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->subject->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->subject->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->subject->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('subject'). ' | ' . SMS);
         $this->layout->view('subject/index', $this->data);
@@ -122,6 +141,10 @@ class Subject extends MY_Controller {
                 $updated = $this->subject->update('subjects', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $class = $this->subject->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been updated a sucject : '. $data['name'].' for class : '. $class->name);
+                    
                     success($this->lang->line('update_success'));
                     redirect('academic/subject/index/'.$data['class_id']);                   
                 } else {
@@ -149,10 +172,19 @@ class Subject extends MY_Controller {
         
         $this->data['class_id'] = $class_id;
         $this->data['subjects'] = $this->subject->get_subject_list($class_id);        
-        $this->data['classes'] = $this->subject->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->subject->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
         
-        $this->data['edit'] = TRUE;       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->subject->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['teachers'] = $this->subject->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        $this->data['schools'] = $this->schools;
+        $this->data['edit'] = TRUE; 
+        $this->data['school_id'] = $this->data['subject']->school_id;
+        
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('subject'). ' | ' . SMS);
         $this->layout->view('subject/index', $this->data);
     }
@@ -180,15 +212,41 @@ class Subject extends MY_Controller {
         $class_id = $this->data['subject']->class_id;
         
         $this->data['subjects'] = $this->subject->get_subject_list($class_id);        
-        $this->data['classes'] = $this->subject->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['teachers'] = $this->subject->get_list('teachers', array('status' => 1), '','', '', 'id', 'ASC');
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+        }
+        $this->data['classes'] = $this->subject->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        $this->data['teachers'] = $this->subject->get_list('teachers', $condition, '','', '', 'id', 'ASC');
+        
         $this->data['class_id'] = $class_id;
-         
+        $this->data['schools'] = $this->schools; 
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('subject'). ' | ' . SMS);
         $this->layout->view('subject/index', $this->data);
     }
 
+    
+    
+    
+     /*****************Function get_single_subject**********************************
+     * @type            : Function
+     * @function name   : get_single_subject
+     * @description     : "Load single subject information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_subject(){
+        
+       $subject_id = $this->input->post('subject_id');
+       
+       $this->data['subject'] = $this->subject->get_single_subject($subject_id);
+       echo $this->load->view('subject/get-single-subject', $this->data);
+    }
+    
     
     /*****************Function _prepare_subject_validation**********************************
     * @type            : Function
@@ -202,13 +260,12 @@ class Subject extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('teacher_id', $this->lang->line('teacher'), 'trim|required');   
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');   
         $this->form_validation->set_rules('type', $this->lang->line('type'), 'trim');   
         $this->form_validation->set_rules('code', $this->lang->line('subject') . ' ' . $this->lang->line('code'), 'trim');   
         $this->form_validation->set_rules('author', $this->lang->line('author'), 'trim');   
-        $this->form_validation->set_rules('pass_mark', $this->lang->line('pass_mark'), 'trim');   
-        $this->form_validation->set_rules('full_mark', $this->lang->line('full_mark'), 'trim');   
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');   
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'required|trim|callback_name');
     }
@@ -226,7 +283,7 @@ class Subject extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $subject = $this->subject->duplicate_on_create($this->input->post('class_id'),$this->input->post('name')); 
+          $subject = $this->subject->duplicate_check($this->input->post('school_id'), $this->input->post('class_id'),$this->input->post('name')); 
           if($subject){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -234,7 +291,7 @@ class Subject extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $subject = $this->subject->duplicate_on_update($this->input->post('id'), $this->input->post('class_id'),$this->input->post('name')); 
+         $subject = $this->subject->duplicate_check($this->input->post('school_id'), $this->input->post('class_id'),$this->input->post('name'), $this->input->post('id')); 
           if($subject){
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -258,13 +315,12 @@ class Subject extends MY_Controller {
     private function _get_posted_subject_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'class_id';
         $items[] = 'teacher_id';
         $items[] = 'type';
         $items[] = 'code';
         $items[] = 'author';
-        $items[] = 'pass_mark';
-        $items[] = 'full_mark';
         $items[] = 'name';
         $items[] = 'note';
         $data = elements($items, $_POST);        
@@ -302,7 +358,11 @@ class Subject extends MY_Controller {
         
         $subject = $this->subject->get_single('subjects', array('id' => $id));
         
-        if ($this->subject->delete('subjects', array('id' => $id))) {            
+        if ($this->subject->delete('subjects', array('id' => $id))) { 
+            
+            $class = $this->subject->get_single('classes', array('id' => $subject->class_id, 'school_id'=>$subject->school_id));
+            create_log('Has been deleted a sucject : '. $subject->name.' for class : '. $class->name);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

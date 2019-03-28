@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Room.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Room
  * @description     : Manage hostel room.  
@@ -36,8 +36,13 @@ class Room extends MY_Controller {
 
         check_permission(VIEW);
 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['hostels'] = $this->room->get_list('hostels', $condition, '', '', '', 'id', 'ASC');
+        }        
         $this->data['rooms'] = $this->room->get_room_list();
-        $this->data['hostels'] = $this->room->get_list('hostels', array('status' => 1), '', '', '', 'id', 'ASC');
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_room') . ' | ' . SMS);
@@ -65,6 +70,10 @@ class Room extends MY_Controller {
 
                 $insert_id = $this->room->insert('rooms', $data);
                 if ($insert_id) {
+                    
+                    $hostel = $this->room->get_single('hostels', array('id' => $data['hostel_id']));
+                    create_log('Has been added a room no : '.$data['room_no']. ' of '. $hostel->name );
+                    
                     success($this->lang->line('insert_success'));
                     redirect('hostel/room/index');
                 } else {
@@ -76,8 +85,14 @@ class Room extends MY_Controller {
             }
         }
 
+         $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['hostels'] = $this->room->get_list('hostels', $condition, '', '', '', 'id', 'ASC');
+        }        
         $this->data['rooms'] = $this->room->get_room_list();
-        $this->data['hostels'] = $this->room->get_list('hostels', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('room') . ' | ' . SMS);
@@ -110,6 +125,10 @@ class Room extends MY_Controller {
                 $updated = $this->room->update('rooms', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $hostel = $this->room->get_single('hostels', array('id' => $data['hostel_id']));
+                    create_log('Has been updated a room no : '.$data['room_no']. ' of '. $hostel->name );
+                    
                     success($this->lang->line('update_success'));
                     redirect('hostel/room/index');
                 } else {
@@ -129,8 +148,15 @@ class Room extends MY_Controller {
             }
         }
 
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['hostels'] = $this->room->get_list('hostels', $condition, '', '', '', 'id', 'ASC');
+        }        
         $this->data['rooms'] = $this->room->get_room_list();
-        $this->data['hostels'] = $this->room->get_list('hostels', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        $this->data['school_id'] = $this->data['room']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('room') . ' | ' . SMS);
@@ -156,15 +182,36 @@ class Room extends MY_Controller {
           redirect('hostel/room/index');
         }
         
-        $this->data['rooms'] = $this->room->get_room_list();
-        $this->data['hostels'] = $this->room->get_list('hostels', array('status' => 1), '', '', '', 'id', 'ASC');
-        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['hostels'] = $this->room->get_list('hostels', $condition, '', '', '', 'id', 'ASC');
+        }        
+        $this->data['rooms'] = $this->room->get_room_list();        
         $this->data['room'] = $this->room->get_single_room($id);
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('room') . ' | ' . SMS);
         $this->layout->view('room/index', $this->data);
     }
 
+                   
+    /*****************Function get_single_room**********************************
+     * @type            : Function
+     * @function name   : get_single_room
+     * @description     : "Load single room information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_room(){
+        
+        $room_id = $this->input->post('room_id');
+       
+         $this->data['room'] = $this->room->get_single_room($room_id);
+        echo $this->load->view('room/get-single-room', $this->data);
+    }
         
     /*****************Function _prepare_room_validation**********************************
     * @type            : Function
@@ -178,6 +225,7 @@ class Room extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('hostel_id', $this->lang->line('hostel'), 'trim|required');
         $this->form_validation->set_rules('room_type', $this->lang->line('room') . ' ' . $this->lang->line('type'), 'trim|required');
         $this->form_validation->set_rules('cost', $this->lang->line('cost_per_seat'), 'trim');
@@ -199,7 +247,7 @@ class Room extends MY_Controller {
     * ********************************************************** */ 
     public function room_no() {
         if ($this->input->post('id') == '') {
-            $room = $this->room->duplicate_check($this->input->post('hostel_id'), $this->input->post('room_no'));
+            $room = $this->room->duplicate_check($this->input->post('school_id'), $this->input->post('hostel_id'), $this->input->post('room_no'));
             if ($room) {
                 $this->form_validation->set_message('room_no', $this->lang->line('already_exist'));
                 return FALSE;
@@ -207,7 +255,7 @@ class Room extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $room = $this->room->duplicate_check($this->input->post('hostel_id'), $this->input->post('room_no'), $this->input->post('id'));
+            $room = $this->room->duplicate_check($this->input->post('school_id'), $this->input->post('hostel_id'), $this->input->post('room_no'), $this->input->post('id'));
             if ($room) {
                 $this->form_validation->set_message('room_no', $this->lang->line('already_exist'));
                 return FALSE;
@@ -232,6 +280,7 @@ class Room extends MY_Controller {
     private function _get_posted_room_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'hostel_id';
         $items[] = 'room_no';
         $items[] = 'room_type';
@@ -270,12 +319,47 @@ class Room extends MY_Controller {
           redirect('hostel/room/index');
         }
         
+        $room = $this->room->get_single('rooms', array('id' => $id));
+        
         if ($this->room->delete('rooms', array('id' => $id))) {
+            
+            $hostel = $this->room->get_single('hostels', array('id' => $room->hostel_id));
+            create_log('Has been deleted a room no : '.$room->room_no. ' of '. $hostel->name );
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
         }
          redirect('hostel/room/index');
+    }
+    
+    
+    /*****************Function get_hostel_by_school**********************************
+     * @type            : Function
+     * @function name   : get_hostel_by_school
+     * @description     : Load "Hostel Listing" by ajax call                
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    
+    public function get_hostel_by_school() {
+        
+        $school_id  = $this->input->post('school_id');
+        $hostel_id  = $this->input->post('hostel_id');
+         
+        $books = $this->room->get_list('hostels', array('status'=>1, 'school_id'=>$school_id), '','', '', 'id', 'ASC'); 
+         
+        $str = '<option value="">--' . $this->lang->line('select') . '--</option>';
+        $select = 'selected="selected"';
+        if (!empty($books)) {
+            foreach ($books as $obj) { 
+               
+                $selected = $hostel_id == $obj->id ? $select : '';
+                $str .= '<option value="' . $obj->id . '" ' . $selected . '>' . $obj->name . ' [ '.$obj->type.' ]</option>';                
+            }
+        }
+
+        echo $str;
     }
 
 }

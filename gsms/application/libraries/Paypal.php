@@ -101,7 +101,7 @@ class Paypal {
     var $fields = array();           // array holds the fields to submit to paypal
     public $paypal_url = 'https://www.paypal.com/cgi-bin/webscr';
     
-    function Paypal() {
+    function __construct() {
 
         // initialization constructor.  Called when class is created.
         //$this->paypal_url = 'https://www.sandbox.paypal.com/cgi-bin/webscr';

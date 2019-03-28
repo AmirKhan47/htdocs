@@ -10,7 +10,7 @@
             </div>
             
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
                    <a href="<?php echo site_url('frontend/index'); ?>"><?php echo $this->lang->line('manage_frontend'); ?> </a>                    
                 <?php } ?>
@@ -43,19 +43,19 @@
                 <div class="" data-example-id="togglable-tabs">
                     
                     <ul  class="nav nav-tabs bordered">
-                        <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_page_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
-                        <?php if(isset($add)){ ?>
-                            <?php if(has_permission(ADD, 'frontend', 'frontend')){ ?>
-                               <li  class="active"><a href="#tab_add_page"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('page'); ?></a> </li>                          
-                            <?php } ?>
-                         <?php } ?>
+                    <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_page_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
+                        <?php if(has_permission(ADD, 'frontend', 'frontend')){ ?>
                             
+                          <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('frontend/add'); ?>"  role="tab"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('create'); ?> <?php echo $this->lang->line('page'); ?></a> </li>                          
+                          <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_page"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('create'); ?> <?php echo $this->lang->line('page'); ?></a> </li>                          
+                          <?php } ?>   
+                           
+                        <?php } ?>                            
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_page"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('page'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_page"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('page'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>  
                     </ul>
                     <br/>
                     
@@ -66,7 +66,10 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
-                                        <th><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?></th>
+                                         <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
+                                        <th><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('location'); ?></th>
                                         <th><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('image'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
@@ -77,7 +80,10 @@
                                         <?php foreach($pages as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
-                                            <td><?php echo $obj->page_name; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
+                                            <td><?php echo $this->lang->line($obj->page_location); ?></td>
                                             <td><?php echo $obj->page_title; ?></td>
                                             <td>
                                                 <?php  if($obj->page_image != ''){ ?>
@@ -89,8 +95,8 @@
                                                     <a href="<?php echo site_url('frontend/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
-                                                    <a href="<?php echo site_url('frontend/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
-                                                <?php } ?>
+                                                    <a  onclick="get_frontend_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-frontend-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                <?php  } ?> 
                                                 <?php if(has_permission(DELETE, 'frontend', 'frontend')){ ?>
                                                     <a href="<?php echo site_url('frontend/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
                                                 <?php } ?>
@@ -107,12 +113,19 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('frontend/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                 <?php $this->load->view('layout/school_list_form'); ?>
+                               
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_name"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_location"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('location'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="page_name"  id="page_name" value="<?php echo isset($post['page_name']) ?  $post['page_name'] : ''; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
-                                        <div class="help-block"><?php echo form_error('page_name'); ?></div>
+                                        <?php $locations = get_page_location(); ?>
+                                        <select  class="form-control col-md-7 col-xs-12 quick-field" name="page_location" id="page_location" required="required">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                            <?php foreach($locations as $key=>$value){ ?>                                           
+                                            <option value="<?php echo $key; ?>" <?php if(isset($post['page_location']) == $key){ echo 'selected="selected"';} ?>><?php echo $value; ?></option>
+                                            <?php } ?>           
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('page_location'); ?></div>
                                     </div>
                                 </div>
                                 
@@ -120,7 +133,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_title"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="page_title"  id="page_title" value="<?php echo isset($post['page_title']) ?  $post['page_title'] : ''; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="page_title"  id="page_title" value="<?php echo isset($post['page_title']) ?  $post['page_title'] : ''; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('page_title'); ?></div>
                                     </div>
                                 </div>
@@ -163,12 +176,20 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('frontend/edit/'.$page->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>    
+                                
+                                
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_name"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_location"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('location'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="page_name"  id="page_name" value="<?php echo isset($page->page_name) ?  $page->page_name : $post['page_name']; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
-                                        <div class="help-block"><?php echo form_error('page_name'); ?></div>
+                                        <?php $locations = get_page_location(); ?>
+                                        <select  class="form-control col-md-7 col-xs-12 quick-field" name="page_location" id="page_location" required="required">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                                    
+                                            <?php foreach($locations as $key=>$value){ ?>                                           
+                                            <option value="<?php echo $key; ?>" <?php if(isset($page->page_location) == $key){ echo 'selected="selected"';} ?>><?php echo $value; ?></option>
+                                            <?php } ?>           
+                                        </select>
+                                        <div class="help-block"><?php echo form_error('page_location'); ?></div>
                                     </div>
                                 </div>
                                 
@@ -176,7 +197,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="page_title"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="page_title"  id="page_title" value="<?php echo isset($page->page_title) ?  $page->page_title : $post['page_title']; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="page_title"  id="page_title" value="<?php echo isset($page->page_title) ?  $page->page_title : $post['page_title']; ?>" placeholder="<?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('page_title'); ?></div>
                                     </div>
                                 </div>
@@ -218,68 +239,46 @@
                             </div>
                         </div>  
                         <?php } ?>
-                        
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_page">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('name'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $page->page_name; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $page->page_title; ?>
-                                    </div>
-                                </div>
-                               
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('description'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $page->page_description; ?>
-                                    </div>
-                                </div>
-                               
-                                                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('page'); ?> <?php echo $this->lang->line('image'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($page->page_image){ ?>
-                                    <img src="<?php echo UPLOAD_PATH; ?>/page/<?php echo $page->page_image; ?>" alt=""  class="img-responsive" /><br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('modified'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo date('M j, Y', strtotime($page->modified_at)); ?>
-                                    </div>
-                                </div>     
-                                
-                                <?php if(has_permission(EDIT, 'frontend', 'frontend')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('frontend/edit/'.$page->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                       
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<div class="modal fade bs-frontend-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('frontend'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_frontend_data">            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_frontend_modal(frontend_id){
+         
+        $('.fn_frontend_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('frontend/get_single_frontend'); ?>",
+          data   : {frontend_id : frontend_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_frontend_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
 
  <link href="<?php echo VENDOR_URL; ?>editor/jquery-te-1.4.0.css" rel="stylesheet">
  <script type="text/javascript" src="<?php echo VENDOR_URL; ?>editor/jquery-te-1.4.0.min.js"></script>
@@ -299,13 +298,17 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+           search: true,            
+           responsive: true
       });
     });
+    
     $("#add").validate();     
     $("#edit").validate();  
   </script> 
+  
   <style type="text/css">
       .jqte_editor{height: 250px;}
   </style>
+  
       

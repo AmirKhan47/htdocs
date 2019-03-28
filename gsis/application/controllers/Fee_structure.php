@@ -33,7 +33,9 @@ class Fee_structure extends CI_Controller
             $row = array();
             $row[] = $i;
             $row[] = $value['class_name'];
+            $row[] = $value['fee_structure_type'];
             $row[] = $value['created_at'];
+            $row[] = $value['updated_at'];
             $row[] = '<a class="btn btn-primary btn-sm" href="'.SURL.'fee_structure/edit_fee_structure/'.$value['fee_structure_id'].'">Edit</a>
             		';
             $data[] = $row;
@@ -54,13 +56,14 @@ class Fee_structure extends CI_Controller
 			if($this->input->post('submit'))
 			{
 				$check=$this->common->checkfield_in_table('fee_structure','class_id',$this->input->post('class_id'));
-				if($check)
+				if($check>=2)
 				{
-					echo '<h1>Fee Structure for this Class already exist!</h1>';
+					echo '<h1>Fee Structures for this Class already exist!</h1>';
 					exit();
 				}
 				$fee_structure = array(
 					'class_id' => $this->input->post('class_id'),
+					'fee_structure_type' => $this->input->post('fee_structure_type'),
 					'admission_fee' => $this->input->post('admission_fee'),
 					'security' => $this->input->post('security'),
 					'tution_fee' => $this->input->post('tution_fee'),
@@ -109,6 +112,7 @@ class Fee_structure extends CI_Controller
 			if($this->input->post('submit'))
 			{
 				$fee_structure = array(
+					'fee_structure_type' => $this->input->post('fee_structure_type'),
 					'admission_fee' => $this->input->post('admission_fee'),
 					'security' => $this->input->post('security'),
 					'tution_fee' => $this->input->post('tution_fee'),
@@ -152,8 +156,26 @@ class Fee_structure extends CI_Controller
 			redirect('login/');
 		}
 	}
-	// public function delete( $id = NULL )
-	// {
-
-	// }
+	public function fee_structure_type_check()
+	{
+		$class_id=$this->input->post('class_id');
+		$fee_structure_type=$this->input->post('fee_structure_type');
+		$where= array(
+			'class_id'=>$class_id,
+			'fee_structure_type'=>$fee_structure_type,
+		);
+		$result=$this->common->select_array_records('fee_structure',$where);
+		// echo "<pre>";
+		// print_r ($result);
+		// echo "</pre>";
+		// exit();
+		if(count($result)>0)
+		{
+			echo 1;
+		}
+		else
+		{
+			echo 0;
+		}
+	}
 }

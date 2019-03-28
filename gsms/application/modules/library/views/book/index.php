@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'library', 'book')){ ?>
                     <a href="<?php echo site_url('library/book/index/'); ?>"><?php echo $this->lang->line('manage_book'); ?></a>
                 <?php } ?>
@@ -26,14 +26,15 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_book_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'library', 'book')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_book"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('book'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('library/book/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('book'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_book"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('book'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?> 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_book"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('book'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_book"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('book'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>   
                     </ul>
                     <br/>
                     
@@ -44,6 +45,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('book_id'); ?></th>
                                         <th><?php echo $this->lang->line('isbn_no'); ?></th>
@@ -59,6 +63,9 @@
                                         <?php foreach($books as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->title; ?></td>
                                             <td><?php echo $obj->custom_id; ?></td>
                                             <td><?php echo $obj->isbn_no; ?></td>
@@ -75,7 +82,7 @@
                                                     <a href="<?php echo site_url('library/book/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(VIEW, 'library', 'book')){ ?>
-                                                    <a href="<?php echo site_url('library/book/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                    <a  onclick="get_book_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-book-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                 <?php } ?>
                                                 <?php if(has_permission(DELETE, 'library', 'book')){ ?>
                                                     <a href="<?php echo site_url('library/book/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
@@ -93,11 +100,13 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('library/book/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -106,7 +115,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="custom_id"><?php echo $this->lang->line('book_id'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="custom_id"  id="custom_id" value="<?php echo $custom_id; ?>" readonly="readonly" placeholder="<?php echo $this->lang->line('book_id'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="custom_id"  id="custom_id" value="<?php echo $custom_id; ?>" readonly="readonly" placeholder="<?php echo $this->lang->line('book_id'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('custom_id'); ?></div>
                                     </div>
                                 </div>                                
@@ -115,7 +124,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="isbn_no"><?php echo $this->lang->line('isbn_no'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="<?php echo isset($post['isbn_no']) ?  $post['isbn_no'] : ''; ?>" placeholder="<?php echo $this->lang->line('isbn_no'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="<?php echo isset($post['isbn_no']) ?  $post['isbn_no'] : ''; ?>" placeholder="<?php echo $this->lang->line('isbn_no'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('isbn_no'); ?></div>
                                     </div>
                                 </div>
@@ -124,7 +133,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="edition"><?php echo $this->lang->line('edition'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="<?php echo isset($post['edition']) ?  $post['edition'] : ''; ?>" placeholder="<?php echo $this->lang->line('edition'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="<?php echo isset($post['edition']) ?  $post['edition'] : ''; ?>" placeholder="<?php echo $this->lang->line('edition'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('edition'); ?></div>
                                     </div>
                                 </div>
@@ -133,7 +142,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="author"><?php echo $this->lang->line('author'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="<?php echo isset($post['author']) ?  $post['author'] : ''; ?>" placeholder="<?php echo $this->lang->line('author'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="<?php echo isset($post['author']) ?  $post['author'] : ''; ?>" placeholder="<?php echo $this->lang->line('author'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('author'); ?></div>
                                     </div>
                                 </div>
@@ -142,16 +151,15 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="language"><?php echo $this->lang->line('language'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="<?php echo isset($post['language']) ?  $post['language'] : ''; ?>" placeholder="<?php echo $this->lang->line('language'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="<?php echo isset($post['language']) ?  $post['language'] : ''; ?>" placeholder="<?php echo $this->lang->line('language'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('language'); ?></div>
                                     </div>
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price"><?php echo $this->lang->line('price'); ?> (<?php echo $this->session->userdata('currency_symbol'); ?>)
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price"><?php echo $this->lang->line('price'); ?>   </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="<?php echo isset($post['price']) ?  $post['price'] : ''; ?>" placeholder="<?php echo $this->lang->line('price'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="<?php echo isset($post['price']) ?  $post['price'] : ''; ?>" placeholder="<?php echo $this->lang->line('price'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('price'); ?></div>
                                     </div>
                                 </div>
@@ -160,7 +168,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="qty"><?php echo $this->lang->line('quantity'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="<?php echo isset($post['qty']) ?  $post['qty'] : ''; ?>" placeholder="<?php echo $this->lang->line('quantity'); ?>" required="required"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="<?php echo isset($post['qty']) ?  $post['qty'] : ''; ?>" placeholder="<?php echo $this->lang->line('quantity'); ?>" required="required"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('qty'); ?></div>
                                     </div>
                                 </div>
@@ -169,7 +177,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="rack_no"><?php echo $this->lang->line('almira_rack'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="<?php echo isset($post['rack_no']) ?  $post['rack_no'] : ''; ?>" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="<?php echo isset($post['rack_no']) ?  $post['rack_no'] : ''; ?>" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('rack_no'); ?></div>
                                     </div>
                                 </div>
@@ -203,11 +211,13 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('library/book/edit/'.$book->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($book->title) ?  $book->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($book->title) ?  $book->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -216,7 +226,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="custom_id"><?php echo $this->lang->line('book_id'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="custom_id"  id="custom_id" value="<?php echo isset($book->custom_id) ?  $book->custom_id : $post['custom_id']; ?>" placeholder="<?php echo $this->lang->line('book_id'); ?>" readonly="readonly" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="custom_id"  id="custom_id" value="<?php echo isset($book->custom_id) ?  $book->custom_id : $post['custom_id']; ?>" placeholder="<?php echo $this->lang->line('book_id'); ?>" readonly="readonly" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('custom_id'); ?></div>
                                     </div>
                                 </div>
@@ -225,7 +235,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="isbn_no"><?php echo $this->lang->line('isbn_no'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="<?php echo isset($book->isbn_no) ?  $book->isbn_no : $post['isbn_no']; ?>" placeholder="<?php echo $this->lang->line('isbn_no'); ?>" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="isbn_no"  id="isbn_no" value="<?php echo isset($book->isbn_no) ?  $book->isbn_no : $post['isbn_no']; ?>" placeholder="<?php echo $this->lang->line('isbn_no'); ?>" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('isbn_no'); ?></div>
                                     </div>
                                 </div>
@@ -234,7 +244,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="edition"><?php echo $this->lang->line('edition'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="<?php echo isset($book->edition) ?  $book->edition : $post['edition']; ?>" placeholder="<?php echo $this->lang->line('edition'); ?>" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="edition"  id="edition" value="<?php echo isset($book->edition) ?  $book->edition : $post['edition']; ?>" placeholder="<?php echo $this->lang->line('edition'); ?>" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('edition'); ?></div>
                                     </div>
                                 </div>
@@ -242,7 +252,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="author"><?php echo $this->lang->line('author'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="<?php echo isset($book->author) ?  $book->author : $post['author']; ?>" placeholder="<?php echo $this->lang->line('author'); ?>" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="author"  id="author" value="<?php echo isset($book->author) ?  $book->author : $post['author']; ?>" placeholder="<?php echo $this->lang->line('author'); ?>" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('author'); ?></div>
                                     </div>
                                 </div>
@@ -251,16 +261,15 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="language"><?php echo $this->lang->line('language'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="<?php echo isset($book->language) ?  $book->language : $post['language']; ?>" placeholder="<?php echo $this->lang->line('language'); ?>" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="language"  id="language" value="<?php echo isset($book->language) ?  $book->language : $post['language']; ?>" placeholder="<?php echo $this->lang->line('language'); ?>" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('language'); ?></div>
                                     </div>
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price"><?php echo $this->lang->line('price'); ?> (<?php echo $this->session->userdata('currency_symbol'); ?>)
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="price"><?php echo $this->lang->line('price'); ?>   </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="<?php echo isset($book->price) ?  $book->price : $post['price']; ?>" placeholder="<?php echo $this->lang->line('price'); ?>" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="price"  id="price" value="<?php echo isset($book->price) ?  $book->price : $post['price']; ?>" placeholder="<?php echo $this->lang->line('price'); ?>" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('price'); ?></div>
                                     </div>
                                 </div>
@@ -268,7 +277,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="qty"><?php echo $this->lang->line('quantity'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="<?php echo isset($book->qty) ?  $book->qty : $post['qty']; ?>" placeholder="<?php echo $this->lang->line('quantity'); ?>" required="required" type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="qty"  id="qty" value="<?php echo isset($book->qty) ?  $book->qty : $post['qty']; ?>" placeholder="<?php echo $this->lang->line('quantity'); ?>" required="required" type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('qty'); ?></div>
                                     </div>
                                 </div>
@@ -278,7 +287,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="rack_no"><?php echo $this->lang->line('almira_rack'); ?>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="<?php echo isset($book->rack_no) ?  $book->rack_no : $post['rack_no']; ?>" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text"/>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="rack_no"  id="rack_no" value="<?php echo isset($book->rack_no) ?  $book->rack_no : $post['rack_no']; ?>" placeholder="<?php echo $this->lang->line('almira_rack'); ?>"  type="text" autocomplete="off"/>
                                         <div class="help-block"><?php echo form_error('rack_no'); ?></div>
                                     </div>
                                 </div>                                
@@ -314,93 +323,45 @@
                         </div>  
                         <?php } ?>
                         
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_book">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(''), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->title; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('book_id'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->custom_id; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('edition'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->edition; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('author'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->author; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('language'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->language; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('price'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $this->session->userdata('currency_symbol'); ?><?php echo $book->price; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('quantity'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->qty; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('almira_rack'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $book->rack_no; ?>
-                                    </div>
-                                </div>
-                                                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('book_cover'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($book->cover){ ?>
-                                        <img src="<?php echo UPLOAD_PATH; ?>/book-cover/<?php echo $book->cover; ?>" alt="" width="70" /><br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('created'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo date('M j, Y', strtotime($book->created_at)); ?>
-                                    </div>
-                                </div>                         
-                                <?php if(has_permission(EDIT, 'library', 'book')){ ?>                                                           
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a  href="<?php echo site_url('library/book/edit/'.$book->id); ?>"  class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<div class="modal fade bs-book-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('book'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_book_data"></div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_book_modal(book_id){
+         
+        $('.fn_book_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('library/book/get_single_book'); ?>",
+          data   : {book_id : book_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_book_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
  <script type="text/javascript">
         $(document).ready(function() {
           $('#datatable-responsive').DataTable( {
@@ -413,9 +374,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate();
 </script>

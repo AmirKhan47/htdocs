@@ -9,11 +9,23 @@
                 <div class="clearfix"></div>
             </div>
             
-            <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
-                    <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+          <div class="x_content quick-link">
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+                <?php if(has_permission(VIEW, 'administrator', 'setting')){ ?>
+                    <a href="<?php echo site_url('administrator/setting'); ?>"><?php echo $this->lang->line('general'); ?> <?php echo $this->lang->line('setting'); ?></a>
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'school')){ ?>
+                   | <a href="<?php echo site_url('administrator/school'); ?>"><?php echo $this->lang->line('manage_school'); ?></a>
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'payment')){ ?>
+                    | <a href="<?php echo site_url('administrator/payment'); ?>"><?php echo $this->lang->line('payment'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>                    
+                <?php if(has_permission(VIEW, 'administrator', 'sms')){ ?>
+                    | <a href="<?php echo site_url('administrator/sms'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>      
+                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
+                    | <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+                <?php } ?>                  
                 <?php if(has_permission(VIEW, 'administrator', 'role')){ ?>
                    | <a href="<?php echo site_url('administrator/role'); ?>"><?php echo $this->lang->line('user_role'); ?></a>
                 <?php } ?>
@@ -23,13 +35,29 @@
                 <?php if(has_permission(VIEW, 'administrator', 'user')){ ?>
                    | <a href="<?php echo site_url('administrator/user'); ?>"><?php echo $this->lang->line('manage_user'); ?></a>                
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'superadmin')){ ?>
+                   | <a href="<?php echo site_url('administrator/superadmin'); ?>"><?php echo $this->lang->line('super_admin'); ?></a>                
+                <?php } ?>
                 <?php if(has_permission(EDIT, 'administrator', 'password')){ ?>
                    | <a href="<?php echo site_url('administrator/password'); ?>"><?php echo $this->lang->line('reset_user_password'); ?></a>                   
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'emailtemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/emailtemplate'); ?>"><?php echo $this->lang->line('email'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'smstemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/smstemplate'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'activitylog')){ ?>
+                   | <a href="<?php echo site_url('administrator/activitylog'); ?>"><?php echo $this->lang->line('activity_log'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'feedback')){ ?>
+                   | <a href="<?php echo site_url('administrator/feedback'); ?>"><?php echo $this->lang->line('guardian'); ?> <?php echo $this->lang->line('feedback'); ?></a>                  
                 <?php } ?>
                 <?php if(has_permission(VIEW, 'administrator', 'backup')){ ?>
                    | <a href="<?php echo site_url('administrator/backup'); ?>"><?php echo $this->lang->line('backup'); ?> <?php echo $this->lang->line('database'); ?></a>                  
                 <?php } ?>
             </div>
+            
             <div class="x_content">
 
                 <div class="" data-example-id="togglable-tabs">
@@ -42,7 +70,10 @@
                         <div  class="tab-pane fade in active" id="tab_password_reset" >
                             <div class="x_content">
                                 <?php echo form_open(site_url('administrator/password'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                 <div class="item form-group"> 
+                                
+                                <?php $this->load->view('layout/school_list_form'); ?> 
+                                
+                                <div class="item form-group"> 
                                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('user'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span></label>
                                      <div class="col-md-6 col-sm-6 col-xs-12">
                                          <select  class="form-control col-md-12 col-xs-12"  name="role_id"  id="role_id" required="required" onchange="get_user_by_role(this.value, '');">
@@ -55,14 +86,11 @@
                                      </div>
                                  </div>
 
-                                 <div class="item form-group display"> 
+                                <div class="item form-group display"> 
                                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span></label>
                                      <div class="col-md-6 col-sm-6 col-xs-12">
-                                         <select  class="form-control col-md-12 col-xs-12"  name="class_id"  id="class_id"  onchange="get_user('', this.value,'');">
+                                         <select  class="form-control col-md-12 col-xs-12"  name="class_id"  id="class_id"  onchange="get_user('', this.value,'', '');">
                                              <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                             <?php foreach($classes as $obj ){ ?>
-                                             <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
-                                             <?php } ?> 
                                          </select>
                                          <div class="help-block"><?php echo form_error('class_id'); ?></div>
                                      </div>
@@ -81,7 +109,7 @@
                                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="password"><?php echo $this->lang->line('password'); ?> <span class="required">*</span>
                                      </label>
                                      <div class="col-md-6 col-sm-6 col-xs-12">
-                                         <input  class="form-control col-md-7 col-xs-12"  name="password"  id="password" value="" placeholder="<?php echo $this->lang->line('password'); ?>" required="required" type="password">
+                                         <input  class="form-control col-md-7 col-xs-12"  name="password"  id="password" value="" placeholder="<?php echo $this->lang->line('password'); ?>" required="required" type="password" autocomplete="off">
                                          <div class="help-block"><?php echo form_error('password'); ?></div>
                                      </div>
                                  </div>
@@ -89,7 +117,7 @@
                                      <label class="control-label col-md-3 col-sm-3 col-xs-12" for="conf_password"><?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?> <span class="required">*</span>
                                      </label>
                                      <div class="col-md-6 col-sm-6 col-xs-12">
-                                         <input  class="form-control col-md-7 col-xs-12"  name="conf_password"  id="conf_password" value="" placeholder="<?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?>" required="required" type="password">
+                                         <input  class="form-control col-md-7 col-xs-12"  name="conf_password"  id="conf_password" value="" placeholder="<?php echo $this->lang->line('confirm'); ?> <?php echo $this->lang->line('password'); ?>" required="required" type="password" autocomplete="off">
                                          <div class="help-block"><?php echo form_error('conf_password'); ?></div>
                                      </div>
                                  </div>
@@ -112,34 +140,69 @@
 </div>
 <script type="text/javascript">
     
+    $('.fn_school_id').on('change', function(){
+        $('#role_id').prop('selectedIndex',0);
+        $('#user_id').prop('selectedIndex',0);        
+         get_class_by_school();        
+    });
+    
     function get_user_by_role(role_id, user_id){       
+       
+       var school_id =  $('.fn_school_id').val();
+       
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+       }
        
        if(role_id == <?php echo STUDENT; ?>){
            $('.display').show();
            $('#class_id').prop('required', true);
            $('#user_id').html('<option value="">--<?php echo $this->lang->line('select'); ?>--</option>'); 
        }else{
-           get_user(role_id, '', user_id);
+           get_user(role_id, '', user_id, school_id);
            $('#class_id').prop('required', false);
            $('.display').hide();
        }       
    }
    
-   function get_user(role_id, class_id, user_id){
+   function get_user(role_id, class_id, user_id, school_id){
        
        if(role_id == ''){
            role_id = $('#role_id').val();
        }
+       if(school_id == ''){
+           school_id = $('#add_school_id').val();
+       }
+            
        
        $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_user_by_role'); ?>",
-            data   : { role_id : role_id , class_id: class_id, user_id:user_id},               
+            data   : { school_id:school_id, role_id : role_id , class_id: class_id, user_id:user_id, message : true},               
             async  : false,
             success: function(response){                                                   
                if(response)
                {
                    $('#user_id').html(response); 
+               }
+            }
+        }); 
+   }
+   
+    function get_class_by_school(){
+       
+        var school_id = $('#add_school_id').val();       
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {
+                   $('#class_id').html(response); 
                }
             }
         }); 

@@ -23,9 +23,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
- 
+
 $config['base_url'] =  'http://localhost/gsms';
 
+// example
+// $config['base_url'] =  'http://codetroopers-team.com';
 
 /*
 |--------------------------------------------------------------------------
@@ -384,16 +386,17 @@ $config['encryption_key'] = 'dsfjoiwfskjdfh#%$#%&^68367ksdhjfksdjhf4';
 //$config['sess_driver'] = 'files';
 $config['sess_driver'] = 'database';
 //$config['sess_cookie_name'] = 'ci_session';
-$config['sess_cookie_name'] = 'gsms';
+$config['sess_cookie_name'] = 'gmsms';
 $config['sess_expiration'] = 7200;
 //$config['sess_save_path'] = NULL;
-$config['sess_save_path'] = 'gsms_sessions';
+$config['sess_save_path'] = 'gmsms_sessions';
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
 $config['sess_match_useragent']	= FALSE;
 $config['sess_expire_on_close'] = TRUE;
 $config['sess_encrypt_cookie'] 	= TRUE ;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -535,13 +538,14 @@ $config['proxy_ips'] = '';
 
 $config['admin_per_page'] = 20;
 
+define('ASSET_URL', $config['base_url'] . '/assets/');
 define('VENDOR_URL', $config['base_url'] . '/assets/vendors/');
 define('CSS_URL', $config['base_url'] . '/assets/css/');
 define('JS_URL', $config['base_url'] . '/assets/js/');
 define('IMG_URL', $config['base_url'] . '/assets/images/');
 define('UPLOAD_PATH', $config['base_url'] . '/assets/uploads/');
 
-define('IS_LIVE', FALSE);
+define('IS_LIVE', TRUE);
 
 
 /* role static id*/
@@ -561,7 +565,7 @@ define('EDIT', '1');
 define('VIEW', '2');
 define('DELETE', '3');
 
-define('SMS', 'Global - School Management System');
+define('SMS', 'Global - Multi School Management System Express');
 
 
 

@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'message', 'mail')){ ?>
                     <a href="<?php echo site_url('message/mail/index/'); ?>"><?php echo $this->lang->line('manage_email'); ?></a> |
                 <?php } ?>
@@ -24,7 +24,6 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_email_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('email'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_email"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('send'); ?> <?php echo $this->lang->line('email'); ?></a> </li>                          
-                                    
                     </ul>
                     <br/>
                     
@@ -36,6 +35,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('receiver_type'); ?></th>
                                         <th><?php echo $this->lang->line('receiver'); ?> <?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('subject'); ?></th>
@@ -49,14 +51,21 @@
                                         <?php foreach($emails as $obj){ ?>                                       
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->receiver_type; ?></td>
                                             <td><?php echo $obj->receivers; ?></td>
                                             <td><?php echo $obj->subject; ?></td>                                           
                                             <td><?php  if($obj->attachment){ echo '<i class="fa fa-paperclip"></i>'; } ?></td>                                           
                                             <td><?php echo get_nice_time($obj->created_at); ?></td>                                           
                                             <td>
-                                                <a href="<?php echo site_url('message/mail/view/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
-                                                <a href="<?php echo site_url('message/mail/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
+                                                <?php if(has_permission(VIEW, 'message', 'mail')){ ?>
+                                                    <a  onclick="get_email_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-email-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                <?php } ?>
+                                                <?php if(has_permission(DELETE, 'message', 'mail')){ ?>    
+                                                    <a href="<?php echo site_url('message/mail/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <?php } ?>
@@ -70,13 +79,17 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('message/mail/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>
+                                
                                 <div class="item form-group"> 
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('receiver_type'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-12 col-xs-12"  name="role_id"  id="role_id" required="required" onchange="get_user_by_role(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?> --</option> 
-                                            <?php foreach($roles as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" <?php if(isset($message) && $message->role_id == $obj->id ){ echo 'selected="selected"';} ?> ><?php echo $obj->name; ?></option>
+                                             <?php if(isset($roles) &&  !empty($roles)){ ?>
+                                                <?php foreach($roles as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" <?php if(isset($message) && $message->role_id == $obj->id ){ echo 'selected="selected"';} ?> ><?php echo $obj->name; ?></option>
+                                                <?php } ?>                                            
                                             <?php } ?>                                            
                                         </select>
                                         <div class="help-block"><?php echo form_error('role_id'); ?></div>
@@ -88,8 +101,10 @@
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-12 col-xs-12"  name="class_id"  id="class_id"  onchange="get_user('', this.value,'');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                            <?php foreach($classes as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                            <?php if(isset($classes) &&  !empty($classes)){ ?>
+                                                <?php foreach($classes as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                                <?php } ?> 
                                             <?php } ?> 
                                         </select>
                                         <div class="help-block"><?php echo form_error('class_id'); ?></div>
@@ -110,7 +125,7 @@
                                 <div class="form-group"> 
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="subject"><?php echo $this->lang->line('subject'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="subject"  id="subject" value="<?php if(isset($message)){ echo $message->subject;} ?>" placeholder="<?php echo $this->lang->line('subject'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="subject"  id="subject" value="<?php if(isset($message)){ echo $message->subject;} ?>" placeholder="<?php echo $this->lang->line('subject'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('subject'); ?></div>
                                     </div>
                                 </div>
@@ -154,22 +169,55 @@
     </div>
 </div>
 
- <link href="<?php echo VENDOR_URL; ?>editor/jquery-te-1.4.0.css" rel="stylesheet">
- <script type="text/javascript" src="<?php echo VENDOR_URL; ?>editor/jquery-te-1.4.0.min.js"></script>
+
+<div class="modal fade bs-email-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('email'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_email_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_email_modal(email_id){
+         
+        $('.fn_email_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('message/mail/get_single_email'); ?>",
+          data   : {email_id : email_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_email_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
  <script type="text/javascript">
-  $('#body').jqte();
    
-  <?php if(isset($message)){ ?>
-        get_user_by_role('<?php echo $message->role_id; ?>', '<?php echo $message->receiver_id; ?>');
-        
-    <?php } ?>
-    
+    $('#add_school_id').on('change', function(){
+        $('#class_id').prop('selectedIndex',0);
+        $('#role_id').prop('selectedIndex',0);
+        $('#receiver_id').prop('selectedIndex',0);
+    });
+ 
     function get_user_by_role(role_id, user_id){       
       
        if(role_id == <?php echo STUDENT; ?>){
            $('.display').show();
            $('#class_id').prop('required', true);
            $('#receiver_id').html('<option value="">--<?php echo $this->lang->line('select'); ?>--</option>'); 
+            get_class_by_school();
        }else{
            get_user(role_id, '', user_id);
            $('#class_id').prop('required', false);
@@ -181,14 +229,21 @@
    
    function get_user(role_id, class_id, user_id){
        
+       var school_id = $('#add_school_id').val();
+       
        if(role_id == ''){
            role_id = $('#role_id').val();
        }
        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
        $.ajax({       
             type   : "POST",
-            url    : "<?php echo site_url('/ajax/get_user_by_role'); ?>",
-            data   : { role_id : role_id , class_id: class_id, user_id:user_id},               
+            url    : "<?php echo site_url('ajax/get_user_by_role'); ?>",
+            data   : {school_id:school_id, role_id : role_id , class_id: class_id, user_id:user_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
@@ -214,6 +269,28 @@
         }); 
    }
    
+   function get_class_by_school(){
+        
+        var school_id = $('#add_school_id').val();
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                    $('#class_id').html(response);                     
+               }
+            }
+        });
+   }
+   
    $(document).ready(function() {
         $('#datatable-responsive').DataTable( {
             dom: 'Bfrtip',
@@ -225,8 +302,10 @@
                 'pdfHtml5',
                 'pageLength'
             ],
-            search: true
+            search: true,            
+            responsive: true
         });
       });
+      
     $("#add").validate();   
 </script> 

@@ -1,5 +1,4 @@
 <?php
-
 header("Expires: Tue, 01 Jan 2000 00:00:00 GMT");
 header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -18,7 +17,6 @@ if (!function_exists('_d')) {
         if ($exit)
             exit;
     }
-
 }
 
 if (!function_exists('logged_in_user_id')) {
@@ -60,6 +58,9 @@ if (!function_exists('logged_in_user_type')) {
 
 }
 
+
+
+
 if (!function_exists('success')) {
 
     function success($message) {
@@ -67,7 +68,6 @@ if (!function_exists('success')) {
         $CI->session->set_userdata('success', $message);
         return true;
     }
-
 }
 
 if (!function_exists('error')) {
@@ -107,7 +107,7 @@ if (!function_exists('get_slug')) {
             return;
         }
 
-        $char = array("!", "’", "'", ":", ",", "_", "`", "~", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "{", "}", "[", "]", "/", ";", '"', '<', '>', '?', "'\'",);
+        $char = array("!", "â€™", "'", ":", ",", "_", "`", "~", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "{", "}", "[", "]", "/", ";", '"', '<', '>', '?', "'\'",);
         $slug = str_replace($char, "", $slug);
         return $str = strtolower(str_replace(' ', "-", $slug));
     }
@@ -146,9 +146,14 @@ if (!function_exists('verify_email_format')) {
 
 if (!function_exists('get_classes')) {
 
-    function get_classes() {
+    function get_classes($school_id = null) {
         $ci = & get_instance();
-        return $ci->db->get('classes')->result();
+        $ci->db->select('C.*');
+        $ci->db->from('classes AS C');
+        if($school_id){
+            $ci->db->where('C.school_id', $school_id);
+        }
+         return $ci->db->get()->result();
     }
 
 }
@@ -198,13 +203,14 @@ if (!function_exists('get_routines_by_day')) {
 
 if (!function_exists('get_student_attendance')) {
 
-    function get_student_attendance($student_id, $academic_year_id, $class_id, $section_id, $year, $month, $day) {
+    function get_student_attendance($student_id, $school_id, $academic_year_id, $class_id, $section_id, $year, $month, $day) {
         $ci = & get_instance();
         $field = 'day_' . abs($day);
         $ci->db->select('SA.' . $field);
         $ci->db->from('student_attendances AS SA');
         $ci->db->where('SA.student_id', $student_id);
         $ci->db->where('SA.academic_year_id', $academic_year_id);
+        $ci->db->where('SA.school_id', $school_id);
         $ci->db->where('SA.class_id', $class_id);
         $ci->db->where('SA.section_id', $section_id);
         $ci->db->where('SA.year', $year);
@@ -216,27 +222,30 @@ if (!function_exists('get_student_attendance')) {
 
 if (!function_exists('get_teacher_attendance')) {
 
-    function get_teacher_attendance($teacher_id, $academic_year_id, $year, $month, $day) {
+    function get_teacher_attendance($teacher_id, $school_id, $academic_year_id, $year, $month, $day) {
         $ci = & get_instance();
         $field = 'day_' . abs($day);
         $ci->db->select('TA.' . $field);
         $ci->db->from('teacher_attendances AS TA');
         $ci->db->where('TA.teacher_id', $teacher_id);
+        $ci->db->where('TA.school_id', $school_id);
         $ci->db->where('TA.academic_year_id', $academic_year_id);
         $ci->db->where('TA.year', $year);
         $ci->db->where('TA.month', $month);
-        return @$ci->db->get()->row()->$field;
+       return $ci->db->get()->row()->$field;
+      // echo $ci->db->last_query();
     }
 
 }
 
 if (!function_exists('get_employee_attendance')) {
 
-    function get_employee_attendance($teacher_id, $academic_year_id, $year, $month, $day) {
+    function get_employee_attendance($teacher_id, $school_id, $academic_year_id, $year, $month, $day) {
         $ci = & get_instance();
         $field = 'day_' . abs($day);
         $ci->db->select('EA.' . $field);
         $ci->db->from('employee_attendances AS EA');
+        $ci->db->where('EA.school_id', $school_id);
         $ci->db->where('EA.employee_id', $teacher_id);
         $ci->db->where('EA.academic_year_id', $academic_year_id);
         $ci->db->where('EA.year', $year);
@@ -248,16 +257,19 @@ if (!function_exists('get_employee_attendance')) {
 
 if (!function_exists('get_exam_attendance')) {
 
-    function get_exam_attendance($student_id, $academic_year_id, $exam_id, $class_id, $section_id, $subject_id) {
+    function get_exam_attendance($school_id, $student_id, $academic_year_id, $exam_id, $class_id, $section_id, $subject_id) {
         $ci = & get_instance();
         $ci->db->select('EA.is_attend');
         $ci->db->from('exam_attendances AS EA');
+        $ci->db->where('EA.school_id', $school_id);
+        $ci->db->where('EA.academic_year_id', $academic_year_id);
         $ci->db->where('EA.exam_id', $exam_id);
         $ci->db->where('EA.class_id', $class_id);
-        $ci->db->where('EA.section_id', $section_id);
+        if($section_id){
+            $ci->db->where('EA.section_id', $section_id);
+        }
         $ci->db->where('EA.student_id', $student_id);
         $ci->db->where('EA.subject_id', $subject_id);
-        $ci->db->where('EA.academic_year_id', $academic_year_id);
         return @$ci->db->get()->row()->is_attend;
     }
 
@@ -265,16 +277,19 @@ if (!function_exists('get_exam_attendance')) {
 
 if (!function_exists('get_exam_mark')) {
 
-    function get_exam_mark($student_id, $academic_year_id, $exam_id, $class_id, $section_id, $subject_id) {
+    function get_exam_mark($school_id, $student_id, $academic_year_id, $exam_id, $class_id, $section_id, $subject_id) {
         $ci = & get_instance();
         $ci->db->select('M.*');
         $ci->db->from('marks AS M');
+        $ci->db->where('M.academic_year_id', $academic_year_id);
+        $ci->db->where('M.school_id', $school_id);
         $ci->db->where('M.exam_id', $exam_id);
         $ci->db->where('M.class_id', $class_id);
-        $ci->db->where('M.section_id', $section_id);
+        if($section_id){
+            $ci->db->where('M.section_id', $section_id);
+        }
         $ci->db->where('M.student_id', $student_id);
         $ci->db->where('M.subject_id', $subject_id);
-        $ci->db->where('M.academic_year_id', $academic_year_id);
         return $ci->db->get()->row();
     }
 
@@ -282,13 +297,18 @@ if (!function_exists('get_exam_mark')) {
 
 if (!function_exists('get_exam_attendance')) {
 
-    function get_exam_attendance($student_id, $academic_year_id, $exam_id, $class_id, $section_id, $subject_id) {
+    function get_exam_attendance($student_id, $academic_year_id, $school_id, $exam_id, $class_id, $section_id, $subject_id) {
         $ci = & get_instance();
         $ci->db->select('M.*');
         $ci->db->from('exam_attendances AS EA');
+        $ci->db->where('EA.school_id', $school_id);
         $ci->db->where('EA.exam_id', $exam_id);
         $ci->db->where('EA.class_id', $class_id);
+        
+        if($section_id){
         $ci->db->where('EA.section_id', $section_id);
+        }
+        
         $ci->db->where('EA.student_id', $student_id);
         $ci->db->where('EA.subject_id', $subject_id);
         $ci->db->where('EA.academic_year_id', $academic_year_id);
@@ -297,51 +317,315 @@ if (!function_exists('get_exam_attendance')) {
 
 }
 
+
 if (!function_exists('get_exam_total_mark')) {
 
-    function get_exam_total_mark($student_id, $academic_year_id, $exam_id, $class_id, $section_id = null) {
+    function get_exam_total_mark($school_id, $exam_id, $student_id, $academic_year_id, $class_id, $section_id = null) {
+        
         $ci = & get_instance();
-        $ci->db->select('COUNT(M.id) AS total_subject, SUM(G.point) AS total_point, SUM(M.exam_mark) AS exam_mark, SUM(M.obtain_mark) AS obtain_mark');
+        $ci->db->select('COUNT(M.id) AS total_subject, SUM(G.point) AS total_point, SUM(M.exam_total_mark) AS exam_mark, SUM(M.obtain_total_mark) AS obtain_mark');
         $ci->db->from('marks AS M');
-        $ci->db->join('grades AS G', 'G.id = M.grade_id', 'left');
-        $ci->db->where('M.exam_id', $exam_id);
+        $ci->db->join('grades AS G', 'G.id = M.grade_id', 'left');      
+        $ci->db->where('M.school_id', $school_id);
         $ci->db->where('M.class_id', $class_id);
+        $ci->db->where('M.exam_id', $exam_id);
         if ($section_id) {
             $ci->db->where('M.section_id', $section_id);
         }
+        
         $ci->db->where('M.student_id', $student_id);
         $ci->db->where('M.academic_year_id', $academic_year_id);
         return $ci->db->get()->row();
     }
-
 }
+
 
 if (!function_exists('get_exam_result')) {
 
-    function get_exam_result($student_id, $academic_year_id, $exam_id, $class_id, $section_id = null) {
+    function get_exam_result($school_id, $exim_id, $student_id, $academic_year_id, $class_id, $section_id = null) {
         $ci = & get_instance();
-        $ci->db->select('R.*');
-        $ci->db->from('results AS R');
-        $ci->db->where('R.exam_id', $exam_id);
-        $ci->db->where('R.class_id', $class_id);
+        $ci->db->select('ER.*, G.name');
+        $ci->db->from('exam_results AS ER');  
+        $ci->db->join('grades AS G', 'G.id = ER.grade_id', 'left');  
+        $ci->db->where('ER.school_id', $school_id);
+        $ci->db->where('ER.exam_id', $exim_id);
+        $ci->db->where('ER.class_id', $class_id);
         if ($section_id) {
-            $ci->db->where('R.section_id', $section_id);
+            $ci->db->where('ER.section_id', $section_id);
         }
-        $ci->db->where('R.student_id', $student_id);
-        $ci->db->where('R.academic_year_id', $academic_year_id);
+        $ci->db->where('ER.student_id', $student_id);
+        $ci->db->where('ER.academic_year_id', $academic_year_id);
         return $ci->db->get()->row();
+    }
+}
+
+
+if (!function_exists('get_exam_final_result')) {
+
+    function get_exam_final_result($school_id, $student_id, $academic_year_id, $class_id, $section_id = null) {
+        $ci = & get_instance();
+        $ci->db->select('FR.*');
+        $ci->db->from('final_results AS FR');
+        $ci->db->where('FR.class_id', $class_id);
+        if ($section_id) {
+            $ci->db->where('FR.section_id', $section_id);
+        }
+        $ci->db->where('FR.school_id', $school_id);
+        $ci->db->where('FR.student_id', $student_id);
+        $ci->db->where('FR.academic_year_id', $academic_year_id);
+        return $ci->db->get()->row();
+    }
+}
+
+
+
+if (!function_exists('get_student_position')) {
+
+    function get_student_position($school_id, $academic_year_id, $class_id, $student_id, $section_id = null) {
+        
+        $condition = " academic_year_id = $academic_year_id ";
+        $condition .= " AND school_id = $school_id";
+        $condition .= " AND class_id = $class_id";
+        $condition .= " AND student_id = $student_id";
+        if($section_id){
+            $condition .= " AND section_id = $section_id";
+        }
+        
+        $ci = & get_instance();              
+        $sql = "SELECT id, avg_grade_point, FIND_IN_SET( (avg_grade_point+total_obtain_mark), 
+                ( SELECT GROUP_CONCAT( (avg_grade_point+total_obtain_mark) ORDER BY avg_grade_point DESC )
+                FROM final_results ) ) AS rank 
+                FROM final_results 
+                WHERE $condition";
+        
+        $result =  $ci->db->query($sql)->row(); 
+        
+        $rank = '';
+        if(!empty($result)){
+            $rank = $result->rank;
+        }
+                       
+        if($rank == 1){
+            return $rank.'st';
+        }elseif($rank == 2){
+           return $rank.'nd'; 
+        }elseif($rank == 3){
+           return $rank.'rd'; 
+        }elseif($rank > 3 ){
+            return $rank.'th';         
+        }else{
+            return '--'; 
+        }
     }
 
 }
 
+
+
+if (!function_exists('get_lowet_height_mark')) {
+
+    function get_lowet_height_mark($school_id, $exam_id, $class_id, $section_id, $subject_id) {
+        $ci = & get_instance();
+        $ci->db->select('MIN(M.obtain_total_mark) AS lowest, MAX(M.obtain_total_mark) AS height');
+        $ci->db->from('marks AS M');       
+        $ci->db->where('M.school_id', $school_id);
+        $ci->db->where('M.exam_id', $exam_id);
+        $ci->db->where('M.class_id', $class_id);
+        $ci->db->where('M.section_id', $section_id);
+        $ci->db->where('M.subject_id', $subject_id);  
+        return  $ci->db->get()->row();
+     // echo $ci->db->last_query();
+    }
+}
+
+
+if (!function_exists('get_position_in_subject')) {
+
+    function get_position_in_subject($school_id, $exam_id, $class_id, $section_id, $subject_id, $mark) {
+        
+        
+        $ci = & get_instance();
+        $sql = "SELECT id, obtain_total_mark, FIND_IN_SET( obtain_total_mark,(
+                SELECT GROUP_CONCAT( obtain_total_mark  ORDER BY obtain_total_mark DESC ) 
+                FROM marks WHERE  school_id = $school_id AND exam_id = $exam_id AND class_id = $class_id AND section_id = $section_id AND subject_id = $subject_id))
+                AS rank 
+                FROM marks
+                WHERE school_id = $school_id AND exam_id = $exam_id AND class_id = $class_id AND section_id = $section_id AND subject_id = $subject_id AND  obtain_total_mark = $mark"; 
+        
+        $rank =  $ci->db->query($sql)->row()->rank; 
+        
+        if($mark == 0){
+            return '--'; 
+        }
+        
+        if($rank == 1){
+            return $rank.'st';
+        }elseif($rank == 2){
+           return $rank.'nd'; 
+        }elseif($rank == 3){
+           return $rank.'rd'; 
+        }elseif($rank > 3 ){
+            return $rank.'th';         
+        }else{
+            return '--'; 
+        }
+    }
+
+}
+
+
+if (!function_exists('get_subject_list')) {
+
+    function get_subject_list($school_id, $exam_id, $class_id, $section_id, $student_id) {
+        $ci = & get_instance();
+        $ci->db->select('M.*,S.name AS subject, G.point, G.name');
+        $ci->db->from('marks AS M');        
+        $ci->db->join('subjects AS S', 'S.id = M.subject_id', 'left');
+        $ci->db->join('grades AS G', 'G.id = M.grade_id', 'left');
+        $ci->db->where('M.school_id', $school_id);
+        $ci->db->where('M.class_id', $class_id);
+        $ci->db->where('M.section_id', $section_id);
+        $ci->db->where('M.student_id', $student_id);
+        $ci->db->where('M.exam_id', $exam_id);
+        return  $ci->db->get()->result();     
+    }
+
+}
+
+
+
+if (!function_exists('get_exam_wise_markt')) {
+
+    function get_exam_wise_markt($school_id, $exam_id, $class_id, $section_id, $student_id) {
+        $ci = & get_instance();
+        
+        $select = 'SUM(M.written_mark) AS written_mark,
+                   SUM(M.written_obtain) AS written_obtain,
+                   SUM(M.tutorial_mark) AS tutorial_mark,
+                   SUM(M.tutorial_obtain) AS tutorial_obtain,
+                   SUM(M.practical_mark) AS practical_mark,
+                   SUM(M.practical_obtain) AS practical_obtain,
+                   SUM(M.viva_mark) AS viva_mark,
+                   SUM(M.viva_obtain) AS viva_obtain,
+                   COUNT(M.id) AS total_subject,
+                   SUM(G.point) AS point,                  
+                   G.name';
+        
+        $ci->db->select($select);
+        $ci->db->from('marks AS M');        
+        $ci->db->join('grades AS G', 'G.id = M.grade_id', 'left');          
+        $ci->db->where('M.school_id', $school_id);
+        $ci->db->where('M.class_id', $class_id);
+        $ci->db->where('M.section_id', $section_id);
+        $ci->db->where('M.student_id', $student_id);
+        $ci->db->where('M.exam_id', $exam_id);        
+        return $ci->db->get()->row();  
+        // $ci->db->last_query();
+    }
+}
+
+
+if (!function_exists('get_position_in_exam')) {
+
+    function get_position_in_exam($school_id, $exam_id, $class_id, $section_id, $mark) {
+        
+        
+        $ci = & get_instance();
+        $sql = "SELECT id, total_obtain_mark, FIND_IN_SET( total_obtain_mark,(
+                SELECT GROUP_CONCAT( total_obtain_mark  ORDER BY total_obtain_mark DESC ) 
+                FROM exam_results WHERE school_id = $school_id AND exam_id = $exam_id AND class_id = $class_id AND section_id = $section_id ))
+                AS rank 
+                FROM exam_results
+                WHERE school_id = $school_id AND exam_id = $exam_id AND class_id = $class_id AND section_id = $section_id AND total_obtain_mark = $mark"; 
+        
+        $rank =  @$ci->db->query($sql)->row()->rank; 
+        
+        if($mark == 0){
+            return '--'; 
+        }
+        
+        if($rank == 1){
+            return $rank.'st';
+        }elseif($rank == 2){
+           return $rank.'nd'; 
+        }elseif($rank == 3){
+           return $rank.'rd'; 
+        }elseif($rank > 3 ){
+            return $rank.'th';         
+        }else{
+            return '--'; 
+        }
+    }
+
+}
+
+
+if (!function_exists('get_lowet_height_result')) {
+
+    function get_lowet_height_result($school_id, $exam_id, $class_id, $section_id) {
+        $ci = & get_instance();
+        $ci->db->select('MIN(ER.total_obtain_mark) AS lowest, MAX(ER.total_obtain_mark) AS height');
+        $ci->db->from('exam_results AS ER');       
+        $ci->db->where('ER.school_id', $school_id);
+        $ci->db->where('ER.exam_id', $exam_id);
+        $ci->db->where('ER.class_id', $class_id);
+        $ci->db->where('ER.section_id', $section_id);
+        //$ci->db->where('ER.student_id', $student_id);  
+        return  $ci->db->get()->row();
+     // echo $ci->db->last_query();
+    }
+
+}
+
+
+if (!function_exists('get_position_in_class')) {
+
+    function get_position_in_class($school_id, $academic_year_id, $class_id, $student_id) {
+       
+        
+        $condition = " school_id = $school_id";
+        $condition .= " AND academic_year_id = $academic_year_id";
+        $condition .= " AND class_id = $class_id";
+        $condition .= " AND student_id = $student_id";       
+        
+        $ci = & get_instance();              
+        $sql = "SELECT id, avg_grade_point, FIND_IN_SET( (avg_grade_point+total_obtain_mark), 
+                ( SELECT GROUP_CONCAT( (avg_grade_point+total_obtain_mark) ORDER BY avg_grade_point DESC )
+                FROM final_results ) ) AS rank 
+                FROM final_results 
+                WHERE $condition";
+        
+        $rank =  @$ci->db->query($sql)->row()->rank; 
+         
+        if($rank == 1){
+            return $rank.'st';
+        }elseif($rank == 2){
+           return $rank.'nd'; 
+        }elseif($rank == 3){
+           return $rank.'rd'; 
+        }elseif($rank > 3 ){
+            return $rank.'th';         
+        }else{
+            return '--'; 
+        }
+    }
+
+}
+
+
+
+
 if (!function_exists('get_enrollment')) {
 
-    function get_enrollment($student_id, $academic_year_id) {
+    function get_enrollment($student_id, $academic_year_id, $school_id = null) {
         $ci = & get_instance();
         $ci->db->select('E.*');
         $ci->db->from('enrollments AS E');
         $ci->db->where('E.student_id', $student_id);
         $ci->db->where('E.academic_year_id', $academic_year_id);
+        if($school_id){
+            $ci->db->where('E.school_id', $school_id);
+        }
         return $ci->db->get()->row();
     }
 
@@ -353,35 +637,51 @@ if (!function_exists('get_user_by_role')) {
 
         $ci = & get_instance();
 
-        if ($role_id == STUDENT) {
+        if ($role_id == SUPER_ADMIN) {
+            
+            $ci->db->select('SA.*, U.username, U.role_id');
+            $ci->db->from('system_admin AS SA');
+            $ci->db->join('users AS U', 'U.id = SA.user_id', 'left');
+            $ci->db->where('SA.user_id', $user_id);
+            return $ci->db->get()->row();
 
-            $ci->db->select('S.*, G.name AS guardian, E.roll_no, E.section_id, E.class_id, U.email, U.role_id,  C.name AS class_name, SE.name AS section');
+        }elseif ($role_id == STUDENT) {
+
+            $ci->db->select('S.*, D.amount, D.title AS discount, G.name AS guardian, E.roll_no, E.section_id, E.class_id, U.username, U.role_id,  C.name AS class_name, SE.name AS section');
             $ci->db->from('enrollments AS E');
             $ci->db->join('students AS S', 'S.id = E.student_id', 'left');
             $ci->db->join('guardians AS G', 'G.id = S.guardian_id', 'left');
             $ci->db->join('users AS U', 'U.id = S.user_id', 'left');
             $ci->db->join('classes AS C', 'C.id = E.class_id', 'left');
             $ci->db->join('sections AS SE', 'SE.id = E.section_id', 'left');
+            $ci->db->join('discounts AS D', 'D.id = S.discount_id', 'left');
             $ci->db->where('S.user_id', $user_id);
+            
             return $ci->db->get()->row();
             
         } elseif ($role_id == TEACHER) {
-            $ci->db->select('T.*, U.email, U.role_id');
+            
+            $ci->db->select('T.*, U.username, U.role_id');
             $ci->db->from('teachers AS T');
             $ci->db->join('users AS U', 'U.id = T.user_id', 'left');
             $ci->db->where('T.user_id', $user_id);
             return $ci->db->get()->row();
+            
         } elseif ($role_id == GUARDIAN) {
-            $ci->db->select('G.*, U.email, U.role_id');
+            
+            $ci->db->select('G.*, U.username, U.role_id');
             $ci->db->from('guardians AS G');
             $ci->db->join('users AS U', 'U.id = G.user_id', 'left');
             $ci->db->where('G.user_id', $user_id);
             return $ci->db->get()->row();
+                
         } else {
-            $ci->db->select('E.*, U.email, U.role_id, D.name AS designation');
+            
+            $ci->db->select('E.*, SG.grade_name, U.username, U.role_id, D.name AS designation');
             $ci->db->from('employees AS E');
             $ci->db->join('users AS U', 'U.id = E.user_id', 'left');
             $ci->db->join('designations AS D', 'D.id = E.designation_id', 'left');
+            $ci->db->join('salary_grades AS SG', 'SG.id = E.salary_grade_id', 'left');
             $ci->db->where('E.user_id', $user_id);
             return $ci->db->get()->row();
         }
@@ -403,39 +703,52 @@ if (!function_exists('get_user_by_id')) {
         $ci->db->where('U.id', $user_id);
         $user = $ci->db->get()->row();
 
-        if ($user->role_id == STUDENT) {
+        if ($user->role_id == SUPER_ADMIN) {
+            
+            $ci->db->select('SA.*, U.username, U.role_id');
+            $ci->db->from('system_admin AS SA');
+            $ci->db->join('users AS U', 'U.id = SA.user_id', 'left');
+            $ci->db->where('SA.user_id', $user_id);
+            return $ci->db->get()->row();
+            
+        }else if ($user->role_id == STUDENT) {
 
-            $ci->db->select('S.*, E.roll_no, U.email, U.role_id,  C.name AS class_name, SE.name AS section');
+            $ci->db->select('S.*, E.roll_no, U.username, U.role_id,  C.name AS class_name, SE.name AS section');
             $ci->db->from('enrollments AS E');
             $ci->db->join('students AS S', 'S.id = E.student_id', 'left');
             $ci->db->join('users AS U', 'U.id = S.user_id', 'left');
             $ci->db->join('classes AS C', 'C.id = E.class_id', 'left');
             $ci->db->join('sections AS SE', 'SE.id = E.section_id', 'left');
-            $ci->db->where('S.user_id', $user_id);
-            
+            $ci->db->where('S.user_id', $user_id);            
             return $ci->db->get()->row();
+            
         } elseif ($user->role_id == TEACHER) {
-            $ci->db->select('T.*, U.email, U.role_id');
+            
+            $ci->db->select('T.*, U.username, U.role_id');
             $ci->db->from('teachers AS T');
             $ci->db->join('users AS U', 'U.id = T.user_id', 'left');
             $ci->db->where('T.user_id', $user_id);
             return $ci->db->get()->row();
+            
         } elseif ($user->role_id == GUARDIAN) {
-            $ci->db->select('G.*, U.email, U.role_id');
+            
+            $ci->db->select('G.*, U.username, U.role_id');
             $ci->db->from('guardians AS G');
             $ci->db->join('users AS U', 'U.id = G.user_id', 'left');
             $ci->db->where('G.user_id', $user_id);
-            return $ci->db->get()->row();
+            return $ci->db->get()->row();        
+            
         } else {
-            $ci->db->select('E.*, U.email, U.role_id, D.name AS designation');
+            
+            $ci->db->select('E.*, U.username, U.role_id, D.name AS designation');
             $ci->db->from('employees AS E');
             $ci->db->join('users AS U', 'U.id = E.user_id', 'left');
             $ci->db->join('designations AS D', 'D.id = E.designation_id', 'left');
             $ci->db->where('E.user_id', $user_id);
-            return $ci->db->get()->row();
+            return  $ci->db->get()->row();
         }
 
-        $ci->db->last_query();
+        // $ci->db->last_query();
     }
 
 }
@@ -552,7 +865,17 @@ if (!function_exists('get_hostel_types')) {
             'combine' => $ci->lang->line('combine')
         );
     }
+}
 
+if (!function_exists('get_page_location')) {
+
+    function get_page_location() {
+        $ci = & get_instance();
+        return array(
+            'header' => $ci->lang->line('header'),
+            'footer' => $ci->lang->line('footer'),
+        );
+    }
 }
 
 if (!function_exists('get_room_types')) {
@@ -613,24 +936,38 @@ if (!function_exists('get_relation_types')) {
 
 if (!function_exists('get_payment_methods')) {
 
-    function get_payment_methods() {
+    function get_payment_methods($school_id = null) {
         $ci = & get_instance();
 
         $methods = array('cash' => $ci->lang->line('cash'), 'cheque' => $ci->lang->line('cheque'));
-     
-        $ci = & get_instance();
-        $ci->db->select('PS.*');
-        $ci->db->from('payment_settings AS PS');
-        $data = $ci->db->get()->row();
+          
+        if($ci->session->userdata('role_id') != SUPER_ADMIN){
+            $school_id =  $ci->session->userdata('school_id');
+        }
         
-        if ($data->paypal_status) {
-            $methods['paypal'] = $ci->lang->line('paypal');
+        $ci->db->select('PS.*');
+        $ci->db->from('payment_settings AS PS');  
+        if($school_id){
+            $ci->db->where('PS.school_id', $school_id);
         }
-        if ($data->stripe_status) {
-            $methods['stripe'] = $ci->lang->line('stripe');
-        }
-        if ($data->payumoney_status) {
-            $methods['payumoney'] = $ci->lang->line('payumoney');
+        
+        $data = $ci->db->get()->row();
+        if(!empty($data)){ 
+            if ($data->paypal_status) {
+                $methods['paypal'] = $ci->lang->line('paypal');
+            }
+            if ($data->stripe_status) {
+                $methods['stripe'] = $ci->lang->line('stripe');
+            }
+            if ($data->payumoney_status) {
+                $methods['payumoney'] = $ci->lang->line('payumoney');
+            }
+            if ($data->ccavenue_status) {
+                $methods['ccavenue'] = $ci->lang->line('ccavenue');
+            }
+            if ($data->paytm_status) {
+                $methods['paytm'] = $ci->lang->line('paytm');
+            }
         }
 
         return $methods;
@@ -640,30 +977,40 @@ if (!function_exists('get_payment_methods')) {
 
 if (!function_exists('get_sms_gateways')) {
 
-    function get_sms_gateways() {
+    function get_sms_gateways( $school_id ) {
+        
         $ci = & get_instance();
         $gateways = array();
-        $ci = & get_instance();
+       
         $ci->db->select('SS.*');
         $ci->db->from('sms_settings AS SS');
+        $ci->db->where('SS.school_id', $school_id);
         $data = $ci->db->get()->row();
 
-        if ($data->clickatell_status) {
-            $gateways['clicktell'] = $ci->lang->line('clicktell');
-        }
-        if ($data->twilio_status) {
-            $gateways['twilio'] = $ci->lang->line('twilio');
-        }
-        if ($data->bulk_status) {
-            $gateways['bulk'] = $ci->lang->line('bulk');
-        }
-        if ($data->msg91_status) {
-            $gateways['msg91'] = $ci->lang->line('msg91');
-        }
-        if ($data->plivo_status) {
-            $gateways['plivo'] = $ci->lang->line('plivo');
-        }
-
+        if(!empty($data)){
+            
+            if ($data->clickatell_status) {
+                $gateways['clicktell'] = $ci->lang->line('clicktell');
+            }
+            if ($data->twilio_status) {
+                $gateways['twilio'] = $ci->lang->line('twilio');
+            }
+            if ($data->bulk_status) {
+                $gateways['bulk'] = $ci->lang->line('bulk');
+            }
+            if ($data->msg91_status) {
+                $gateways['msg91'] = $ci->lang->line('msg91');
+            }
+            if ($data->plivo_status) {
+                $gateways['plivo'] = $ci->lang->line('plivo');
+            }
+            if ($data->textlocal_status) {
+                $gateways['text_local'] = $ci->lang->line('text_local');
+            }
+            if ($data->smscountry_status) {
+                $gateways['sms_country'] = $ci->lang->line('sms_country');
+            }
+         }
         return $gateways;
     }
 
@@ -692,7 +1039,14 @@ if (!function_exists('get_template_tags')) {
         $tags[] = '[email]';
         $tags[] = '[phone]';
 
-        if ($role_id == STUDENT) {
+        if($role_id == SUPER_ADMIN){
+            
+            $tags[] = '[designation]';
+            $tags[] = '[gender]';
+            $tags[] = '[blood_group]';
+            $tags[] = '[religion]';
+            $tags[] = '[dob]';            
+        }elseif ($role_id == STUDENT) {
 
             $tags[] = '[class_name]';
             $tags[] = '[section]';
@@ -738,6 +1092,7 @@ if (!function_exists('get_formatted_body')) {
 
         $tags = get_template_tags($role_id);
         $user = get_user_by_role($role_id, $user_id);
+             
         $arr = array('[', ']');
         foreach ($tags as $tag) {
             $field = str_replace($arr, '', $tag);
@@ -746,9 +1101,7 @@ if (!function_exists('get_formatted_body')) {
                 $body = str_replace($tag, date('M-d-Y', strtotime($user->created_at)), $body);                
             }else{
                 $body = str_replace($tag, $user->{$field}, $body);
-            }
-            
-            
+            } 
         }
 
         return $body;
@@ -838,7 +1191,51 @@ if (!function_exists('get_inbox_message')) {
         $ci->db->where('MR.receiver_id', logged_in_user_id());
         return $ci->db->get()->result();
     }
+}
 
+if (!function_exists('get_hostel_by_school')) {
+
+    function get_hostel_by_school($school_id) {
+        $ci = & get_instance();
+        $ci->db->select('H.*');
+        $ci->db->from('hostels AS H');
+        $ci->db->where('H.school_id', $school_id);
+       return $ci->db->get()->result();
+    }
+
+}
+
+if (!function_exists('get_gallery_images')) {
+
+    function get_gallery_images($school_id, $gallery_id) {
+        $ci = & get_instance();
+        $ci->db->select('GI.*');
+        $ci->db->from('gallery_images AS GI');
+        $ci->db->where('GI.school_id', $school_id);
+        $ci->db->where('GI.gallery_id', $gallery_id);
+       return $ci->db->get()->result();
+    }
+}
+
+
+if (!function_exists('get_fee_amount')) {
+
+    function get_fee_amount($income_head_id, $class_id) {
+        $ci = & get_instance();
+        return $ci->db->get_where('fees_amount', array('class_id'=>$class_id, 'income_head_id'=>$income_head_id))->row();
+    }
+}
+
+if (!function_exists('get_invoice_paid_amount')) {
+
+    function get_invoice_paid_amount($invoice_id){
+        $ci = & get_instance();
+        $ci->db->select('I.*, SUM(T.amount) AS paid_amount');
+        $ci->db->from('invoices AS I');        
+        $ci->db->join('transactions AS T', 'T.invoice_id = I.id', 'left');
+        $ci->db->where('I.id', $invoice_id);         
+        return $ci->db->get()->row(); 
+    }
 }
 
 if (!function_exists('get_operation_by_module')) {
@@ -863,7 +1260,17 @@ if (!function_exists('get_permission_by_operation')) {
         $ci->db->where('P.operation_id', $operation_id);
         return $ci->db->get()->row();
     }
+}
 
+if (!function_exists('get_school_list')) {
+
+    function get_school_list() {
+        $ci = & get_instance();
+        $ci->db->select('S.*');
+        $ci->db->from('schools AS S');
+        $ci->db->where('S.status', 1);
+        return $ci->db->get()->result();
+    }
 }
 
 if (!function_exists('get_lang')) {
@@ -921,6 +1328,149 @@ if (!function_exists('get_default_lang_list')) {
     }
 
 }
+
+
+if (!function_exists('get_timezones')) {
+    function get_timezones() {
+        $timezones = array(           
+            'Pacific/Midway' => "(GMT-11:00) Midway Island",
+            'US/Samoa' => "(GMT-11:00) Samoa",
+            'US/Hawaii' => "(GMT-10:00) Hawaii",
+            'US/Alaska' => "(GMT-09:00) Alaska",
+            'US/Pacific' => "(GMT-08:00) Pacific Time (US &amp; Canada)",
+            'America/Tijuana' => "(GMT-08:00) Tijuana",
+            'US/Arizona' => "(GMT-07:00) Arizona",
+            'US/Mountain' => "(GMT-07:00) Mountain Time (US &amp; Canada)",
+            'America/Chihuahua' => "(GMT-07:00) Chihuahua",
+            'America/Mazatlan' => "(GMT-07:00) Mazatlan",
+            'America/Mexico_City' => "(GMT-06:00) Mexico City",
+            'America/Monterrey' => "(GMT-06:00) Monterrey",
+            'Canada/Saskatchewan' => "(GMT-06:00) Saskatchewan",
+            'US/Central' => "(GMT-06:00) Central Time (US &amp; Canada)",
+            'US/Eastern' => "(GMT-05:00) Eastern Time (US &amp; Canada)",
+            'US/East-Indiana' => "(GMT-05:00) Indiana (East)",
+            'America/Bogota' => "(GMT-05:00) Bogota",
+            'America/Lima' => "(GMT-05:00) Lima",
+            'America/Caracas' => "(GMT-04:30) Caracas",
+            'Canada/Atlantic' => "(GMT-04:00) Atlantic Time (Canada)",
+            'America/La_Paz' => "(GMT-04:00) La Paz",
+            'America/Santiago' => "(GMT-04:00) Santiago",
+            'Canada/Newfoundland' => "(GMT-03:30) Newfoundland",
+            'America/Buenos_Aires' => "(GMT-03:00) Buenos Aires",
+            'Greenland' => "(GMT-03:00) Greenland",
+            'Atlantic/Stanley' => "(GMT-02:00) Stanley",
+            'Atlantic/Azores' => "(GMT-01:00) Azores",
+            'Atlantic/Cape_Verde' => "(GMT-01:00) Cape Verde Is.",
+            'Africa/Casablanca' => "(GMT) Casablanca",
+            'Europe/Dublin' => "(GMT) Dublin",
+            'Europe/Lisbon' => "(GMT) Lisbon",
+            'Europe/London' => "(GMT) London",
+            'Africa/Monrovia' => "(GMT) Monrovia",
+            'Europe/Amsterdam' => "(GMT+01:00) Amsterdam",
+            'Europe/Belgrade' => "(GMT+01:00) Belgrade",
+            'Europe/Berlin' => "(GMT+01:00) Berlin",
+            'Europe/Bratislava' => "(GMT+01:00) Bratislava",
+            'Europe/Brussels' => "(GMT+01:00) Brussels",
+            'Europe/Budapest' => "(GMT+01:00) Budapest",
+            'Europe/Copenhagen' => "(GMT+01:00) Copenhagen",
+            'Europe/Ljubljana' => "(GMT+01:00) Ljubljana",
+            'Europe/Madrid' => "(GMT+01:00) Madrid",
+            'Europe/Paris' => "(GMT+01:00) Paris",
+            'Europe/Prague' => "(GMT+01:00) Prague",
+            'Europe/Rome' => "(GMT+01:00) Rome",
+            'Europe/Sarajevo' => "(GMT+01:00) Sarajevo",
+            'Europe/Skopje' => "(GMT+01:00) Skopje",
+            'Europe/Stockholm' => "(GMT+01:00) Stockholm",
+            'Europe/Vienna' => "(GMT+01:00) Vienna",
+            'Europe/Warsaw' => "(GMT+01:00) Warsaw",
+            'Europe/Zagreb' => "(GMT+01:00) Zagreb",
+            'Europe/Athens' => "(GMT+02:00) Athens",
+            'Europe/Bucharest' => "(GMT+02:00) Bucharest",
+            'Africa/Cairo' => "(GMT+02:00) Cairo",
+            'Africa/Harare' => "(GMT+02:00) Harare",
+            'Europe/Helsinki' => "(GMT+02:00) Helsinki",
+            'Europe/Istanbul' => "(GMT+02:00) Istanbul",
+            'Asia/Jerusalem' => "(GMT+02:00) Jerusalem",
+            'Europe/Kiev' => "(GMT+02:00) Kyiv",
+            'Europe/Minsk' => "(GMT+02:00) Minsk",
+            'Europe/Riga' => "(GMT+02:00) Riga",
+            'Europe/Sofia' => "(GMT+02:00) Sofia",
+            'Europe/Tallinn' => "(GMT+02:00) Tallinn",
+            'Europe/Vilnius' => "(GMT+02:00) Vilnius",
+            'Asia/Baghdad' => "(GMT+03:00) Baghdad",
+            'Asia/Kuwait' => "(GMT+03:00) Kuwait",
+            'Africa/Nairobi' => "(GMT+03:00) Nairobi",
+            'Asia/Riyadh' => "(GMT+03:00) Riyadh",
+            'Asia/Tehran' => "(GMT+03:30) Tehran",
+            'Europe/Moscow' => "(GMT+04:00) Moscow",
+            'Asia/Baku' => "(GMT+04:00) Baku",
+            'Europe/Volgograd' => "(GMT+04:00) Volgograd",
+            'Asia/Muscat' => "(GMT+04:00) Muscat",
+            'Asia/Tbilisi' => "(GMT+04:00) Tbilisi",
+            'Asia/Yerevan' => "(GMT+04:00) Yerevan",
+            'Asia/Kabul' => "(GMT+04:30) Kabul",
+            'Asia/Karachi' => "(GMT+05:00) Karachi",
+            'Asia/Tashkent' => "(GMT+05:00) Tashkent",
+            'Asia/Kolkata' => "(GMT+05:30) Kolkata",
+            'Asia/Kathmandu' => "(GMT+05:45) Kathmandu",
+            'Asia/Yekaterinburg' => "(GMT+06:00) Ekaterinburg",
+            'Asia/Almaty' => "(GMT+06:00) Almaty",
+            'Asia/Dhaka' => "(GMT+06:00) Dhaka",
+            'Asia/Novosibirsk' => "(GMT+07:00) Novosibirsk",
+            'Asia/Bangkok' => "(GMT+07:00) Bangkok",
+            'Asia/Jakarta' => "(GMT+07:00) Jakarta",
+            'Asia/Krasnoyarsk' => "(GMT+08:00) Krasnoyarsk",
+            'Asia/Chongqing' => "(GMT+08:00) Chongqing",
+            'Asia/Hong_Kong' => "(GMT+08:00) Hong Kong",
+            'Asia/Kuala_Lumpur' => "(GMT+08:00) Kuala Lumpur",
+            'Australia/Perth' => "(GMT+08:00) Perth",
+            'Asia/Singapore' => "(GMT+08:00) Singapore",
+            'Asia/Taipei' => "(GMT+08:00) Taipei",
+            'Asia/Ulaanbaatar' => "(GMT+08:00) Ulaan Bataar",
+            'Asia/Urumqi' => "(GMT+08:00) Urumqi",
+            'Asia/Irkutsk' => "(GMT+09:00) Irkutsk",
+            'Asia/Seoul' => "(GMT+09:00) Seoul",
+            'Asia/Tokyo' => "(GMT+09:00) Tokyo",
+            'Australia/Adelaide' => "(GMT+09:30) Adelaide",
+            'Australia/Darwin' => "(GMT+09:30) Darwin",
+            'Asia/Yakutsk' => "(GMT+10:00) Yakutsk",
+            'Australia/Brisbane' => "(GMT+10:00) Brisbane",
+            'Australia/Canberra' => "(GMT+10:00) Canberra",
+            'Pacific/Guam' => "(GMT+10:00) Guam",
+            'Australia/Hobart' => "(GMT+10:00) Hobart",
+            'Australia/Melbourne' => "(GMT+10:00) Melbourne",
+            'Pacific/Port_Moresby' => "(GMT+10:00) Port Moresby",
+            'Australia/Sydney' => "(GMT+10:00) Sydney",
+            'Asia/Vladivostok' => "(GMT+11:00) Vladivostok",
+            'Asia/Magadan' => "(GMT+12:00) Magadan",
+            'Pacific/Auckland' => "(GMT+12:00) Auckland",
+            'Pacific/Fiji' => "(GMT+12:00) Fiji",
+        );
+
+        return $timezones;
+    }
+}
+
+
+if (!function_exists('get_date_format')) {
+    function get_date_format() {
+        
+        $date = array();
+        $date['Y-m-d'] = '2001-03-15';
+        $date['d-m-Y'] = '15-03-2018';
+        $date['d/m/Y'] = '15/03/2018';
+        $date['m/d/Y'] = '03/15/2018';
+        $date['m.d.Y'] = '03.10.2018';
+        $date['j, n, Y'] = '14, 7, 2018';
+        $date['F j, Y'] = 'July 15, 2018';
+        $date['M j, Y'] = 'Jul 13, 2018';
+        $date['j M, Y'] = '13 Jul, 2018';
+        
+        return $date;
+    }
+}
+
+
 
 if (!function_exists('check_permission')) {
 
@@ -981,4 +1531,35 @@ if (!function_exists('has_permission')) {
         }
     }
 
+}
+
+
+if (!function_exists('create_log')) {
+
+    function create_log($activity = null) {
+
+        $ci = & get_instance();
+        $data = array();
+        
+        if($ci->session->userdata('role_id') != SUPER_ADMIN){
+            $data['school_id'] = 0;
+        }else{
+            $data['school_id'] = $ci->session->userdata('school_id');            
+        }
+        
+        $data['user_id'] = logged_in_user_id();
+        $data['role_id'] = logged_in_role_id(); 
+        $user = get_user_by_id($data['user_id']);
+        
+        $data['name'] = $user->name;
+        $data['phone'] = $user->phone;
+        $data['email'] = $user->email;
+        $data['ip_address'] = $_SERVER['REMOTE_ADDR'];
+        $data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+        $data['activity'] = $activity;
+        $data['status'] = 1;
+        $data['created_at'] = date('Y-m-d H:i:s');
+        $data['created_by'] = logged_in_user_id();
+        $ci->db->insert('activity_logs', $data);
+    }
 }

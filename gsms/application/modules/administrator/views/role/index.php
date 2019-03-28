@@ -8,11 +8,24 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
+            
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
-                    <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+                <?php if(has_permission(VIEW, 'administrator', 'setting')){ ?>
+                    <a href="<?php echo site_url('administrator/setting'); ?>"><?php echo $this->lang->line('general'); ?> <?php echo $this->lang->line('setting'); ?></a>
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'school')){ ?>
+                   | <a href="<?php echo site_url('administrator/school'); ?>"><?php echo $this->lang->line('manage_school'); ?></a>
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'payment')){ ?>
+                    | <a href="<?php echo site_url('administrator/payment'); ?>"><?php echo $this->lang->line('payment'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>                    
+                <?php if(has_permission(VIEW, 'administrator', 'sms')){ ?>
+                    | <a href="<?php echo site_url('administrator/sms'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>      
+                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
+                    | <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+                <?php } ?>                  
                 <?php if(has_permission(VIEW, 'administrator', 'role')){ ?>
                    | <a href="<?php echo site_url('administrator/role'); ?>"><?php echo $this->lang->line('user_role'); ?></a>
                 <?php } ?>
@@ -22,13 +35,29 @@
                 <?php if(has_permission(VIEW, 'administrator', 'user')){ ?>
                    | <a href="<?php echo site_url('administrator/user'); ?>"><?php echo $this->lang->line('manage_user'); ?></a>                
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'superadmin')){ ?>
+                   | <a href="<?php echo site_url('administrator/superadmin'); ?>"><?php echo $this->lang->line('super_admin'); ?></a>                
+                <?php } ?>
                 <?php if(has_permission(EDIT, 'administrator', 'password')){ ?>
                    | <a href="<?php echo site_url('administrator/password'); ?>"><?php echo $this->lang->line('reset_user_password'); ?></a>                   
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'emailtemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/emailtemplate'); ?>"><?php echo $this->lang->line('email'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'smstemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/smstemplate'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'activitylog')){ ?>
+                   | <a href="<?php echo site_url('administrator/activitylog'); ?>"><?php echo $this->lang->line('activity_log'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'feedback')){ ?>
+                   | <a href="<?php echo site_url('administrator/feedback'); ?>"><?php echo $this->lang->line('guardian'); ?> <?php echo $this->lang->line('feedback'); ?></a>                  
                 <?php } ?>
                 <?php if(has_permission(VIEW, 'administrator', 'backup')){ ?>
                    | <a href="<?php echo site_url('administrator/backup'); ?>"><?php echo $this->lang->line('backup'); ?> <?php echo $this->lang->line('database'); ?></a>                  
                 <?php } ?>
             </div>
+            
             <div class="x_content">
                 <div class="" data-example-id="togglable-tabs">
                     
@@ -90,7 +119,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($name) ?  $name : ''; ?>" placeholder="<?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -121,7 +150,7 @@
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <input type="hidden" value="<?php echo isset($role) ? $role->id : ''; ?>" name="id" />
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($role) ? $role->name : ''; ?>"  placeholder="<?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($role) ? $role->name : ''; ?>"  placeholder="<?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -162,9 +191,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });          
         });
+        
     $("#add").validate();  
     $("#edit").validate();     
 </script>

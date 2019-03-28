@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Hostel.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Hostel
  * @description     : Manage student residential hostel/dormitory.  
@@ -33,9 +33,10 @@ Class Hostel extends MY_Controller {
     * ********************************************************** */
     public function index() {
 
-        check_permission(VIEW);
-
+      
         $this->data['hostels'] = $this->hostel->get_hostel_list();
+        
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_hostel') . ' | ' . SMS);
         $this->layout->view('hostel/index', $this->data);
@@ -61,6 +62,8 @@ Class Hostel extends MY_Controller {
 
                 $insert_id = $this->hostel->insert('hostels', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been added a Hostel : '.$data['name']);
                     success($this->lang->line('insert_success'));
                     redirect('hostel/index');
                 } else {
@@ -73,6 +76,8 @@ Class Hostel extends MY_Controller {
         }
 
         $this->data['hostels'] = $this->hostel->get_hostel_list();
+        
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('hostel') . ' | ' . SMS);
         $this->layout->view('hostel/index', $this->data);
@@ -104,6 +109,8 @@ Class Hostel extends MY_Controller {
                 $updated = $this->hostel->update('hostels', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a Hostel : '.$data['name']);
                     success($this->lang->line('update_success'));
                     redirect('hostel/index');
                 } else {
@@ -124,6 +131,9 @@ Class Hostel extends MY_Controller {
         }
 
         $this->data['hostels'] = $this->hostel->get_hostel_list();
+        
+        $this->data['school_id'] = $this->data['hostel']->school_id;
+        
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('hostel') . ' | ' . SMS);
@@ -149,14 +159,33 @@ Class Hostel extends MY_Controller {
           redirect('hostel/index');
         }
         
+        
         $this->data['hostels'] = $this->hostel->get_hostel_list();
+        
         $this->data['hostel'] = $this->hostel->get_single('hostels', array('id' => $id));
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('hostel') . ' | ' . SMS);
         $this->layout->view('hostel/index', $this->data);
     }
 
-    
+        
+               
+    /*****************Function get_single_hostel**********************************
+     * @type            : Function
+     * @function name   : get_single_hostel
+     * @description     : "Load single hostel information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_hostel(){
+        
+        $hostel_id = $this->input->post('hostel_id');
+       
+        $this->data['hostel'] = $this->hostel->get_single_hostel($hostel_id);
+        echo $this->load->view('hostel/get-single-hostel', $this->data);
+    }
         
     /*****************Function _prepare_hostel_validation**********************************
     * @type            : Function
@@ -171,6 +200,7 @@ Class Hostel extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         $this->form_validation->set_rules('name', $this->lang->line('hostel') . ' ' . $this->lang->line('name'), 'trim|required|callback_name');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('type', $this->lang->line('hostel_type'), 'trim|required');
         $this->form_validation->set_rules('address', $this->lang->line('address'), 'trim|required');
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
@@ -188,7 +218,7 @@ Class Hostel extends MY_Controller {
     * ********************************************************** */ 
     public function name() {
         if ($this->input->post('id') == '') {
-            $hostel = $this->hostel->duplicate_check($this->input->post('name'));
+            $hostel = $this->hostel->duplicate_check($this->input->post('school_id'), $this->input->post('name'));
             if ($hostel) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -196,7 +226,7 @@ Class Hostel extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $hostel = $this->hostel->duplicate_check($this->input->post('name'), $this->input->post('id'));
+            $hostel = $this->hostel->duplicate_check($this->input->post('school_id'), $this->input->post('name'), $this->input->post('id'));
             if ($hostel) {
                 $this->form_validation->set_message('name', $this->lang->line('already_exist'));
                 return FALSE;
@@ -222,6 +252,7 @@ Class Hostel extends MY_Controller {
     private function _get_posted_hostel_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'name';
         $items[] = 'type';
         $items[] = 'address';
@@ -259,7 +290,11 @@ Class Hostel extends MY_Controller {
           redirect('hostel/index');
         }
         
+         $hostel = $this->hostel->get_single('hostels', array('id' => $id));
+        
         if ($this->hostel->delete('hostels', array('id' => $id))) {
+            
+             create_log('Has been deleted a Hostel : '.$hostel->name);   
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

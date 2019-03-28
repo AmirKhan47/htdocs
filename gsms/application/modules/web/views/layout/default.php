@@ -8,38 +8,59 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title><?php echo $title_for_layout; ?></title>
-        <link rel="icon" href="<?php echo IMG_URL; ?>favicon.ico" type="image/x-icon" />
-        <!-- Bootstrap -->
-        <link href="<?php echo VENDOR_URL; ?>bootstrap/bootstrap.min.css" rel="stylesheet">
-        <!-- Font Awesome -->
-        <link href="<?php echo VENDOR_URL; ?>font-awesome/css/font-awesome.min.css" rel="stylesheet">
-
-        <!-- Custom Theme Style -->
-        <link href="<?php echo CSS_URL; ?>front-style.css" rel="stylesheet">
-        <link href="<?php echo CSS_URL; ?>front-colorbox.css" rel="stylesheet">
-        <link href="<?php echo CSS_URL; ?>front-zoomslider.css" rel="stylesheet">
-
-        <?php if ($theme->slug) { ?>
-            <link href="<?php echo CSS_URL; ?>theme/<?php echo $theme->slug; ?>.css" rel="stylesheet">
-        <?php } else { ?>
-            <link href="<?php echo CSS_URL; ?>theme/dodger-blue.css" rel="stylesheet">
+        <title><?php echo $title_for_layout; ?></title>        
+        <link rel="icon" href="<?php echo IMG_URL; ?>front/favicon.ico" type="image/x-icon" />
+        
+        <!-- CSS -->
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/bootstrap.min.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/jquery-ui.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/fontawesome-all.min.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/owl.carousel.min.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/animate.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/meanmenu.css">
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/jquery.fancybox.min.css">
+        
+        <?php if(isset($school->theme_name)){ ?>
+            <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/theme/<?php echo $school->theme_name; ?>.css">
+        <?php }else{ ?>
+            <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/style.css">
+        <?php } ?>  
+        
+        <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/responsive.css">
+        
+        <?php if($this->global_setting->enable_rtl){ ?>
+         <link rel="stylesheet" href="<?php echo CSS_URL; ?>front/rtl.css">
         <?php } ?>
-
-        <!-- jQuery -->
-        <script src="<?php echo JS_URL; ?>modernizr-2.6.2.min.js"></script>
-        <script src="<?php echo JS_URL; ?>jquery-1.11.2.min.js"></script>
+         
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+        
+        <script src="<?php echo JS_URL; ?>front/jquery-3.3.1.min.js"></script>
         <script src="<?php echo JS_URL; ?>jquery.validate.js"></script>
-
+        
+        <?php if($this->global_setting->google_analytics){ ?>         
+            <!-- Global site tag (gtag.js) - Google Analytics -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $this->global_setting->google_analytics; ?>"></script>
+            <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '<?php echo $this->global_setting->google_analytics; ?>');
+            </script>
+        <?php } ?>
+            
     </head>
 
     <body>
+        <div id="preloader"></div>
         
-        <?php $this->load->view('layout/header'); ?>   
-
+        <?php $this->load->view('layout/header'); ?>  
         
-        <!-- page content -->
-        
+        <!-- page content -->        
         <?php echo $content_for_layout; ?>
         <!-- /page content -->
         
@@ -47,17 +68,18 @@
         <?php $this->load->view('layout/footer'); ?>   
         <!-- /footer content -->
 
-        <!-- Bootstrap -->
-        <script src="<?php echo VENDOR_URL; ?>bootstrap/bootstrap.min.js"></script>    
 
-        <!--   Start   -->
-        
-        <script src="<?php echo JS_URL; ?>jquery.zoomslider.min.js"></script>        
-        <script src="<?php echo JS_URL; ?>jquery.colorbox-min.js"></script>
-        <!-- dataTable with buttons end -->
-    
-        <!-- Custom Theme Scripts -->
-        <script src="<?php echo JS_URL; ?>front-custom.js"></script>   
+        <!-- Scripts -->      
+        <script src="<?php echo JS_URL; ?>front/jquery-ui.js"></script>
+        <script src="<?php echo JS_URL; ?>front/owl.carousel.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/jquery.counterup.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/jquery.meanmenu.js"></script>
+        <script src="<?php echo JS_URL; ?>front/jquery.fancybox.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/jquery.scrollUp.js"></script>
+        <script src="<?php echo JS_URL; ?>front/jquery.waypoints.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/popper.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/bootstrap.min.js"></script>
+        <script src="<?php echo JS_URL; ?>front/theme.js"></script> 
 
         <script type="text/javascript">
 
@@ -78,7 +100,13 @@
                 max: jQuery.validator.format("Please enter a value less than or equal to {0}."),
                 min: jQuery.validator.format("Please enter a value greater than or equal to {0}.")
             });
+            
+            
+            function change_school(school_id){
+                if(school_id){
+                    window.location.href = '<?php echo site_url('school/'); ?>'+school_id; 
+                }
+            }           
         </script>
-
     </body>
 </html>

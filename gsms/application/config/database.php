@@ -74,6 +74,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+$active_group = 'default';
+$active_record = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
@@ -94,9 +96,10 @@ $db['default'] = array(
 	'save_queries' => TRUE
 );
 
-
-$db['default']['hostname'] = "localhost";
-$db['default']['username'] = "root";
+// Please enter your database connection here
+$db['default']['hostname'] = "";
+$db['default']['username'] = "";
 $db['default']['password'] = "";
-$db['default']['database'] = "gsms";
+$db['default']['database'] = "";
+
 

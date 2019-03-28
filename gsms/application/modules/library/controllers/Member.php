@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Member.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Member
  * @description     : Manage library member, from the student whose are library member.  
@@ -34,7 +34,7 @@ class Member extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
-        $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1);        
+        $this->data['members'] = $this->book->get_library_member_list($is_library_member = 1); 
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('library') . ' ' . $this->lang->line('member') . ' | ' . SMS);
         $this->layout->view('member/index', $this->data);
@@ -53,8 +53,7 @@ class Member extends MY_Controller {
 
         check_permission(ADD);
 
-        $this->data['non_members'] = $this->book->get_library_member_list($is_library_member = 0);
-        
+        $this->data['non_members'] = $this->book->get_library_member_list($is_library_member = 0);       
         $this->data['non_list'] = TRUE;
         $this->layout->title($this->lang->line('library') . ' ' . $this->lang->line('non_member') . ' | ' . SMS);
         $this->layout->view('member/index', $this->data);
@@ -81,6 +80,10 @@ class Member extends MY_Controller {
         $member = $this->book->get_single('library_members', array('id' => $id));
         if ($this->book->delete('library_members', array('id' => $id))) {
             $this->book->update('students', array('is_library_member' => 0), array('user_id' => $member->user_id));
+            
+            $student = $this->book->get_single('students', array('user_id' => $member->user_id));
+            create_log('Has been deleted a Library Member : '.$student->name);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));
@@ -102,10 +105,13 @@ class Member extends MY_Controller {
         $user_id = $this->input->post('user_id');
 
         if ($user_id) {
-
+            
+            $user   = $this->book->get_single('users', array('id' => $user_id));
             $member = $this->book->get_single('library_members', array('user_id' => $user_id));
+            
             if (empty($member)) {
 
+                $data['school_id'] = $user->school_id;
                 $data['user_id'] = $user_id;
                 $data['custom_member_id'] = $this->book->get_custom_id('library_members', 'LM');
                 $data['status'] = 1;

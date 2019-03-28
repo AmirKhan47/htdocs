@@ -42,6 +42,9 @@
                                             <thead>
                                                 <tr>
                                                     <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                                    <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                        <th><?php echo $this->lang->line('school'); ?></th>
+                                                    <?php } ?>
                                                     <th><?php echo $this->lang->line('status'); ?></th>
                                                     <th><?php echo $this->lang->line('receiver'); ?> <?php echo $this->lang->line('name'); ?></th>
                                                     <th><?php echo $this->lang->line('subject'); ?></th>                                       
@@ -53,12 +56,15 @@
                                                     <?php foreach($drafts as $obj ){ ?>
                                                     <tr>
                                                         <td><input type="checkbox"></td>
+                                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                            <td><?php echo $obj->school_name; ?></td>
+                                                        <?php } ?>
                                                         <td class="mailbox-star"><a href="#"><i class="fa fa-star text-yellow"></i></a></td>
                                                         <td class="mailbox-name">
                                                             <a href="<?php echo site_url('message/compose/'.$obj->message_id); ?>"><?php $user = get_user_by_id($obj->receiver_id); echo $user->name; ?></a>
                                                         </td>
                                                         <td class="mailbox-subject">
-                                                            <b><?php echo $obj->subject; ?></b> 
+                                                            <b><a href="<?php echo site_url('message/compose/'.$obj->message_id); ?>"><?php echo $obj->subject; ?></a></b> 
                                                         </td>
                                                         <td class="mailbox-date"><?php echo get_nice_time($obj->created_at); ?></td>
                                                     </tr>
@@ -95,7 +101,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
 </script> 

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Promotion.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Promotion
  * @description     : Manage student promotion from one academic class to another academic class.  
@@ -21,17 +21,6 @@ class Promotion extends MY_Controller {
     function __construct() {
         parent::__construct();
         $this->load->model('Promotion_Model', 'promotion', true);
-        
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }
-        
-        $this->data['classes'] = $this->promotion->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->promotion->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->promotion->get_list('grades', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['curr_session'] = $this->promotion->get_single('academic_years', array('is_running' => 1));
-        $this->data['next_session'] = $this->promotion->get_list('academic_years', array('id !=' => $this->academic_year_id, 'status'=>1), '','', '', 'session_year', 'ASC');
     }
 
         
@@ -47,27 +36,48 @@ class Promotion extends MY_Controller {
     public function index() {                
         
         check_permission(VIEW);
+        
+        $this->data['current_session_id'] = '';
+        
         if($_POST){
             
+            $school_id   = $this->input->post('school_id');
             $current_session_id   = $this->input->post('current_session_id');
             $next_session_id   = $this->input->post('next_session_id');
             $current_class_id = $this->input->post('current_class_id');
             $next_class_id = $this->input->post('next_class_id');  
-            $exam_id = $this->input->post('exam_id');  
             
-            $this->data['students'] = $this->promotion->get_student_list($exam_id, $current_class_id);
+            $school = $this->promotion->get_school_by_id($school_id);
+            $this->data['students'] = $this->promotion->get_student_list($school_id, $current_class_id, $school->academic_year_id );
             
-            $this->data['current_class'] = $this->promotion->get_single('classes', array('id' => $current_class_id));
-            $this->data['next_class'] = $this->promotion->get_single('classes', array('id' => $next_class_id));
+            $this->data['current_class'] = $this->promotion->get_single('classes', array('school_id'=>$school_id, 'id' => $current_class_id));
+            $this->data['next_class'] = $this->promotion->get_single('classes', array('school_id'=>$school_id,'id' => $next_class_id));
                                               
+            $this->data['school_id'] = $school_id;
             $this->data['current_session_id'] = $current_session_id;
             $this->data['next_session_id'] = $next_session_id;
             $this->data['current_class_id'] = $current_class_id;
             $this->data['next_class_id'] = $next_class_id;
-            $this->data['exam_id'] = $exam_id;
-            
+            $this->data['academic_year_id'] = $school->academic_year_id;
+                        
         }
-
+        
+        $this->data['curr_session'] = array();
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->promotion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $school = $this->promotion->get_school_by_id($condition['school_id']);
+            
+            $this->data['curr_session'] = $this->promotion->get_single('academic_years', array('id' => $school->academic_year_id, 'school_id'=>$condition['school_id']));
+            $this->data['next_session'] = $this->promotion->get_list('academic_years', array('id !=' => $school->academic_year_id, 'status'=>1, 'school_id'=>$condition['school_id']), '','', '', 'session_year', 'ASC');
+        }         
+        
+       
         $this->layout->title( $this->lang->line('manage_promotion'). ' | ' . SMS);
         $this->layout->view('promotion/index', $this->data);  
     }
@@ -87,27 +97,36 @@ class Promotion extends MY_Controller {
         check_permission(ADD);
         if($_POST){
             
+            $school_id   = $this->input->post('school_id');
             $current_session_id   = $this->input->post('current_session_id');
             $next_session_id   = $this->input->post('next_session_id');
             $current_class_id = $this->input->post('current_class_id');
             $next_class_id = $this->input->post('next_class_id');  
+            $academic_year_id = $this->input->post('academic_year_id');  
                       
            
             // get next class default section
-            $next_class_default_section = $this->promotion->get_single('sections', array('class_id'=>$next_class_id, 'name'=>'A'));
+            $next_class_default_section = $this->promotion->get_single('sections', array('school_id'=>$school_id, 'class_id'=>$next_class_id, 'name'=>'A'));
+            if(empty($next_class_default_section)){
+                error($this->lang->line('no_data_found'). ' for ' .$this->lang->line('promote_to_class'));
+                redirect('academic/promotion/index');
+            }
+            
             
             if(!empty($_POST['students'])){
                 
                 foreach($_POST['students'] as $key=>$value){
                     
                        // need to check is any student alredy enrolled
-                        $exist = $this->promotion->get_single('enrollments', array('class_id'=>$next_class_id, 'student_id'=>$value, 'academic_year_id'=>$next_session_id));
+                        $exist = $this->promotion->get_single('enrollments', array('school_id'=>$school_id, 'class_id'=>$next_class_id, 'student_id'=>$value, 'academic_year_id'=>$next_session_id));
                         $data = array();
                         $data['class_id'] = $_POST['promotion_class_id'][$value]; 
                         $data['roll_no'] = $_POST['roll_no'][$value]; 
                         
                        if(empty($exist)){ 
+                           
                             $data['section_id'] = $next_class_default_section->id ? $next_class_default_section->id : ''; 
+                            $data['school_id'] = $school_id; 
                             $data['academic_year_id'] = $next_session_id; 
                             $data['student_id'] = $value;                          
                             $data['status'] = 1;
@@ -117,10 +136,14 @@ class Promotion extends MY_Controller {
                        }else{
                            $data['modified_at'] = date('Y-m-d H:i:s');
                            $data['modified_by'] = logged_in_user_id(); 
-                           $this->promotion->update('enrollments', $data, array('student_id'=>$value, 'academic_year_id'=>$next_session_id)); 
+                           $this->promotion->update('enrollments', $data, array('school_id'=>$school_id,'student_id'=>$value, 'academic_year_id'=>$next_session_id)); 
                        }
                 }
             }
+            
+            $class = $this->promotion->get_single('classes', array('id'=>$current_class_id, 'school_id'=>$school_id));
+            create_log('Has been promoted a class : '. $class->name);
+            
             success($this->lang->line('promotion') .' '. $this->lang->line('insert_success'));                      
         }else{
             error($this->lang->line('promotion').' '.$this->lang->line('insert_failed'));  
@@ -128,6 +151,4 @@ class Promotion extends MY_Controller {
        
         redirect('academic/promotion/index');
     }
-
-
 }

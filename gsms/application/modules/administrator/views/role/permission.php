@@ -8,11 +8,24 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
+            
            <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
-                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
-                    <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+                <span><?php echo $this->lang->line('quick_link'); ?>:</span>
+                <?php if(has_permission(VIEW, 'administrator', 'setting')){ ?>
+                    <a href="<?php echo site_url('administrator/setting'); ?>"><?php echo $this->lang->line('general'); ?> <?php echo $this->lang->line('setting'); ?></a>
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'school')){ ?>
+                   | <a href="<?php echo site_url('administrator/school'); ?>"><?php echo $this->lang->line('manage_school'); ?></a>
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'payment')){ ?>
+                    | <a href="<?php echo site_url('administrator/payment'); ?>"><?php echo $this->lang->line('payment'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>                    
+                <?php if(has_permission(VIEW, 'administrator', 'sms')){ ?>
+                    | <a href="<?php echo site_url('administrator/sms'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('setting'); ?></a>
+                <?php } ?>      
+                <?php if(has_permission(VIEW, 'administrator', 'year')){ ?>
+                    | <a href="<?php echo site_url('administrator/year'); ?>"><?php echo $this->lang->line('academic_year'); ?></a>
+                <?php } ?>                  
                 <?php if(has_permission(VIEW, 'administrator', 'role')){ ?>
                    | <a href="<?php echo site_url('administrator/role'); ?>"><?php echo $this->lang->line('user_role'); ?></a>
                 <?php } ?>
@@ -22,8 +35,23 @@
                 <?php if(has_permission(VIEW, 'administrator', 'user')){ ?>
                    | <a href="<?php echo site_url('administrator/user'); ?>"><?php echo $this->lang->line('manage_user'); ?></a>                
                 <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'superadmin')){ ?>
+                   | <a href="<?php echo site_url('administrator/superadmin'); ?>"><?php echo $this->lang->line('super_admin'); ?></a>                
+                <?php } ?>
                 <?php if(has_permission(EDIT, 'administrator', 'password')){ ?>
                    | <a href="<?php echo site_url('administrator/password'); ?>"><?php echo $this->lang->line('reset_user_password'); ?></a>                   
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'emailtemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/emailtemplate'); ?>"><?php echo $this->lang->line('email'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'smstemplate')){ ?>
+                   | <a href="<?php echo site_url('administrator/smstemplate'); ?>"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('template'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'activitylog')){ ?>
+                   | <a href="<?php echo site_url('administrator/activitylog'); ?>"><?php echo $this->lang->line('activity_log'); ?></a>                  
+                <?php } ?>
+                <?php if(has_permission(VIEW, 'administrator', 'feedback')){ ?>
+                   | <a href="<?php echo site_url('administrator/feedback'); ?>"><?php echo $this->lang->line('guardian'); ?> <?php echo $this->lang->line('feedback'); ?></a>                  
                 <?php } ?>
                 <?php if(has_permission(VIEW, 'administrator', 'backup')){ ?>
                    | <a href="<?php echo site_url('administrator/backup'); ?>"><?php echo $this->lang->line('backup'); ?> <?php echo $this->lang->line('database'); ?></a>                  
@@ -81,7 +109,7 @@
                                     <?php echo $this->lang->line('role_permission'); ?> : <?php echo $role->name; ?>
                                 </div>
                             </div>
-                            <div class="x_content">
+                            <div class="x_content"  style=" overflow-y: auto; overflow-y: hidden;">
                             <?php echo form_open(site_url('administrator/permission/index/'.$role_id), array('name' => 'login', 'id' => 'login', 'class'=>'form-horizontal form-label-left'), ''); ?>
                             
                             <table class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
@@ -182,7 +210,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
           
           /* Permission */

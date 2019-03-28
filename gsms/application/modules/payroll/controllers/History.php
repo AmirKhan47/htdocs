@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************History.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : History
  * @description     : Manage Employee and Teacher Salary History.  
@@ -44,13 +44,15 @@ class History extends MY_Controller {
         
          if ($_POST) {
              
+            $school_id  = $this->input->post('school_id');
             $payment_to  = $this->input->post('payment_to');
             $user_id  = $this->input->post('user_id');
         
+            $this->data['school_id'] = $school_id;
             $this->data['payment_to'] = $payment_to;
             $this->data['user_id'] = $user_id;
             
-            $this->data['payments'] = $this->payment->get_payment_list($user_id, $payment_to);
+            $this->data['payments'] = $this->payment->get_payment_list($school_id, $user_id, $payment_to);
             
          }
         

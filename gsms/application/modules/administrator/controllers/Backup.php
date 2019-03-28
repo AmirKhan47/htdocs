@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 /* * *****************Backup.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Backup
  * @description     : Backup system database by system adminstrator.  
@@ -19,8 +19,6 @@ class Backup extends MY_Controller {
     function __construct() {
         parent::__construct();
          $this->load->model('Administrator_Model', 'administrator', true);
-         $this->data['roles'] = $this->administrator->get_list('roles', array('status' => 1), '','', '', 'id', 'ASC');
-         $this->data['years'] = $this->administrator->get_list('academic_years', array('status' => 1), '','', '', 'id', 'ASC');
     }
     
     
@@ -44,9 +42,11 @@ class Backup extends MY_Controller {
                     'format' => 'zip',
                     'filename' => 'database-backup.sql'
                 );
-                $backup = & $this->dbutil->backup($conf);
+                $backup = $this->dbutil->backup($conf);
                 $this->load->helper('download');
                 force_download('database-backup.zip', $backup);
+                
+                create_log('Has been taken database backup');
                 redirect('administrator/backup');
             } else {
                 error($this->lang->line('in_demo_db_backup'));

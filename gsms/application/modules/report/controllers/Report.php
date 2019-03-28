@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Report.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Report
  * @description     : Manage all reports of the system.  
@@ -21,10 +21,15 @@ class Report extends My_Controller {
 
     public function __construct() {
         parent::__construct();
+        
         $this->load->model('Report_Model', 'report', true);
         $this->load->helper('report');
-        $this->data['academic_years'] = $this->report->get_list('academic_years', array('status' => 1));
-
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            $school_id = $this->session->userdata('school_id');
+            $this->data['academic_years'] = $this->report->get_list('academic_years', array('status' => 1, 'school_id'=>$school_id));
+        }
+        
         $this->date_from = date('Y-m-01');
         $this->date_to = date('Y-m-t');
     }
@@ -45,6 +50,7 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');
 
@@ -56,12 +62,15 @@ class Report extends My_Controller {
                 $date_to = '';
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             $this->data['date_from'] = $date_from;
             $this->data['date_to'] = $date_to;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
 
-            $this->data['income'] = $this->report->get_income_report($academic_year_id, $group_by, $date_from, $date_to);
+            $this->data['income'] = $this->report->get_income_report($school_id, $academic_year_id, $group_by, $date_from, $date_to);
         }
 
         $this->layout->title($this->lang->line('income') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -86,6 +95,7 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');
 
@@ -97,12 +107,15 @@ class Report extends My_Controller {
                 $date_to = '';
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             $this->data['date_from'] = $date_from;
             $this->data['date_to'] = $date_to;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
 
-            $this->data['expenditure'] = $this->report->get_expenditure_report($academic_year_id, $group_by, $date_from, $date_to);
+            $this->data['expenditure'] = $this->report->get_expenditure_report($school_id, $academic_year_id, $group_by, $date_from, $date_to);
         }
 
         $this->layout->title($this->lang->line('expenditure') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -127,6 +140,7 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');
 
@@ -139,19 +153,112 @@ class Report extends My_Controller {
                 $date_to = '';
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             $this->data['date_from'] = $date_from;
             $this->data['date_to'] = $date_to;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
 
-            $this->data['invoice'] = $this->report->get_invoice_report($academic_year_id, $group_by, $date_from, $date_to);
+            $this->data['invoice'] = $this->report->get_invoice_report($school_id, $academic_year_id, $group_by, $date_from, $date_to);
         }
 
         $this->layout->title($this->lang->line('invoice') . ' ' . $this->lang->line('report') . ' | ' . SMS);
         $this->layout->view('invoice/index', $this->data);
     }
 
+     
+        
+    /*****************Function duefees**********************************
+    * @type            : Function
+    * @function name   : duefees
+    * @description     : Load duefees report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function duefee() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $class_id = $this->input->post('class_id');
+            $student_id = $this->input->post('student_id');
+                
+            $this->data['school_id'] = $school_id;
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['student_id'] = $student_id;
+            $this->data['class_id'] = $class_id;  
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+
+            $this->data['sbalance'] = $this->report->get_student_due_fee_report($school_id, $academic_year_id, $class_id, $student_id);
             
+        }
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            $school_id = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->report->get_list('classes', array('status' => 1, 'school_id'=>$school_id), '', '', '', 'id', 'ASC');
+        }
+        
+        $this->layout->title($this->lang->line('due_fee') . ' ' .$this->lang->line('invoice') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('invoice/duefee', $this->data);
+    }    
+    
+    
+    /*****************Function feecollection**********************************
+    * @type            : Function
+    * @function name   : feecollection
+    * @description     : Load fee collection report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function feecollection() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $class_id = $this->input->post('class_id');
+            $student_id = $this->input->post('student_id');
+            $fee_type = $this->input->post('fee_type');
+                     
+            $date_from = $this->input->post('date_from') ? date('Y-m-d', strtotime($this->input->post('date_from'))) : '';
+            $date_to = $this->input->post('date_to') ? date('Y-m-d', strtotime($this->input->post('date_to'))) : '';
+                  
+            $this->data['school_id'] = $school_id;
+            $this->data['date_from'] = $date_from;
+            $this->data['date_to'] = $date_to;   
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['fee_type'] = $fee_type;
+            $this->data['student_id'] = $student_id;
+            $this->data['class_id'] = $class_id; 
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+
+            $this->data['feecollection'] = $this->report->get_student_fee_collection_report($school_id, $academic_year_id, $class_id, $student_id, $fee_type, $date_from, $date_to);
+        }
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $school_id = $this->session->userdata('school_id');
+
+            $this->data['classes'] = $this->report->get_list('classes', array('status' => 1, 'school_id'=>$school_id), '', '', '', 'id', 'ASC');
+            $this->data['fee_types'] = $this->report->get_list('income_heads', array('status' => 1, 'head_type !='=> 'income', 'school_id'=>$school_id), '', '', '', 'id', 'ASC');
+        }
+        
+        $this->layout->title($this->lang->line('fee') . ' ' .$this->lang->line('collection') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('invoice/fee_collection', $this->data);
+        
+    }
+    
         
     /*****************Function balance**********************************
     * @type            : Function
@@ -168,6 +275,7 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');
 
@@ -180,6 +288,7 @@ class Report extends My_Controller {
                 $date_to = '';
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             $this->data['date_from'] = $date_from;
@@ -187,12 +296,14 @@ class Report extends My_Controller {
 
 
             if ($group_by == 'daily') {
-                $this->data['balance'] = $this->_get_daily_balance_data($date_from, $date_to);
+                $this->data['balance'] = $this->_get_daily_balance_data($school_id, $date_from, $date_to);
             } else {
-                $this->data['expenditure'] = $this->report->get_expenditure_report($academic_year_id, $group_by, $date_from, $date_to);
-                $this->data['income'] = $this->report->get_income_report($academic_year_id, $group_by, $date_from, $date_to);
+                $this->data['expenditure'] = $this->report->get_expenditure_report($school_id,$academic_year_id, $group_by, $date_from, $date_to);
+                $this->data['income'] = $this->report->get_income_report($school_id, $academic_year_id, $group_by, $date_from, $date_to);
                 $this->data['balance'] = $this->_combine_balance_data($this->data['expenditure'], $this->data['income']);
             }
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
         }
 
         $this->layout->title($this->lang->line('balance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -206,7 +317,7 @@ class Report extends My_Controller {
     * @param           : null
     * @return          : null 
     * ********************************************************** */
-    private function _get_daily_balance_data($date_from, $date_to) {
+    private function _get_daily_balance_data($school_id, $date_from, $date_to) {
 
         $data = array();
 
@@ -215,9 +326,9 @@ class Report extends My_Controller {
         for ($i = 0; $i < $days; $i++) {
 
             $date = date('Y-m-d', strtotime($date_from . '+' . $i . ' day'));
-            $data[$i]['expenditure'] = $this->report->get_expenditure_by_date($date);
-            $data[$i]['income'] = $this->report->get_income_by_date($date);
-            $data[$i]['group_by_field'] = date('M j, Y', strtotime($date));
+            $data[$i]['expenditure'] = $this->report->get_expenditure_by_date($school_id, $date);
+            $data[$i]['income'] = $this->report->get_income_by_date($school_id, $date);
+            $data[$i]['group_by_field'] = date($this->global_setting->date_format, strtotime($date));
         }
 
         return $data;
@@ -270,6 +381,7 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');
 
@@ -282,12 +394,15 @@ class Report extends My_Controller {
                 $date_to = '';
             }
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             $this->data['date_from'] = $date_from;
             $this->data['date_to'] = $date_to;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
 
-            $this->data['library'] = $this->report->get_library_report($academic_year_id, $group_by, $date_from, $date_to);
+            $this->data['library'] = $this->report->get_library_report($school_id, $academic_year_id, $group_by, $date_from, $date_to);
   
         }
 
@@ -310,32 +425,45 @@ class Report extends My_Controller {
 
         check_permission(VIEW);
 
-        $this->data['month_number'] = 1;
-        $session = $this->report->get_single('academic_years', array('is_running' => 1));
-
+        $this->data['month_number'] = 1;       
+        $this->data['days'] = 31;
+        
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $class_id = $this->input->post('class_id');
             $section_id = $this->input->post('section_id');
             $month = $this->input->post('month');
 
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['class_id'] = $class_id;
             $this->data['section_id'] = $section_id;
             $this->data['month'] = $month;
             $this->data['month_number'] = date('m', strtotime($this->data['month']));
-            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id));
+            
+            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id, 'school_id'=>$school_id));            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
 
-            $this->data['students'] = $this->report->get_student_list($academic_year_id, $class_id, $section_id);
+            $this->data['students'] = $this->report->get_student_list($school_id, $academic_year_id, $class_id, $section_id);
+            
+            $this->data['year'] = substr($session->session_year, 7);
+            $this->data['days'] =  @date('t', mktime(0, 0, 0, $this->data['month_number'], 1, $this->data['year']));
+            //$this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
         }
 
 
-        $this->data['year'] = substr($session->session_year, 7);
-        $this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
 
-        $this->data['classes'] = $this->report->get_list('classes', array('status' => 1));
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){ 
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['classes'] = $this->report->get_list('classes', $condition);
+        }
+        
 
         $this->layout->title($this->lang->line('student') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
         $this->layout->view('sattendance/index', $this->data);
@@ -357,21 +485,31 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $class_id = $this->input->post('class_id');
             $section_id = $this->input->post('section_id');
             $student_id = $this->input->post('student_id');
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['class_id'] = $class_id;
             $this->data['section_id'] = $section_id;
             $this->data['student_id'] = $student_id;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
         }
 
 
         $this->data['days'] = 31;
 
-        $this->data['classes'] = $this->report->get_list('classes', array('status' => 1));
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){    
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['classes'] = $this->report->get_list('classes', $condition);
+        }
 
         $this->layout->title($this->lang->line('student') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
         $this->layout->view('sattendance/yearly', $this->data);
@@ -391,23 +529,28 @@ class Report extends My_Controller {
 
         check_permission(VIEW);
 
-        $session = $this->report->get_single('academic_years', array('is_running' => 1));
         $this->data['month_number'] = 1;
+        $this->data['days'] = 31;
+                
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $month = $this->input->post('month');
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['month'] = $month;
             $this->data['month_number'] = date('m', strtotime($this->data['month']));
-            $this->data['teachers'] = $this->report->get_list('teachers', array('status' => 1));
-            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id));
+            
+            $this->data['teachers'] = $this->report->get_list('teachers', array('status' => 1, 'school_id'=>$school_id));
+            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id, 'school_id'=>$school_id));
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            $this->data['year'] = substr($session->session_year, 7);
+            //$this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
+            $this->data['days'] =  @date('t', mktime(0, 0, 0, $this->data['month_number'], 1, $this->data['year']));
         }
-
-
-        $this->data['year'] = substr($session->session_year, 7);
-        $this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
 
 
         $this->layout->title($this->lang->line('teacher') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -430,14 +573,27 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $teacher_id = $this->input->post('teacher_id');
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
-            $this->data['teacher_id'] = $teacher_id;
+            $this->data['teacher_id'] = $teacher_id;  
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
         }
-
-        $this->data['teachers'] = $this->report->get_list('teachers', array('status' => 1));
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['teachers'] = $this->report->get_list('teachers', $condition);
+            
+        } 
+           
+        
         $this->data['days'] = 31;
 
         $this->layout->title($this->lang->line('teacher') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -458,22 +614,29 @@ class Report extends My_Controller {
 
         check_permission(VIEW);
 
-        $session = $this->report->get_single('academic_years', array('is_running' => 1));
         $this->data['month_number'] = 1;
+        $this->data['days'] = 31;
+        
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $month = $this->input->post('month');
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['month'] = $month;
             $this->data['month_number'] = date('m', strtotime($this->data['month']));
-            $this->data['employees'] = $this->report->get_list('employees', array('status' => 1));
-            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id));
+            
+            $this->data['employees'] = $this->report->get_list('employees', array('status' => 1, 'school_id'=>$school_id));            
+            $session = $this->report->get_single('academic_years', array('id' => $academic_year_id, 'school_id'=>$school_id));
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            $this->data['year'] = substr($session->session_year, 7);
+            //$this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
+            $this->data['days'] =  @date('t', mktime(0, 0, 0, $this->data['month_number'], 1, $this->data['year']));
         }
 
-        $this->data['year'] = substr($session->session_year, 7);
-        $this->data['days'] = cal_days_in_month(CAL_GREGORIAN, $this->data['month_number'], $this->data['year']);
 
 
         $this->layout->title($this->lang->line('employee') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -496,14 +659,26 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $employee_id = $this->input->post('employee_id');
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['employee_id'] = $employee_id;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
         }
 
-        $this->data['employees'] = $this->report->get_list('employees', array('status' => 1));
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){   
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['employees'] = $this->report->get_list('employees', $condition);
+        } 
+        
         $this->data['days'] = 31;
 
         $this->layout->title($this->lang->line('employee') . ' ' . $this->lang->line('attendance') . ' ' . $this->lang->line('report') . ' | ' . SMS);
@@ -527,14 +702,18 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by');           
 
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
             
-            $this->data['students'] = $this->report->get_student_report($academic_year_id, $group_by);
-            $this->data['students'] = $this->_get_pormatted_student_report($this->data['students']);
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            $this->data['students'] = $this->report->get_student_report($school_id, $academic_year_id, $group_by);
+            $this->data['students'] = $this->_get_pormatted_student_report($school_id, $group_by, $this->data['students']);
    
         }
 
@@ -551,15 +730,15 @@ class Report extends My_Controller {
     * @param           : null
     * @return          : null 
     * ********************************************************** */
-    private function _get_pormatted_student_report($students = null){
+    private function _get_pormatted_student_report($school_id, $group_by,$students = null){
         
         $data = array();
         if(!empty($students)){
             foreach($students as $obj){
                 
-                $male = $this->report->get_student_by_gender($obj->class_id, $obj->academic_year_id, 'male');
+                $male = $this->report->get_student_by_gender($school_id, $group_by, $obj->class_id, $obj->academic_year_id, 'male');
                 $obj->male = $male ? $male : 0;
-                $female = $this->report->get_student_by_gender($obj->class_id, $obj->academic_year_id, 'female');
+                $female = $this->report->get_student_by_gender($school_id, $group_by, $obj->class_id, $obj->academic_year_id, 'female');
                 $obj->female = $female ? $female : 0;
                 $data[] = $obj;
             }
@@ -568,6 +747,108 @@ class Report extends My_Controller {
         
         return $data;
     }
+    
+    
+        
+    /*****************Function sbalance**********************************
+    * @type            : Function
+    * @function name   : sbalance
+    * @description     : Load sbalance report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function sinvoice() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $class_id = $this->input->post('class_id');
+            $student_id = $this->input->post('student_id');
+                      
+            $this->data['school_id'] = $school_id;
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['student_id'] = $student_id;
+            $this->data['class_id'] = $class_id;         
+
+             if($academic_year_id){
+                $this->data['academic_year'] = $this->db->get_where('academic_years', array('id'=>$academic_year_id))->row()->session_year;
+            }
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            $this->data['sbalance'] = $this->report->get_student_invoice_report($school_id, $academic_year_id, $class_id, $student_id);
+            
+        }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){   
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['classes'] = $this->report->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        } 
+        
+        $this->layout->title($this->lang->line('student') . ' ' . $this->lang->line('invoice') . ' ' .$this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('student/sinvoice', $this->data);
+        
+    }
+    
+    
+            
+    /*****************Function sactivity**********************************
+    * @type            : Function
+    * @function name   : sactivity
+    * @description     : Load balance report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function sactivity() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $class_id = $this->input->post('class_id');
+            $student_id = $this->input->post('student_id');
+                      
+            $this->data['school_id'] = $school_id;
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['student_id'] = $student_id;
+            $this->data['class_id'] = $class_id;   
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+
+            if($academic_year_id){
+                $this->data['academic_year'] = $this->db->get_where('academic_years', array('id'=>$academic_year_id))->row()->session_year;
+            }
+            
+            $this->data['activities'] = $this->report->get_student_activity_report($school_id, $academic_year_id, $class_id, $student_id);
+            
+        }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){   
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['classes'] = $this->report->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        } 
+        
+        
+        $this->layout->title($this->lang->line('activity') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('student/activity', $this->data);
+    }    
+    
+
     
         
         
@@ -586,26 +867,223 @@ class Report extends My_Controller {
 
         if ($_POST) {
 
+            $school_id = $this->input->post('school_id');
             $academic_year_id = $this->input->post('academic_year_id');
             $group_by = $this->input->post('group_by'); 
             $month = $this->input->post('month');
             $payment_to = $this->input->post('payment_to');
-            $user_id = $this->input->post('user_id');
+          
             
-
+            $this->data['school_id'] = $school_id;
             $this->data['academic_year_id'] = $academic_year_id;
             $this->data['group_by'] = $group_by;
-            $this->data['payment_to'] = $payment_to;
-            $this->data['user_id'] = $user_id;
+            $this->data['payment_to'] = $payment_to;          
             $this->data['month'] = $month;
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            if($academic_year_id){
+                $this->data['academic_year'] = $this->db->get_where('academic_years', array('id'=>$academic_year_id, 'school_id'=>$school_id))->row()->session_year;
+            }
 
-            $this->data['payrolls'] = $this->report->get_payroll_report($academic_year_id, $group_by, $payment_to, $user_id, $month);
+            $this->data['payrolls'] = $this->report->get_payroll_report($school_id, $academic_year_id, $group_by, $payment_to, $month);
         }
 
         $this->layout->title($this->lang->line('payroll') . ' ' . $this->lang->line('report') . ' | ' . SMS);
         $this->layout->view('payroll/index', $this->data);
     }
+    
+    
+        
+    
+    
+    
+    
+    /*****************Function statement**********************************
+    * @type            : Function
+    * @function name   : statement
+    * @description     : Load balance report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function statement() {
 
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $date_from = $this->input->post('date_from') ? date('Y-m-d', strtotime($this->input->post('date_from'))) : $this->date_from;
+            $date_to = $this->input->post('date_to') ? date('Y-m-d', strtotime($this->input->post('date_to'))) : $this->date_to;
+                      
+            $this->data['school_id'] = $school_id;
+            $this->data['date_from'] = $date_from;
+            $this->data['date_to'] = $date_to;
+          
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+        
+            
+            $this->data['statement'] = $this->_get_daily_actbalance_data($school_id, $date_from, $date_to);
+          
+        }
+        
+        $this->layout->title($this->lang->line('statement') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('balance/statement', $this->data);
+    }
+    
+    /*****************Function _get_daily_actbalance_data**********************************
+    * @type            : Function
+    * @function name   : _get_daily_actbalance_data
+    * @description     : format the daily balanace report data for user friendly data presentation                
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    private function _get_daily_actbalance_data($school_id, $date_from, $date_to) {
+
+        $data = array();
+
+        $start = strtotime($date_from);
+        $end   = strtotime($date_to);
+        $days  = ceil(abs($end - $start) / 86400)+1;
+        $j = 0;
+        for ($i = 0; $i < $days; $i++) {           
+
+            $date = date('Y-m-d', strtotime($date_from . '+' . $i . ' day'));
+            
+            $expenditure = $this->report->get_debit_by_date($school_id, $date);
+            if(!empty($expenditure)){
+                
+                foreach($expenditure as $exp){
+                    $data[$j+1]['head'] = $exp->head;                       
+                    $data[$j+1]['debit'] = $exp->debit;                       
+                    $data[$j+1]['credit'] = 0;                       
+                    $data[$j+1]['gross'] = $exp->debit;                      
+                    $data[$j+1]['tax'] = 0;                      
+                    $data[$j+1]['note'] = $exp->note;                       
+                    $data[$j+1]['date'] = $date; 
+                    
+                    $j++;
+                }
+            }
+            
+            $income = $this->report->get_credit_by_date($school_id, $date);
+            if(!empty($income)){
+                
+                foreach($income as $inc){
+                    $data[$j+1]['head'] = $inc->head;                       
+                    $data[$j+1]['debit'] = 0;                       
+                    $data[$j+1]['credit'] = $inc->credit;                        
+                    $data[$j+1]['gross'] = $inc->credit;                      
+                    $data[$j+1]['tax'] = 0;                      
+                    $data[$j+1]['note'] = $inc->note;                       
+                    $data[$j+1]['date'] = $date; 
+                    
+                    $j++;
+                }
+            }
+            
+        }
+
+        return $data;
+        
+    }
+
+    
+        
+    /*****************Function transaction**********************************
+    * @type            : Function
+    * @function name   : transaction
+    * @description     : Load balance report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function transaction() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $date_from = $this->input->post('date_from') ? date('Y-m-d', strtotime($this->input->post('date_from'))) : $this->date_from;
+            $date_to = $this->input->post('date_to') ? date('Y-m-d', strtotime($this->input->post('date_to'))) : $this->date_to;
+                      
+            $this->data['school_id'] = $school_id;
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['date_from'] = $date_from;
+            $this->data['date_to'] = $date_to;     
+
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+            
+            if($academic_year_id){
+                $this->data['academic_year'] = $this->db->get_where('academic_years', array('id'=>$academic_year_id, 'school_id'=>$school_id))->row()->session_year;
+            }
+            
+            $this->data['transaction'] = $this->report->get_transaction_report($school_id, $academic_year_id, $date_from, $date_to);
+            
+        }
+        
+        $this->layout->title($this->lang->line('transaction') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('balance/transaction', $this->data);
+    }    
+    
+    
+     
+    /*****************Function examresult**********************************
+    * @type            : Function
+    * @function name   : examresult
+    * @description     : Load examresult report user interface                 
+    *                    with various filtering options
+    *                    and process to load balance report   
+    * @param           : null
+    * @return          : null 
+    * ********************************************************** */
+    public function examresult() {
+
+        check_permission(VIEW);
+
+        if ($_POST) {
+           
+            $school_id = $this->input->post('school_id');
+            $academic_year_id = $this->input->post('academic_year_id');
+            $class_id = $this->input->post('class_id');
+            $section_id = $this->input->post('section_id');
+           
+            $this->data['school_id'] = $school_id;
+            $this->data['academic_year_id'] = $academic_year_id;
+            $this->data['class_id'] = $class_id;         
+            $this->data['section_id'] = $section_id;  
+            
+            $this->data['school'] = $this->report->get_school_by_id($school_id);
+
+            $this->data['class'] = $this->db->get_where('classes', array('id'=>$class_id, 'school_id'=>$school_id))->row()->name;
+            
+            if($section_id){
+                $this->data['section'] = $this->db->get_where('sections', array('id'=>$section_id, 'school_id'=>$school_id))->row()->name;
+            }
+            
+            $this->data['academic_year'] = $this->db->get_where('academic_years', array('id'=>$academic_year_id, 'school_id'=>$school_id))->row()->session_year;
+            $this->data['examresult'] = $this->report->get_student_examresult_report($school_id, $academic_year_id, $class_id, $section_id);
+        }        
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){   
+            
+            $condition['school_id'] = $this->session->userdata('school_id');  
+            $this->data['classes'] = $this->report->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        }        
+        
+        
+        $this->layout->title($this->lang->line('exam') . ' ' .$this->lang->line('result') . ' ' . $this->lang->line('report') . ' | ' . SMS);
+        $this->layout->view('student/exam_result', $this->data);
+        
+    }
     
 
 }

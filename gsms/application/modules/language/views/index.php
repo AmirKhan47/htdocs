@@ -13,14 +13,19 @@
                 <div class="" data-example-id="togglable-tabs">
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_language_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
-                        <?php if(has_permission(ADD, 'language', 'language')){ ?>
+                        
+                        <?php if(has_permission(ADD, 'language', 'language') && !isset($labels)){ ?>
                             <li  class=""><a href="#tab_add_language"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('language'); ?></a> </li>                          
                         <?php } ?>
-                        <?php if(isset($edit)){ ?>
-                            <li  class="active"><a href="#tab_edit_language"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('languge'); ?></a> </li>                          
+                         
+                        <?php if(has_permission(ADD, 'language', 'language')){ ?>    
+                            <?php if(isset($edit)){ ?>
+                                <li  class="active"><a href="#tab_edit_language"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('languge'); ?></a> </li>                          
+                            <?php } ?>
                         <?php } ?>
+                            
                         <?php if(isset($labels)){ ?>
-                        <li  class="active"><a href="#tab_label" role="tab" data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('label'); ?></a></li>                          
+                            <li  class="active"><a href="#tab_label" role="tab" data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('label'); ?></a></li>                          
                         <?php } ?>
                     </ul>
                     <br/>
@@ -80,7 +85,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" placeholder="<?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" placeholder="<?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -104,7 +109,7 @@
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <input type="hidden" value="<?php echo isset($language) ? $language : ''; ?>" name="old_name" />
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($language) ? $language : ''; ?>"  placeholder="<?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name" value="<?php echo isset($language) ? $language : ''; ?>"  placeholder="<?php echo $this->lang->line('language'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -155,6 +160,7 @@
         </div>
     </div>
 </div>
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
@@ -168,7 +174,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
         

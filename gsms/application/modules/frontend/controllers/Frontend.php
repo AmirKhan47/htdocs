@@ -35,7 +35,8 @@ class Frontend extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['pages'] = $this->frontend->get_list('pages', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['pages'] = $this->frontend->get_page_list(); 
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_frontend_page') . ' | ' . SMS);
         $this->layout->view('frontend/index', $this->data);
@@ -62,6 +63,9 @@ class Frontend extends MY_Controller {
 
                 $insert_id = $this->frontend->insert('pages', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a frontend page : '.$data['page_title']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('frontend/index');
                 } else {
@@ -73,7 +77,7 @@ class Frontend extends MY_Controller {
             }
         }
 
-        $this->data['pages'] = $this->frontend->get_list('pages', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['pages'] = $this->frontend->get_page_list(); 
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('frontend') . ' ' . $this->lang->line('page') . ' | ' . SMS);
         $this->layout->view('frontend/index', $this->data);
@@ -106,6 +110,9 @@ class Frontend extends MY_Controller {
                 $updated = $this->frontend->update('pages', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a frontend page : '.$data['page_title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('frontend/index');
                 } else {
@@ -125,7 +132,8 @@ class Frontend extends MY_Controller {
             }
         }
 
-        $this->data['pages'] = $this->frontend->get_list('pages', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['pages'] = $this->frontend->get_page_list(); 
+        $this->data['school_id'] = $this->data['page']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('frontend') . ' ' . $this->lang->line('page')  . ' | ' . SMS);
@@ -158,22 +166,41 @@ class Frontend extends MY_Controller {
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('frontend') . ' ' . $this->lang->line('page') . ' | ' . SMS);
         $this->layout->view('frontend/index', $this->data);
     }
+    
+    
+               
+     /*****************Function get_single_frontend**********************************
+     * @type            : Function
+     * @function name   : get_single_frontend
+     * @description     : "Load single frontend information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_frontend(){
+        
+       $frontend_id = $this->input->post('frontend_id');
+       
+       $this->data['frontend'] = $this->frontend->get_single_page($frontend_id);
+       echo $this->load->view('get-single-frontend', $this->data);
+    }
 
     
     /*****************Function _prepare_frontend_validation**********************************
     * @type            : Function
     * @function name   : _prepare_frontend_validation
     * @description     : Process "frontend page" user input data validation                 
-    *                       
     * @param           : null
     * @return          : null 
     * ********************************************************** */
     private function _prepare_frontend_validation() {
+        
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
-        $this->form_validation->set_rules('page_name', $this->lang->line('page_name') . ' ' . $this->lang->line('title'), 'trim|required|callback_page_name');
-        $this->form_validation->set_rules('page_title', $this->lang->line('page_title'), 'trim|required');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school') . ' ' . $this->lang->line('name'), 'trim|required');
+        $this->form_validation->set_rules('page_location', $this->lang->line('page') . ' '. $this->lang->line('location'), 'trim|required');
+        $this->form_validation->set_rules('page_title', $this->lang->line('page_title'), 'trim|required|callback_page_title');
         $this->form_validation->set_rules('page_image', $this->lang->line('image'), 'trim|callback_page_image');
         $this->form_validation->set_rules('page_description', $this->lang->line('page_description'), 'trim|required');
     }
@@ -183,23 +210,22 @@ class Frontend extends MY_Controller {
     * @type            : Function
     * @function name   : title_name
     * @description     : Unique check for "frontend page name" data/value                  
-    *                       
     * @param           : null
     * @return          : boolean true/false 
     * ********************************************************** */  
-    public function page_name() {
+    public function page_title() {
         if ($this->input->post('id') == '') {
-            $frontend = $this->frontend->duplicate_check($this->input->post('page_name'));
+            $frontend = $this->frontend->duplicate_check($this->input->post('school_id'), $this->input->post('page_title'));
             if ($frontend) {
-                $this->form_validation->set_message('page_name', $this->lang->line('already_exist'));
+                $this->form_validation->set_message('page_title', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $frontend = $this->frontend->duplicate_check($this->input->post('page_name'), $this->input->post('id'));
+            $frontend = $this->frontend->duplicate_check($this->input->post('school_id'), $this->input->post('page_title'), $this->input->post('id'));
             if ($frontend) {
-                $this->form_validation->set_message('page_name', $this->lang->line('already_exist'));
+                $this->form_validation->set_message('page_title', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
@@ -212,7 +238,6 @@ class Frontend extends MY_Controller {
     * @type            : Function
     * @function name   : page_image
     * @description     : validate frontend image type/format                  
-    *                       
     * @param           : null
     * @return          : boolean true/false 
     * ********************************************************** */ 
@@ -242,18 +267,20 @@ class Frontend extends MY_Controller {
     private function _get_posted_frontend_data() {
 
         $items = array();
-        $items[] = 'page_name';
+        $items[] = 'school_id';
+        $items[] = 'page_location';
         $items[] = 'page_title';
         $items[] = 'page_description';
 
         $data = elements($items, $_POST);        
 
+        $data['page_slug'] = get_slug($data['page_title']);
+        
         if ($this->input->post('id')) {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
-        } else {
+        } else {            
             
-            $data['page_slug'] = get_slug($data['page_name']);
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
@@ -338,6 +365,8 @@ class Frontend extends MY_Controller {
             if (file_exists($destination . '/page/' . $frontend->page_image)) {
                 @unlink($destination . '/page/' . $frontend->page_image);
             }
+            
+            create_log('Has been deleted a frontend page : '.$frontend->page_title);
 
             success($this->lang->line('delete_success'));
         } else {
@@ -345,5 +374,8 @@ class Frontend extends MY_Controller {
         }
         redirect('frontend/index');
     }
+    
+    
+    
 
 }

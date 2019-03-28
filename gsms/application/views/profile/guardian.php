@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <a href="<?php echo site_url('profile'); ?>"><?php echo $this->lang->line('my_profile'); ?></a> |
                 <a href="<?php echo site_url('profile/password'); ?>"><?php echo $this->lang->line('reset_password'); ?></a> |
                 <a href="<?php echo site_url('auth/logout'); ?>"><?php echo $this->lang->line('logout'); ?></a>                  
@@ -44,8 +44,8 @@
                                         <tr>
                                             <th><?php echo $this->lang->line('name'); ?></th>
                                             <td><?php echo $profile->name; ?></td>
-                                            <th><?php echo $this->lang->line('relation'); ?></th>
-                                            <td><?php echo $this->lang->line($profile->relation); ?></td>
+                                            <th><?php echo $this->lang->line('other_info'); ?></th>
+                                            <td><?php echo $profile->other_info; ?></td>
                                         </tr>                                                                                
                                         <tr>
                                             <th><?php echo $this->lang->line('email'); ?></th>
@@ -66,11 +66,11 @@
                                             <th><?php echo $this->lang->line('profession'); ?></th>
                                             <td><?php echo $profile->profession; ?></td>
                                         </tr>                                                                      
-                                        <tr>
-                                            <th><?php echo $this->lang->line('other_info'); ?></th>
-                                            <td><?php echo $profile->other_info; ?></td>
+                                        <tr>                                            
                                             <th><?php echo $this->lang->line('created'); ?></th>
                                             <td><?php echo  date('M j,Y', strtotime($profile->created_at)); ?></td>
+                                            <th><?php echo $this->lang->line('modified'); ?></th>
+                                            <td><?php echo  date('M j,Y', strtotime($profile->modified_at)); ?></td>
                                         </tr>                                                                      
                                         
                                     </tbody> 
@@ -86,30 +86,32 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($profile->name) ?  $profile->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="name" value="<?php echo isset($profile->name) ?  $profile->name : $post['name']; ?>" placeholder="<?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
-                                </div>
+                                </div>   
+                               
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="relation"><?php echo $this->lang->line('relation'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="national_id"><?php echo $this->lang->line('national_id'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12" name="relation" id="relation" required="required">
-                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>
-                                            <?php $relations = get_relation_types(); ?>
-                                            <?php foreach($relations as $key=>$value){ ?>
-                                                <option value="<?php echo $key; ?>" <?php if($profile->relation == $key){ echo 'selected="selected"';} ?>><?php echo $value; ?></option>
-                                            <?php } ?>
-                                        </select>
-                                        <div class="help-block"><?php echo form_error('relation'); ?></div>
+                                        <input  class="form-control col-md-7 col-xs-12"  name="national_id"  id="national_id" value="<?php echo isset($profile->national_id) ?  $profile->national_id : '' ?>" placeholder="<?php echo $this->lang->line('national_id'); ?>" type="text" autocomplete="off">
+                                        <div class="help-block"><?php echo form_error('national_id'); ?></div>
                                     </div>
                                 </div>
+                               
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="phone"><?php echo $this->lang->line('phone'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="phone"  id="phone" value="<?php echo isset($profile->phone) ?  $profile->phone : '' ?>" placeholder="<?php echo $this->lang->line('phone'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="phone"  id="phone" value="<?php echo isset($profile->phone) ?  $profile->phone : '' ?>" placeholder="<?php echo $this->lang->line('phone'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('phone'); ?></div>
+                                    </div>
+                                </div>
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="profession"><?php echo $this->lang->line('profession'); ?> </label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="profession"  id="profession" value="<?php echo isset($profile->profession) ?  $profile->profession : '' ?>" placeholder="<?php echo $this->lang->line('profession'); ?>" type="text" autocomplete="off">
+                                        <div class="help-block"><?php echo form_error('profession'); ?></div>
                                     </div>
                                 </div>
                                 <div class="item form-group">
@@ -128,21 +130,27 @@
                                 </div>
                                
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="religion"><?php echo $this->lang->line('religion'); ?> 
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="religion"><?php echo $this->lang->line('religion'); ?>  </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="religion"  id="religion" value="<?php echo isset($profile->religion) ?  $profile->religion : ''; ?>" placeholder="<?php echo $this->lang->line('religion'); ?>"  type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="religion"  id="religion" value="<?php echo isset($profile->religion) ?  $profile->religion : ''; ?>" placeholder="<?php echo $this->lang->line('religion'); ?>"  type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('religion'); ?></div>
                                     </div>
                                 </div>
                                                             
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="email"><?php echo $this->lang->line('email'); ?> <span class="required">*</span>
-                                    </label>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="email"><?php echo $this->lang->line('email'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="email" readonly="readonly"  id="email" value="<?php echo isset($profile->email) ?  $profile->email : ''; ?>" placeholder="<?php echo $this->lang->line('email'); ?>" required="email" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="email"  id="email" value="<?php echo isset($profile->email) ?  $profile->email : ''; ?>" placeholder="<?php echo $this->lang->line('email'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('email'); ?></div>
+                                    </div>
+                                </div>
+                               
+                                <div class="item form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="username"><?php echo $this->lang->line('username'); ?> </label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="username"  id="username" value="<?php echo isset($profile->username) ?  $profile->username : ''; ?>" placeholder="<?php echo $this->lang->line('username'); ?>" type="text" readonly="readonly" autocomplete="off">
+                                        <div class="help-block"><?php echo form_error('username'); ?></div>
                                     </div>
                                 </div>
                                 
@@ -221,7 +229,9 @@
                                                 <?php } ?>
                                             </td>
                                             <td>
-                                                <a href="<?php echo site_url('student/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> View </a>
+                                                <?php if(has_permission(VIEW, 'student', 'student')){ ?>
+                                                    <a onclick="get_student_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-student-modal-lg" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> View </a>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <?php } ?>
@@ -237,6 +247,74 @@
     </div>
 </div>
 
+
+
+<div class="modal fade bs-student-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('student'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_student_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_student_modal(student_id){
+         
+        $('.fn_student_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('student/get_single_student'); ?>",
+          data   : {student_id : student_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_student_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+  
+
+<div class="modal fade bs-activity-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('activity'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_activity_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_activity_modal(activity_id){
+         
+        $('.fn_activity_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('student/activity/get_single_activity'); ?>",
+          data   : {activity_id : activity_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_activity_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
 <script type="text/javascript">
     $(document).ready(function() {
      $('#datatable-responsive').DataTable( {
@@ -249,7 +327,8 @@
              'pdfHtml5',
              'pageLength'
          ],
-         search: true
+        search: true,        
+        responsive: true
      });
    });
    

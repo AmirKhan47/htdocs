@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'certificate', 'type')){ ?>
                     <a href="<?php echo site_url('certificate/type'); ?>"><?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></a> |
                 <?php } ?>
@@ -23,13 +23,17 @@
                 <?php echo form_open_multipart(site_url('certificate/index'), array('name' => 'generate', 'id' => 'generate', 'class' => 'form-horizontal form-label-left'), ''); ?>
                 <div class="row">
                 
+                     <?php $this->load->view('layout/school_list_filter'); ?>
+                    
                     <div class="col-md-3 col-sm-3 col-xs-12">
                         <div class="item form-group"> 
-                            <div><?php echo $this->lang->line('class'); ?></div>
+                            <div><?php echo $this->lang->line('class'); ?> <span class="required">*</span></div>
                             <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="class_id" required="required">
                                 <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                <?php foreach($classes as $obj ){ ?>
-                                <option value="<?php echo $obj->id; ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"'; } ?>><?php echo $obj->name; ?></option>
+                                <?php if(isset($classes) && !empty($classes)){ ?>
+                                    <?php foreach($classes as $obj ){ ?>
+                                    <option value="<?php echo $obj->id; ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"'; } ?>><?php echo $obj->name; ?></option>
+                                    <?php } ?> 
                                 <?php } ?> 
                             </select>
                             <div class="help-block"><?php echo form_error('class_id'); ?></div>
@@ -37,11 +41,13 @@
                     </div>
                     <div class="col-md-3 col-sm-3 col-xs-12">
                         <div class="item form-group"> 
-                            <div><?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?></div>
+                            <div><?php echo $this->lang->line('certificate'); ?> <?php echo $this->lang->line('type'); ?> <span class="required">*</span></div>
                             <select  class="form-control col-md-7 col-xs-12"  name="certificate_id"  id="certificate_id" required="required">
                                 <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                <?php foreach($certificates as $obj ){ ?>
-                                <option value="<?php echo $obj->id; ?>" <?php if(isset($certificate_id) && $certificate_id == $obj->id){ echo 'selected="selected"'; } ?>><?php echo $obj->name; ?></option>
+                                <?php if(isset($certificates) && !empty($certificates)){ ?>
+                                    <?php foreach($certificates as $obj ){ ?>
+                                    <option value="<?php echo $obj->id; ?>" <?php if(isset($certificate_id) && $certificate_id == $obj->id){ echo 'selected="selected"'; } ?>><?php echo $obj->name; ?></option>
+                                    <?php } ?> 
                                 <?php } ?> 
                             </select>
                             <div class="help-block"><?php echo form_error('certificate_id'); ?></div>
@@ -53,6 +59,7 @@
                             <button id="send" type="submit" class="btn btn-success"><?php echo $this->lang->line('find'); ?></button>
                         </div>
                     </div>
+                    
                 </div>
                 <?php echo form_close(); ?>
             </div>
@@ -98,10 +105,10 @@
                                                 <td><?php echo ucfirst($obj->name); ?></td>
                                                 <td><?php echo $obj->phone; ?></td>
                                                 <td><?php echo $obj->email; ?></td>   
-                                                <td><?php echo date('M j, Y', strtotime($obj->created_at)); ?></td>   
+                                                <td><?php echo date($this->global_setting->date_format, strtotime($obj->created_at)); ?></td>   
                                                 <td>    
                                                     <?php if(has_permission(VIEW, 'certificate', 'certificate')){ ?>
-                                                    <a target="_blank" href="<?php echo site_url('certificate/generate/'.$obj->id.'/'.$class_id .'/'.$certificate_id); ?>"  class="btn btn-success btn-xs"><i class="fa fa-certificate"> <?php echo $this->lang->line('generate'); ?></i></a>
+                                                    <a target="_blank" href="<?php echo site_url('certificate/generate/'.$obj->school_id.'/'.$obj->id.'/'.$class_id .'/'.$certificate_id); ?>"  class="btn btn-success btn-xs"><i class="fa fa-certificate"> <?php echo $this->lang->line('generate'); ?></i></a>
                                                     <?php } ?>
                                                 </td>   
                                             </tr>
@@ -121,6 +128,67 @@
 </div>
 </div>
 
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $("document").ready(function() {
+         <?php if(isset($school_id) && !empty($school_id)){ ?>
+            $("#school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('#school_id').on('change', function(){
+      
+        var school_id = $(this).val();
+        var class_id = '';
+        var certificate_id = '';
+        <?php if(isset($school_id) && !empty($school_id)){ ?>
+            class_id =  '<?php echo $class_id; ?>';
+            certificate_id =  '<?php echo $certificate_id; ?>';
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                  
+                    $('#class_id').html(response);                                    
+                    get_certificate_type_by_school(school_id, certificate_id);
+               }
+            }
+        });
+    }); 
+    
+    
+    function get_certificate_type_by_school(school_id, certificate_id){
+    
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_certificate_type_by_school'); ?>",
+            data   : { school_id:school_id, certificate_id: certificate_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {                      
+                    $('#certificate_id').html(response);                   
+               }
+            }
+        });
+    }
+    
+  </script>
+<!-- Super admin js end -->
+  
+
  <script type="text/javascript">
 
         $(document).ready(function() {
@@ -134,7 +202,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
         

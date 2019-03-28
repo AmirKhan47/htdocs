@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Role.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Role
  * @description     : Manage system user role.  
@@ -65,6 +65,9 @@ class Role extends MY_Controller {
 
                 $insert_id = $this->role->insert('roles', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a user role : '.$data['name']);  
+                    
                     success($this->lang->line('insert_success'));
                     redirect('administrator/role/index');
                 } else {
@@ -104,6 +107,9 @@ class Role extends MY_Controller {
                 $updated = $this->role->update('roles', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated a user role : '.$data['name']); 
+                    
                     success($this->lang->line('update_success'));
                     redirect('administrator/role/index');                   
                 } else {
@@ -224,7 +230,12 @@ class Role extends MY_Controller {
              error($this->lang->line('unexpected_error'));
              redirect('administrator/role');            
         }
-        if ($this->role->delete('roles', array('id' => $id))) {            
+        
+        $role = $this->role->get_single('roles', array('id' => $id));
+        
+        if ($this->role->delete('roles', array('id' => $id))) {  
+            
+            create_log('Has been deleted a user role : '.$role->name);  
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

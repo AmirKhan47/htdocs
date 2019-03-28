@@ -52,8 +52,10 @@
 			<thead>
 				<tr>
 					<th>#</th>
-					<th>Class Name</th>
-					<th>Created Date</th>
+                    <th>Class Name</th>
+					<th>Type</th>
+                    <th>Created Date</th>
+					<th>Updated Date</th>
 					<th>Action</th>
 				</tr>
 			</thead>

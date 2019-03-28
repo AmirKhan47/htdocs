@@ -14,7 +14,12 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_class_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'academic', 'classes')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_class"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('class'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('academic/classes/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('class'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                 <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_class"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('class'); ?></a> </li>                          
+                             <?php } ?>
+                           
                         <?php } ?> 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_class"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('class'); ?></a> </li>                          
@@ -29,13 +34,12 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('class'); ?></th>
                                         <th><?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?></th>
-                                        <th><?php echo $this->lang->line('teacher'); ?></th>
-                                        <th><?php echo $this->lang->line('monthly_fee'); ?></th>
-                                        <th><?php echo $this->lang->line('admission_fee'); ?></th>
-                                        <th><?php echo $this->lang->line('exam_fee'); ?></th>
-                                        <th><?php echo $this->lang->line('certificate_fee'); ?></th>
+                                        <th><?php echo $this->lang->line('teacher'); ?></th>                                  
                                         <th><?php echo $this->lang->line('action'); ?></th>  
                                     </tr>
                                 </thead>
@@ -44,13 +48,12 @@
                                         <?php foreach($classes as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->name; ?></td>
                                             <td><?php echo $obj->numeric_name; ?></td>
-                                            <td><?php echo $obj->teacher; ?></td>
-                                            <td><?php echo $obj->monthly_tution_fee; ?></td>
-                                            <td><?php echo $obj->admission_fee; ?></td>
-                                            <td><?php echo $obj->exam_fee; ?></td>
-                                            <td><?php echo $obj->certificate_fee; ?></td>
+                                            <td><?php echo $obj->teacher; ?></td>                                           
                                             <td>
                                                 <?php if(has_permission(EDIT, 'academic', 'classes')){ ?>
                                                     <a href="<?php echo site_url('academic/classes/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
@@ -71,11 +74,13 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('academic/classes/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="add_name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="add_name" value="<?php echo isset($post['name']) ?  $post['name'] : ''; ?>" placeholder="<?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -83,13 +88,13 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="numeric_name"><?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="numeric_name"  id="add_numeric_name" value="<?php echo isset($post['numeric_name']) ?  $post['numeric_name'] : ''; ?>" placeholder="<?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="numeric_name"  id="add_numeric_name" value="<?php echo isset($post['numeric_name']) ?  $post['numeric_name'] : ''; ?>" placeholder="<?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('numeric_name'); ?></div>
                                     </div>
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="add_teacher_id" required="required" >
@@ -101,40 +106,7 @@
                                         <div class="help-block"><?php echo form_error('teacher_id'); ?></div>
                                     </div>
                                 </div>
-                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="monthly_tution_fee"><?php echo $this->lang->line('monthly_fee'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="monthly_tution_fee"  id="add_monthly_tution_fee" value="<?php echo isset($post['monthly_tution_fee']) ?  $post['monthly_tution_fee'] : ''; ?>" placeholder="<?php echo $this->lang->line('monthly_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('monthly_tution_fee'); ?></div>
-                                    </div>
-                                </div>                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="admission_fee"><?php echo $this->lang->line('admission_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="admission_fee"  id="add_admission_fee" value="<?php echo isset($post['admission_fee']) ?  $post['admission_fee'] : ''; ?>" placeholder="<?php echo $this->lang->line('admission_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('admission_fee'); ?></div>
-                                    </div>
-                                </div>                                
-                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="exam_fee"><?php echo $this->lang->line('exam_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="exam_fee"  id="add_exam_fee" value="<?php echo isset($post['exam_fee']) ?  $post['exam_fee'] : ''; ?>" placeholder="<?php echo $this->lang->line('exam_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('exam_fee'); ?></div>
-                                    </div>
-                                </div>                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="certificate_fee"><?php echo $this->lang->line('certificate_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="certificate_fee"  id="add_certificate_fee" value="<?php echo isset($post['certificate_fee']) ?  $post['certificate_fee'] : ''; ?>" placeholder="<?php echo $this->lang->line('certificate_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('certificate_fee'); ?></div>
-                                    </div>
-                                </div>                                
+                                                            
                                 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="note"><?php echo $this->lang->line('note'); ?></label>
@@ -165,11 +137,13 @@
                             <div class="x_content"> 
                                <?php echo form_open(site_url('academic/classes/edit/'.$class->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_edit_form'); ?> 
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="name"><?php echo $this->lang->line('class'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="edit_name" value="<?php echo isset($class->name) ?  $class->name : $post['name']; ?>" placeholder="Class Name" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="name"  id="edit_name" value="<?php echo isset($class->name) ?  $class->name : $post['name']; ?>" placeholder="Class Name" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('name'); ?></div>
                                     </div>
                                 </div>
@@ -177,13 +151,13 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="numeric_name"><?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="numeric_name"  id="edit_numeric_name" value="<?php echo isset($class->numeric_name) ?  $class->numeric_name : $post['numeric_name']; ?>" placeholder="<?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="number">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="numeric_name"  id="edit_numeric_name" value="<?php echo isset($class->numeric_name) ?  $class->numeric_name : $post['numeric_name']; ?>" placeholder="<?php echo $this->lang->line('numeric'); ?> <?php echo $this->lang->line('name'); ?>" required="required" type="number" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('numeric_name'); ?></div>
                                     </div>
                                 </div>
                                 
                                 <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="teacher_id"><?php echo $this->lang->line('class'); ?>  <?php echo $this->lang->line('teacher'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-7 col-xs-12"  name="teacher_id"  id="edit_teacher_id" required="required" >
@@ -193,40 +167,6 @@
                                             <?php } ?>                                            
                                         </select>
                                         <div class="help-block"><?php echo form_error('teacher_id'); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="monthly_tution_fee"><?php echo $this->lang->line('monthly_fee'); ?> <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="monthly_tution_fee"  id="edit_monthly_tution_fee" value="<?php echo isset($class->monthly_tution_fee) ?  $class->monthly_tution_fee : $post['monthly_tution_fee']; ?>" placeholder="<?php echo $this->lang->line('monthly_fee'); ?>" required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('monthly_tution_fee'); ?></div>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="admission_fee"><?php echo $this->lang->line('admission_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="admission_fee"  id="edit_admission_fee" value="<?php echo isset($class->admission_fee) ?  $class->admission_fee : $post['admission_fee']; ?>" placeholder="<?php echo $this->lang->line('admission_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('admission_fee'); ?></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="exam_fee"><?php echo $this->lang->line('exam_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="exam_fee"  id="edit_exam_fee" value="<?php echo isset($class->exam_fee) ?  $class->exam_fee : $post['exam_fee']; ?>" placeholder="<?php echo $this->lang->line('exam_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('exam_fee'); ?></div>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="certificate_fee"><?php echo $this->lang->line('certificate_fee'); ?>  <span class="required">*</span>
-                                    </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="certificate_fee"  id="edit_certificate_fee" value="<?php echo isset($class->certificate_fee) ?  $class->certificate_fee : $post['certificate_fee']; ?>" placeholder="<?php echo $this->lang->line('certificate_fee'); ?> " required="required" type="number">
-                                        <div class="help-block"><?php echo form_error('certificate_fee'); ?></div>
                                     </div>
                                 </div>
                                 
@@ -257,10 +197,57 @@
         </div>
     </div>
 </div>
+
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $("document").ready(function() {
+         <?php if(isset($class) && !empty($class)){ ?>
+            $("#edit_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();       
+        var teacher_id = '';
+        <?php if(isset($class) && !empty($class)){ ?>         
+            teacher_id =  '<?php echo $class->teacher_id; ?>';
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
+         $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_teacher_by_school'); ?>",
+            data   : { school_id:school_id, teacher_id : teacher_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {    
+                   if(teacher_id){
+                       $('#edit_teacher_id').html(response);
+                   }else{
+                       $('#add_teacher_id').html(response); 
+                   }
+               }
+            }
+        });       
+     
+    }); 
+
+    
+  </script>
+  <!-- Super admin js end -->
+
 <!-- datatable with buttons -->
  <script type="text/javascript">
         $(document).ready(function() {
-          $('#datatable-responsive').DataTable( {
+            
+          $('#datatable-responsive').DataTable({
               dom: 'Bfrtip',
               iDisplayLength: 15,
               buttons: [
@@ -270,9 +257,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
-          });
+              search: true,              
+              responsive: true
+          });          
         });
+        
     $("#add").validate();     
     $("#edit").validate();     
 </script>

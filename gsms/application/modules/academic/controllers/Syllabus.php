@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Syllabus.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Syllabus
  * @description     : Manage academic syllabus for each class as per school course curriculam.  
@@ -19,14 +19,8 @@ class Syllabus extends MY_Controller {
     
     
     function __construct() {
-        parent::__construct();        
-        
-        $this->load->model('Syllabus_Model', 'syllabus', true);        
-        // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }
+        parent::__construct();     
+        $this->load->model('Syllabus_Model', 'syllabus', true);  
     }
 
     
@@ -39,7 +33,7 @@ class Syllabus extends MY_Controller {
      * @param           : $id integer value
      * @return          : null 
      * ********************************************************** */
-    public function index($class_id = null) {
+    public function index($class_id = null, $school_id = null) {
         
         check_permission(VIEW);
         
@@ -49,9 +43,17 @@ class Syllabus extends MY_Controller {
         }
         
         $this->data['class_id'] = $class_id;
-        $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id);            
-        $this->data['classes'] = $this->syllabus->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
+        $this->data['filter_school_id'] = $school_id;
+        $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id, $school_id);            
+       
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->syllabus->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
         
+        $this->data['schools'] = $this->schools;
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_syllabus'). ' | ' . SMS);
         $this->layout->view('syllabus/index', $this->data);            
@@ -77,6 +79,12 @@ class Syllabus extends MY_Controller {
 
                 $insert_id = $this->syllabus->insert('syllabuses', $data);
                 if ($insert_id) {
+                    
+                       
+                    $class = $this->syllabus->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been added syllabus : '. $data['title'].' for class : '. $class->name);
+                    
+                    
                     success($this->lang->line('insert_success'));
                     redirect('academic/syllabus/index/'.$data['class_id']);
                 } else {
@@ -95,8 +103,15 @@ class Syllabus extends MY_Controller {
         
         $this->data['class_id'] = $class_id;
         $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id);            
-        $this->data['classes'] = $this->syllabus->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
+
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->syllabus->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
         
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('syllabus'). ' | ' . SMS);
         $this->layout->view('syllabus/index', $this->data);
@@ -127,6 +142,10 @@ class Syllabus extends MY_Controller {
                 $updated = $this->syllabus->update('syllabuses', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $class = $this->syllabus->get_single('classes', array('id' => $data['class_id'], 'school_id'=>$data['school_id']));
+                    create_log('Has been updated syllabus : '. $data['title'].' for class : '. $class->name);                    
+                    
                     success($this->lang->line('update_success'));
                     redirect('academic/syllabus/index/'.$data['class_id']);                   
                 } else {
@@ -153,11 +172,20 @@ class Syllabus extends MY_Controller {
         
         $this->data['class_id'] = $class_id;
         $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id);            
-        $this->data['classes'] = $this->syllabus->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->syllabus->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        
+        $this->data['school_id'] = $this->data['syllabus']->school_id;
+        $this->data['schools'] = $this->schools;
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('syllabus'). ' | ' . SMS);
         $this->layout->view('syllabus/index', $this->data);
+        
     }
     
     
@@ -180,15 +208,40 @@ class Syllabus extends MY_Controller {
         $this->data['syllabus'] = $this->syllabus->get_single_syllabus( $syllabus_id);
         $class_id = $this->data['syllabus']->class_id;
         
-        $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id);            
-        $this->data['classes'] = $this->syllabus->get_list('classes', array('status' => 1), '','', '', 'id', 'ASC');
-        $this->data['class_id'] = $class_id;
+        $this->data['syllabuses'] = $this->syllabus->get_syllabus_list($class_id);    
+
          
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+        }
+        $this->data['classes'] = $this->syllabus->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        
+        $this->data['class_id'] = $class_id;
+        
+        $this->data['schools'] = $this->schools;
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('syllabus'). ' | ' . SMS);
         $this->layout->view('syllabus/index', $this->data);
     }
 
+        
+     /*****************Function get_single_syllabus**********************************
+     * @type            : Function
+     * @function name   : get_single_syllabus
+     * @description     : "Load single syllabus information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_syllabus(){
+        
+       $syllabus_id = $this->input->post('syllabus_id');
+       
+       $this->data['syllabus'] = $this->syllabus->get_single_syllabus( $syllabus_id);
+       echo $this->load->view('syllabus/get-single-syllabus', $this->data);
+    }
     
     /*****************Function _prepare_syllabus_validation**********************************
      * @type            : Function
@@ -202,6 +255,7 @@ class Syllabus extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');   
         $this->form_validation->set_rules('subject_id', $this->lang->line('subject'), 'trim|required');   
         $this->form_validation->set_rules('title', $this->lang->line('syllabus') . ' ' . $this->lang->line('title'), 'trim|required');   
@@ -269,6 +323,7 @@ class Syllabus extends MY_Controller {
     private function _get_posted_syllabus_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'class_id';
         $items[] = 'subject_id';
         $items[] = 'title';
@@ -280,7 +335,15 @@ class Syllabus extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->syllabus->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('academic/syllabus/index');
+            }
+            
+            $data['academic_year_id'] = $school->academic_year_id;
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id(); 
@@ -359,6 +422,11 @@ class Syllabus extends MY_Controller {
         
         $syllabus = $this->syllabus->get_single('syllabuses', array('id' => $id));
         if ($this->syllabus->delete('syllabuses', array('id' => $id))) {   
+            
+               
+            $class = $this->syllabus->get_single('classes', array('id' => $syllabus->class_id, 'school_id'=>$syllabus->school_id));
+            create_log('Has been deleted a syllabus : '. $syllabus->title.' for class:'. $class->name);
+            
             
             // delete syllabus file
             $destination = 'assets/uploads/';

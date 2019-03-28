@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Image.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Image
  * @description     : Manage school Image for guardian, student, teacher and employee.  
@@ -34,8 +34,13 @@ class Image extends MY_Controller {
     public function index() {
 
         check_permission(VIEW);
-
-        $this->data['galleries'] = $this->image->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['galleries'] = $this->image->get_list('galleries', $condition, '', '', '', 'id', 'ASC');
+        }
+        
         $this->data['images'] = $this->image->get_image_list();
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_gallery_image') . ' | ' . SMS);
@@ -62,6 +67,9 @@ class Image extends MY_Controller {
 
                 $insert_id = $this->image->insert('gallery_images', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been uploaded a gallery image : '.$data['caption']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('gallery/image/index');
                 } else {
@@ -73,8 +81,14 @@ class Image extends MY_Controller {
             }
         }
 
-        $this->data['galleries'] = $this->image->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['galleries'] = $this->image->get_list('galleries', $condition, '', '', '', 'id', 'ASC');
+        }
         $this->data['images'] = $this->image->get_image_list();
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('gallery') . ' ' . $this->lang->line('image') . ' | ' . SMS);
         $this->layout->view('image/index', $this->data);
@@ -107,6 +121,9 @@ class Image extends MY_Controller {
                 $updated = $this->image->update('gallery_images', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated gallery image : '.$data['caption']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('gallery/image/index');
                 } else {
@@ -126,8 +143,14 @@ class Image extends MY_Controller {
             }
         }
 
-        $this->data['galleries'] = $this->image->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['galleries'] = $this->image->get_list('galleries', $condition, '', '', '', 'id', 'ASC');
+        }
         $this->data['images'] = $this->image->get_image_list();
+        $this->data['school_id'] = $this->data['image']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('gallery') . ' ' . $this->lang->line('image') . ' | ' . SMS);
@@ -153,13 +176,37 @@ class Image extends MY_Controller {
             redirect('gallery/image/index');
         }
         
-        $this->data['galleries'] = $this->image->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['galleries'] = $this->image->get_list('galleries', $condition, '', '', '', 'id', 'ASC');
+        }
+        
         $this->data['image'] = $this->image->get_single_image($id);        
         $this->data['images'] = $this->image->get_image_list();
         
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('gallery')  . ' ' . $this->lang->line('image'). ' | ' . SMS);
         $this->layout->view('image/index', $this->data);
+    }
+    
+    
+                       
+     /*****************Function get_single_news**********************************
+     * @type            : Function
+     * @function name   : get_single_news
+     * @description     : "Load single news information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_image(){
+        
+       $image_id = $this->input->post('image_id');
+       
+       $this->data['image'] = $this->image->get_single_image($image_id);  
+       echo $this->load->view('image/get-single-image', $this->data);
     }
 
     
@@ -174,6 +221,7 @@ class Image extends MY_Controller {
     private function _prepare_image_validation() {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('gallery_id', $this->lang->line('gallery'), 'trim|required');
         $this->form_validation->set_rules('image', $this->lang->line('gallery').' '.$this->lang->line('image'), 'trim|callback_image');
     }
@@ -230,6 +278,7 @@ class Image extends MY_Controller {
     private function _get_posted_image_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'gallery_id';
         $items[] = 'caption';
 
@@ -324,6 +373,8 @@ class Image extends MY_Controller {
                 @unlink($destination . '/gallery/' . $image->image);
             }
 
+            create_log('Has been deleted a gallery image : '.$image->caption);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

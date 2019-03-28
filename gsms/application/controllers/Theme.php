@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * ******************Theme.php*******************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Theme
  * @description     : This class used to manage color theme functionality 
@@ -58,12 +58,19 @@ class Theme extends My_Controller {
             redirect('theme');
         }
 
-        $this->theme->update('themes', array('is_active' => 0), array());
-        $this->theme->update('themes', array('is_active' => 1), array('id' => $id));
-        $theme = $this->theme->get_single('themes', array('is_active' => 1));
+        $theme = $this->theme->get_single('themes', array('id' => $id));
+        
+        if($this->session->userdata('role_id') == SUPER_ADMIN){
+            $this->theme->update('system_admin', array('theme_name' => $theme->slug), array('id' => logged_in_user_id()));
+        }else{
+            $this->theme->update('schools', array('theme_name' => $theme->slug), array('id' => $this->session->userdata('school_id')));
+        }
+        
         $this->session->unset_userdata('theme');
         $this->session->set_userdata('theme', $theme->slug);
         success($this->lang->line('update_success'));
+        
+        create_log('Activate Theme '. $theme->slug);
         redirect('theme');
     }
 

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Employee.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Employee
  * @description     : Manage employee information of the school.  
@@ -19,7 +19,8 @@ class Employee extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Employee_Model', 'employee', true);        
+        $this->load->model('Employee_Model', 'employee', true);  
+       
     }
 
     
@@ -38,8 +39,15 @@ class Employee extends MY_Controller {
         
         $this->data['employees'] = $this->employee->get_employee_list();
         $this->data['roles'] = $this->employee->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['designations'] = $this->employee->get_list('designations', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->employee->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['designations'] = $this->employee->get_list('designations', $condition, '', '', '', 'id', 'ASC');
+            $this->data['grades'] = $this->employee->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_employee') . ' | ' . SMS);
@@ -66,6 +74,9 @@ class Employee extends MY_Controller {
 
                 $insert_id = $this->employee->insert('employees', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been added a Employee : '.$data['name']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('hrm/employee/index');
                 } else {
@@ -79,8 +90,15 @@ class Employee extends MY_Controller {
 
         $this->data['employees'] = $this->employee->get_employee_list();
         $this->data['roles'] = $this->employee->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->employee->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['designations'] = $this->employee->get_list('designations', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+         if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['designations'] = $this->employee->get_list('designations', $condition, '', '', '', 'id', 'ASC');
+            $this->data['grades'] = $this->employee->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
         
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('employee') . ' | ' . SMS);
@@ -109,6 +127,9 @@ class Employee extends MY_Controller {
                 $updated = $this->employee->update('employees', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a Employee : '.$data['name']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('hrm/employee/index');
                 } else {
@@ -130,9 +151,20 @@ class Employee extends MY_Controller {
 
         $this->data['employees'] = $this->employee->get_employee_list();
         $this->data['roles'] = $this->employee->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['designations'] = $this->employee->get_list('designations', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->employee->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+                $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['designations'] = $this->employee->get_list('designations', $condition, '', '', '', 'id', 'ASC');
+            $this->data['grades'] = $this->employee->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
+        
        
+        $this->data['school_id'] = $this->data['employee']->school_id;
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('employee') . ' | ' . SMS);
         $this->layout->view('employee/index', $this->data);
@@ -159,9 +191,17 @@ class Employee extends MY_Controller {
         
         $this->data['employees'] = $this->employee->get_employee_list();
         $this->data['roles'] = $this->employee->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['designations'] = $this->employee->get_list('designations', array('status' => 1), '', '', '', 'id', 'ASC');
         $this->data['employee'] = $this->employee->get_single_employee($employee_id);
-        $this->data['grades'] = $this->employee->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        
+        $condition = array();
+        $condition['status'] = 1;
+        if($this->session->userdata('school_id') > 0){
+            $condition['school_id'] = $this->session->userdata('school_id');
+        }
+        
+        $this->data['designations'] = $this->employee->get_list('designations', $condition, '', '', '', 'id', 'ASC');
+        $this->data['grades'] = $this->employee->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
         
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('employee') . ' | ' . SMS);
@@ -169,6 +209,22 @@ class Employee extends MY_Controller {
     }
 
     
+    
+     /*****************Function get_single_employee**********************************
+     * @type            : Function
+     * @function name   : get_single_employee
+     * @description     : "Load single employee information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_employee(){
+        
+       $employee_id = $this->input->post('employee_id');
+       
+       $this->data['employee'] = $this->employee->get_single_employee($employee_id);
+       echo $this->load->view('employee/get-single-employee', $this->data);
+    }
     
     /*****************Function _prepare_employee_validation**********************************
     * @type            : Function
@@ -183,14 +239,18 @@ class Employee extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         if (!$this->input->post('id')) {       
-            $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|required|valid_email|callback_email');
+            
+            $this->form_validation->set_rules('username', $this->lang->line('username'), 'trim|required|callback_username');
             $this->form_validation->set_rules('password', $this->lang->line('password'), 'trim|required');
         }
         
+        
+        $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|valid_email');
+        $this->form_validation->set_rules('school_id', $this->lang->line('role'), 'trim|required');
         $this->form_validation->set_rules('role_id', $this->lang->line('role'), 'trim|required');
         $this->form_validation->set_rules('designation_id', $this->lang->line('designation'), 'trim|required');
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required');
-        $this->form_validation->set_rules('phone', $this->lang->line('phone'), 'trim|required');
+        $this->form_validation->set_rules('phone', $this->lang->line('phone'), 'trim');
         $this->form_validation->set_rules('present_address', $this->lang->line('present') . ' ' . $this->lang->line('address'), 'trim');
         $this->form_validation->set_rules('permanent_address', $this->lang->line('permanent') . ' ' . $this->lang->line('address'), 'trim');
         $this->form_validation->set_rules('gender', $this->lang->line('gender'), 'trim|required');
@@ -200,13 +260,6 @@ class Employee extends MY_Controller {
         $this->form_validation->set_rules('joining_date', $this->lang->line('join_date'), 'trim|required');
         $this->form_validation->set_rules('salary_grade_id', $this->lang->line('salary_grade'), 'trim|required');
         $this->form_validation->set_rules('salary_type', $this->lang->line('salary_type'), 'trim|required');
-        $this->form_validation->set_rules('facebook_url', $this->lang->line('facebook_url'), 'trim');
-        $this->form_validation->set_rules('linkedin_url', $this->lang->line('linkedin_url'), 'trim');
-        $this->form_validation->set_rules('google_plus_url', $this->lang->line('google_plus_url'), 'trim');
-        $this->form_validation->set_rules('instagram_url', $this->lang->line('instagram_url'), 'trim');
-        $this->form_validation->set_rules('pinterest_url', $this->lang->line('pinterest_url'), 'trim');
-        $this->form_validation->set_rules('twitter_url', $this->lang->line('twitter_url'), 'trim');
-        $this->form_validation->set_rules('youtube_url', $this->lang->line('youtube_url'), 'trim');
         $this->form_validation->set_rules('other_info', $this->lang->line('other_info'), 'trim');
     }
    
@@ -220,19 +273,19 @@ class Employee extends MY_Controller {
     * @param           : null
     * @return          : boolean true/false 
     * ********************************************************** */ 
-    public function email() {
+    public function username() {
         if ($this->input->post('id') == '') {
-            $email = $this->employee->duplicate_check($this->input->post('email'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->employee->duplicate_check($this->input->post('username'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $email = $this->employee->duplicate_check($this->input->post('email'), $this->input->post('id'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->employee->duplicate_check($this->input->post('username'), $this->input->post('id'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
@@ -254,8 +307,11 @@ class Employee extends MY_Controller {
     private function _get_posted_employee_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'designation_id';
+        $items[] = 'national_id';
         $items[] = 'name';
+        $items[] = 'email';
         $items[] = 'phone';
         $items[] = 'present_address';
         $items[] = 'permanent_address';
@@ -271,14 +327,14 @@ class Employee extends MY_Controller {
         $items[] = 'instagram_url';
         $items[] = 'pinterest_url';
         $items[] = 'twitter_url';
-        $items[] = 'youtube_url';
+        $items[] = 'youtube_url';      
+        $items[] = 'is_view_on_web';      
         
         $data = elements($items, $_POST);  
         
 
         $data['dob'] = date('Y-m-d', strtotime($this->input->post('dob')));
         $data['joining_date'] = date('Y-m-d', strtotime($this->input->post('joining_date')));
-        $data['is_view_on_web'] = $this->input->post('is_view_on_web') ? 1 : 0;
 
         if ($this->input->post('id')) {
             $data['modified_at'] = date('Y-m-d H:i:s');
@@ -425,6 +481,8 @@ class Employee extends MY_Controller {
             if (file_exists($destination . '/employee-photo/' . $employee->photo)) {
                 @unlink($destination . '/employee-photo/' . $employee->photo);
             }
+            
+            create_log('Has been deleted a Employee : '.$employee->name);
 
             success($this->lang->line('delete_success'));
         } else {

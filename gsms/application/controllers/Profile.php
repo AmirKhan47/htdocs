@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * ***************Profile.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Profile
  * @description     : This class used to manage logged in users 
@@ -19,8 +19,7 @@ class Profile extends My_Controller {
     public function __construct() {
         parent::__construct();
 
-        $this->load->model('Profile_Model', 'profile', true);
-        $this->data['designations'] = $this->profile->get_list('designations', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->load->model('Profile_Model', 'profile', true);        
     }
 
     public $data = array();
@@ -42,23 +41,58 @@ class Profile extends My_Controller {
 
         $this->data['profile'] = get_user_by_role($role_id, $user_id);
         $this->data['info'] = TRUE;
+        $this->data['roles'] = $this->profile->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
 
-        if ($role_id == STUDENT) {
+         if ($role_id == SUPER_ADMIN) {
+             
+            $this->layout->view('profile/system_admin', $this->data);
+            
+         }else if ($role_id == STUDENT) {
+            
+            $this->load->helper('report');
+            
+            $school_id = $this->session->userdata('school_id');
+            $class_id = $this->session->userdata('class_id');
+            $school = $this->profile->get_school_by_id($school_id);
+            $this->data['guardian'] = $this->profile->get_single_guardian($this->data['profile']->guardian_id);
+            
             $this->data['guardians'] = $this->profile->get_list('guardians', array('status' => 1), '', '', '', 'id', 'ASC');
+            $this->data['classes'] = $this->profile->get_list('classes', array('status' => 1, 'school_id'=>$school_id, 'id'=>$class_id), '', '', '', 'id', 'ASC');
+            
+            $this->data['days'] = 31;
+            $this->data['academic_year_id'] = $school->academic_year_id;
+            $this->data['class_id'] = $this->data['profile']->class_id;
+            $this->data['section_id'] = $this->data['profile']->section_id;
+            $this->data['student_id'] = $profile_id;
+            $this->data['school_id'] = $this->data['profile']->school_id;
+
+            $this->data['exams'] = $this->profile->get_list('exams', array('status' => 1, 'school_id'=>$this->data['profile']->school_id, 'academic_year_id' => $school->academic_year_id), '', '', '', 'id', 'ASC');
+            $this->data['invoices'] = $this->profile->get_invoice_list($profile_id);  
+            $this->data['activity'] = $this->profile->get_activity_list($profile_id); 
+            
+            
             $this->layout->view('profile/student', $this->data);
+            
         } elseif ($role_id == GUARDIAN) {
             
-            $this->data['students'] = $this->profile->get_student_list($profile_id);
+            
+            $school = $this->profile->get_school_by_id($this->data['profile']->school_id);            
+            $this->data['students'] = $this->profile->get_student_list($profile_id, $school->academic_year_id);
             $this->layout->view('profile/guardian', $this->data);
             
         } elseif ($role_id == TEACHER) {
+            
             $this->layout->view('profile/teacher', $this->data);
+            
         } else {
+            
             $this->layout->view('profile/employee', $this->data);
+            
         }
     }
 
-    /**     * *************Function update**********************************
+    
+    /***************Function update**********************************
      * @type            : Function
      * @function name   : update
      * @description     : this function used to update logged user profile inormation            
@@ -69,25 +103,29 @@ class Profile extends My_Controller {
 
         if ($_POST) {
 
+            $data = $this->_get_posted_data();
+            
+            if ($this->input->post('user_type') == 'system_admin') {
+                $updated = $this->profile->update('system_admin', $data, array('id' => $this->input->post('id')));
+            }
+            
             if ($this->input->post('user_type') == 'employee') {
-                $data = $this->_get_posted_data();
                 $updated = $this->profile->update('employees', $data, array('id' => $this->input->post('id')));
             }
+            
             if ($this->input->post('user_type') == 'teacher') {
-                $data = $this->_get_posted_data();
                 $updated = $this->profile->update('teachers', $data, array('id' => $this->input->post('id')));
             }
             if ($this->input->post('user_type') == 'guardian') {
-                $data = $this->_get_posted_data();
                 $updated = $this->profile->update('guardians', $data, array('id' => $this->input->post('id')));
             }
             if ($this->input->post('user_type') == 'student') {
-                $data = $this->_get_posted_data();
                 $updated = $this->profile->update('students', $data, array('id' => $this->input->post('id')));
             }
         }
 
         success($this->lang->line('update_success'));
+        create_log('Update Profile');
         redirect('profile');
     }
 
@@ -112,8 +150,13 @@ class Profile extends My_Controller {
                 $data['modified_at'] = date('Y-m-d H:i:s');
                 $data['modified_by'] = logged_in_user_id();
                 $this->profile->update('users', $data, array('id' => logged_in_user_id()));
-                success($this->lang->line('update_success'));
+                
+                success($this->lang->line('update_success'));                
+                $profile = $this->profile->get_single('users', array('id' => logged_in_user_id()));
+                
+                create_log('Update Password');
                 redirect('profile');
+               
             }
         }
 
@@ -132,45 +175,121 @@ class Profile extends My_Controller {
 
         $items = array();
         // only for employee and teacher
-        if ($this->input->post('user_type') == 'employee' || $this->input->post('user_type') == 'teacher') {
-            $items[] = 'designation_id';
+        
+        if ($this->input->post('user_type') == 'system_admin') {
             $items[] = 'gender';
             $items[] = 'blood_group';
+            $items[] = 'name';
+            $items[] = 'national_id';
+            $items[] = 'phone';
+            $items[] = 'email';
+            $items[] = 'present_address';
+            $items[] = 'permanent_address';
+            $items[] = 'religion';          
+            $items[] = 'other_info';
         }
-
-        // only for guardian
+        
+        if ($this->input->post('user_type') == 'teacher') {
+            $items[] = 'gender';
+            $items[] = 'blood_group';
+            $items[] = 'name';
+            $items[] = 'national_id';
+            $items[] = 'phone';
+            $items[] = 'email';
+            $items[] = 'present_address';
+            $items[] = 'permanent_address';
+            $items[] = 'religion';
+            $items[] = 'profession';
+            $items[] = 'other_info';
+        }
+        
+        if ($this->input->post('user_type') == 'employee') {
+            $items[] = 'name';
+            $items[] = 'national_id';
+            $items[] = 'gender';
+            $items[] = 'blood_group';
+            $items[] = 'phone';
+            $items[] = 'email';
+            $items[] = 'present_address';
+            $items[] = 'permanent_address';
+            $items[] = 'religion';
+            $items[] = 'other_info';
+        }
+        
         if ($this->input->post('user_type') == 'guardian') {
-            $items[] = 'relation';
+            $items[] = 'national_id';
+            $items[] = 'name';       
+            $items[] = 'email';       
+            $items[] = 'phone';
+            $items[] = 'profession';
+            $items[] = 'present_address';
+            $items[] = 'permanent_address';
+            $items[] = 'religion';
+            $items[] = 'other_info';
         }
-
-        // only ro student
-        if ($this->input->post('user_type') == 'student') {           
+        
+        if ( $this->input->post('user_type') == 'student') {
+            $items[] = 'name';
             $items[] = 'gender';
             $items[] = 'blood_group';
+            $items[] = 'religion';
+            $items[] = 'relation_with';
+            $items[] = 'phone';
+            $items[] = 'national_id';
+            $items[] = 'present_address';
+            $items[] = 'permanent_address';
+            $items[] = 'second_language';
+            $items[] = 'father_name';
+            $items[] = 'father_phone';
+            $items[] = 'father_education';
+            $items[] = 'father_profession';
+            $items[] = 'father_designation';
+            $items[] = 'mother_name';
+            $items[] = 'mother_phone';
+            $items[] = 'mother_education';
+            $items[] = 'mother_profession';
+            $items[] = 'mother_designation';
+            $items[] = 'email';
+            $items[] = 'other_info';
+            $items[] = 'health_condition';
         }
 
-        // common data
-        $items[] = 'name';
-        $items[] = 'phone';
-        $items[] = 'present_address';
-        $items[] = 'permanent_address';
-        $items[] = 'religion';
-        $items[] = 'other_info';
+      
+        
+        // only for employee and teacher
+        if ( $this->input->post('user_type') == 'employee' || $this->input->post('user_type') == 'teacher') {
+            $items[] = 'is_view_on_web';
+            $items[] = 'facebook_url';
+            $items[] = 'linkedin_url';
+            $items[] = 'twitter_url';
+            $items[] = 'google_plus_url';
+            $items[] = 'instagram_url';
+            $items[] = 'youtube_url';
+            $items[] = 'pinterest_url';
+        }        
+        
         $data = elements($items, $_POST);
+        
+        if ($this->input->post('user_type') == 'system_admin' || $this->input->post('user_type') == 'employee' || $this->input->post('user_type') == 'teacher') {
 
-        if ($this->input->post('user_type') == 'employee' || $this->input->post('user_type') == 'teacher') {
-
-            $data['dob'] = date('Y-m-d', strtotime($this->input->post('dob')));
-            $data['joining_date'] = date('Y-m-d', strtotime($this->input->post('joining_date')));
+            $data['dob'] = date('Y-m-d', strtotime($this->input->post('dob')));           
 
             if ($_FILES['resume']['name']) {
                 $data['resume'] = $this->_upload_resume();
             }
-        }
+        }        
 
         if ($this->input->post('user_type') == 'student') {
+            
             $data['dob'] = date('Y-m-d', strtotime($this->input->post('dob')));
-        }
+            
+            if ($_FILES['father_photo']['name']) {
+                $data['father_photo'] = $this->_upload_father_photo();
+            }
+            if ($_FILES['mother_photo']['name']) {
+                $data['mother_photo'] = $this->_upload_mother_photo();
+            }
+        }        
 
         if ($_FILES['photo']['name']) {
             $data['photo'] = $this->_upload_photo();
@@ -192,6 +311,14 @@ class Profile extends My_Controller {
     private function _upload_photo() {
 
         $prev_photo = $this->input->post('prev_photo');
+        
+        $user_type  =  $this->input->post('user_type');
+        
+        // system admin photo folder also same as employee
+        if($this->input->post('user_type') == 'system_admin'){
+            $user_type = 'employee';
+        }
+        
         $photo = $_FILES['photo']['name'];
         $photo_type = $_FILES['photo']['type'];
         $return_photo = '';
@@ -200,7 +327,7 @@ class Profile extends My_Controller {
                     $photo_type == 'image/jpg' || $photo_type == 'image/png' ||
                     $photo_type == 'image/x-png' || $photo_type == 'image/gif') {
 
-                $destination = 'assets/uploads/' . $this->input->post('user_type') . '-photo/';
+                $destination = 'assets/uploads/' . $user_type . '-photo/';
 
                 $file_type = explode(".", $photo);
                 $extension = strtolower($file_type[count($file_type) - 1]);
@@ -224,6 +351,8 @@ class Profile extends My_Controller {
         return $return_photo;
     }
 
+    
+    
     /*     * **************Function _upload_photo**********************************
      * @type            : Function
      * @function name   : _upload_photo
@@ -235,6 +364,13 @@ class Profile extends My_Controller {
     private function _upload_resume() {
 
         $prev_resume = $this->input->post('prev_resume');
+        
+        $user_type  =  $this->input->post('user_type');        
+        // system admin resume folder also same as employee
+        if($this->input->post('user_type') == 'system_admin'){
+            $user_type = 'employee';
+        }
+        
         $resume = $_FILES['resume']['name'];
         $resume_type = $_FILES['resume']['type'];
         $return_resume = '';
@@ -244,7 +380,7 @@ class Profile extends My_Controller {
                     $resume_type == 'application/msword' || $resume_type == 'text/plain' ||
                     $resume_type == 'application/vnd.ms-office' || $resume_type == 'application/pdf') {
 
-                $destination = 'assets/uploads/' . $this->input->post('user_type') . '-resume/';
+                $destination = 'assets/uploads/' . $user_type . '-resume/';
 
                 $file_type = explode(".", $resume);
                 $extension = strtolower($file_type[count($file_type) - 1]);
@@ -267,5 +403,100 @@ class Profile extends My_Controller {
 
         return $return_resume;
     }
+    
+    
+    
+    
+               
+    /*****************Function _upload_father_photo**********************************
+    * @type            : Function
+    * @function name   : _upload_father_photo
+    * @description     : process to upload student profile photo in the server                  
+    *                     and return photo file name  
+    * @param           : null
+    * @return          : $return_father_photo string value 
+    * ********************************************************** */
+    private function _upload_father_photo() {
+
+        $prev_father_photo = $this->input->post('prev_father_photo');
+        $father_photo = $_FILES['father_photo']['name'];
+        $father_photo_type = $_FILES['father_photo']['type'];
+        $return_father_photo = '';
+        if ($father_photo != "") {
+            if ($father_photo_type == 'image/jpeg' || $father_photo_type == 'image/pjpeg' ||
+                    $father_photo_type == 'image/jpg' || $father_photo_type == 'image/png' ||
+                    $father_photo_type == 'image/x-png' || $father_photo_type == 'image/gif') {
+
+                $destination = 'assets/uploads/father-photo/';
+
+                $file_type = explode(".", $father_photo);
+                $extension = strtolower($file_type[count($file_type) - 1]);
+                $father_photo_path = 'photo-' . time() . '-sms.' . $extension;
+
+                move_uploaded_file($_FILES['father_photo']['tmp_name'], $destination . $father_photo_path);
+
+                // need to unlink previous father_photo
+                if ($prev_father_photo != "") {
+                    if (file_exists($destination . $prev_father_photo)) {
+                        @unlink($destination . $prev_father_photo);
+                    }
+                }
+
+                $return_father_photo = $father_photo_path;
+            }
+        } else {
+            $return_father_photo = $prev_father_photo;
+        }
+
+        return $return_father_photo;
+    }
+    
+    
+    
+               
+    /*****************Function _upload_mother_photo**********************************
+    * @type            : Function
+    * @function name   : _upload_mother_photo
+    * @description     : process to upload mother profile photo in the server                  
+    *                     and return photo file name  
+    * @param           : null
+    * @return          : $return_mother_photo string value 
+    * ********************************************************** */
+    private function _upload_mother_photo() {
+
+        $prev_mother_photo = $this->input->post('prev_mother_photo');
+        $mother_photo = $_FILES['mother_photo']['name'];
+        $mother_photo_type = $_FILES['mother_photo']['type'];
+        $return_mother_photo = '';
+        if ($mother_photo != "") {
+            if ($mother_photo_type == 'image/jpeg' || $mother_photo_type == 'image/pjpeg' ||
+                    $mother_photo_type == 'image/jpg' || $mother_photo_type == 'image/png' ||
+                    $mother_photo_type == 'image/x-png' || $mother_photo_type == 'image/gif') {
+
+                $destination = 'assets/uploads/mother-photo/';
+
+                $file_type = explode(".", $mother_photo);
+                $extension = strtolower($file_type[count($file_type) - 1]);
+                $mother_photo_path = 'photo-' . time() . '-sms.' . $extension;
+
+                move_uploaded_file($_FILES['mother_photo']['tmp_name'], $destination . $mother_photo_path);
+
+                // need to unlink previous mother_photo
+                if ($prev_mother_photo != "") {
+                    if (file_exists($destination . $prev_mother_photo)) {
+                        @unlink($destination . $prev_mother_photo);
+                    }
+                }
+
+                $return_mother_photo = $mother_photo_path;
+            }
+        } else {
+            $return_mother_photo = $prev_mother_photo;
+        }
+
+        return $return_mother_photo;
+    }
+    
+
 
 }

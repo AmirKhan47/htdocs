@@ -9,13 +9,10 @@
                 <div class="clearfix"></div>
             </div>
              <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'frontend', 'frontend')){ ?>
                     <a href="<?php echo site_url('frontend/index'); ?>"><?php echo $this->lang->line('manage_frontend'); ?> </a>
-                <?php } ?>
-                <?php if(has_permission(VIEW, 'frontend', 'image')){ ?>
-                  |  <a href="<?php echo site_url('frontend/image/index'); ?>"><?php echo $this->lang->line('manage_frontend_image'); ?></a>
-                <?php } ?>
+                <?php } ?>              
                 <?php if(has_permission(VIEW, 'frontend', 'slider')){ ?>
                   |  <a href="<?php echo site_url('frontend/slider/index'); ?>"><?php echo $this->lang->line('manage_slider'); ?></a>
                 <?php } ?>
@@ -27,14 +24,15 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_slider_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'frontend', 'slider')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_slider"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('slider'); ?></a> </li>                          
+                           <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('frontend/slider/add'); ?>" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('slider'); ?></a> </li>                          
+                            <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_slider"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('slider'); ?></a> </li>                          
+                            <?php } ?> 
                         <?php } ?> 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_slider"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('slider'); ?></a> </li>                          
-                        <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_slider"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('slider'); ?></a> </li>                          
-                        <?php } ?>                
+                        <?php } ?>   
                     </ul>
                     <br/>
                     
@@ -45,6 +43,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('image'); ?></th>
                                         <th><?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('action'); ?></th>                                            
@@ -55,6 +56,9 @@
                                         <?php foreach($sliders as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                 <?php  if($obj->image != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/slider/<?php echo $obj->image; ?>" alt="" width="100" /> 
@@ -64,10 +68,10 @@
                                             <td>
                                                 <?php if(has_permission(EDIT, 'frontend', 'slider')){ ?>
                                                     <a href="<?php echo site_url('frontend/slider/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
-                                                <?php } ?>
+                                                <?php } ?>                                                
                                                 <?php if(has_permission(VIEW, 'frontend', 'slider')){ ?>
-                                                    <a href="<?php echo site_url('frontend/slider/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
-                                                <?php } ?>
+                                                    <a  onclick="get_slider_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-slider-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                <?php  } ?>    
                                                 <?php if(has_permission(DELETE, 'frontend', 'slider')){ ?>
                                                     <a href="<?php echo site_url('frontend/slider/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
                                                 <?php } ?>
@@ -84,6 +88,7 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('frontend/slider/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                
+                                <?php $this->load->view('layout/school_list_form'); ?>
                                <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12"> <?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('image'); ?>  <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
@@ -99,7 +104,7 @@
                                <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?>" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -121,7 +126,7 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('frontend/slider/edit/'.$slider->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                                                                                                     
-                                                                
+                                <?php $this->load->view('layout/school_list_edit_form'); ?>                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12"> <?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('image'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
@@ -142,7 +147,7 @@
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?> </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($slider->title) ?  $slider->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?>" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($slider->title) ?  $slider->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('image'); ?> <?php echo $this->lang->line('title'); ?>" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -159,42 +164,7 @@
                                 <?php echo form_close(); ?>
                             </div>
                         </div>  
-                        <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_slider">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $slider->title; ?>
-                                    </div>
-                                </div>
-                                                                                        
-                                                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('image'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($slider->image){ ?>
-                                    <img src="<?php echo UPLOAD_PATH; ?>/slider/<?php echo $slider->image; ?>" alt=""  class="img-responsive" /><br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                
-                                <?php if(has_permission(EDIT, 'frontend', 'slider')){ ?>                                                     
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('frontend/slider/edit/'.$slider->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
+                        <?php } ?> 
                         
                     </div>
                 </div>
@@ -202,6 +172,38 @@
         </div>
     </div>
 </div>
+
+
+<div class="modal fade bs-slider-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('slider'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_slider_data"> </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_slider_modal(slider_id){
+         
+        $('.fn_slider_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('frontend/slider/get_single_slider'); ?>",
+          data   : {slider_id : slider_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_slider_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
 
  <script type="text/javascript"> 
   
@@ -216,9 +218,11 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+        search: true,            
+        responsive: true
       });
     });
+    
     $("#add").validate();     
     $("#edit").validate();  
   </script> 

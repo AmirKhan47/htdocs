@@ -634,6 +634,32 @@ class Common_model extends CI_Model {
 	        return false;
 	    }
 	}
+	public function excel_data()
+	{
+		$this->db->select('*');
+	    $this->db->from('registration r');
+	    $this->db->join('student s','s.id=r.student_id','left');
+	    $this->db->join('classes cl','cl.id=r.class_id','left');
+	    $this->db->join('branch b','b.id=r.branch_id','left');
+	    $this->db->join('challan ch','ch.student_id=s.id','left');
+	    $this->db->join('student_fees_discounts sfd','sfd.student_id=s.id','left');
+
+	    $this->db->join('fee_structure fs','fs.fee_structure_id=ch.fee_structure_id','left');
+
+	    $this->db->join('users u', 'u.id = ch.created_by', 'left');
+	    $this->db->where('r.registration_status','registered');
+	    // $this->db->where('fs.fee_structure_type','New');
+	    $this->db->order_by('s.id','asc');
+	    $query = $this->db->get();
+	    if($query->num_rows() > 0)
+	    {
+	        return $query->result_array();
+	    }
+	    else
+	    {
+	        return false;
+	    }
+	}
 	public function select_max($table="",$column="")
 	{
 		$this->db->select_max($column);

@@ -15,27 +15,46 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_assignment_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'assignment', 'assignment')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_assignment"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('assignment'); ?></a> </li>                          
+                        
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('assignment/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('assignment'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                 <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_assignment"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('assignment'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>
+                                 
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_assignment"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('assignment'); ?></a> </li>                          
                         <?php } ?>                
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_assignment"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('assignment'); ?></a> </li>                          
-                        <?php } ?> 
+                       
+                            
                         <li class="li-class-list">
-                            <select  class="form-control col-md-7 col-xs-12" onchange="get_assignment_by_class(this.value);">
-                                <?php if($this->session->userdata('role_id') != STUDENT){ ?>
-                                <option value="<?php echo site_url('assignment/index'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                 <?php } ?>  
-                                <?php foreach($classes as $obj ){ ?>
-                                    <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
-                                        <option value="<?php echo site_url('assignment/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
-                                    <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
-                                        <option value="<?php echo site_url('assignment/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                            <?php if($this->session->userdata('role_id') != SUPER_ADMIN){  ?>
+                                <select  class="form-control col-md-7 col-xs-12" onchange="get_assignment_by_class(this.value);">
+                                    <?php if($this->session->userdata('role_id') != STUDENT){ ?>
+                                    <option value="<?php echo site_url('assignment/index'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
+                                     <?php } ?>  
+                                    <?php foreach($class_list as $obj ){ ?>
+                                        <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
+                                            <option value="<?php echo site_url('assignment/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                        <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
+                                            <option value="<?php echo site_url('assignment/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                        <?php } ?>                                            
                                     <?php } ?>                                            
-                                <?php } ?>                                            
-                            </select>
+                                </select>
+                            <?php }else{ ?>
+                            
+                                <select  class="form-control col-md-7 col-xs-12 auto-width" name="school_id_filter" id="school_id_filter" onchange="get_class_by_school(this.value,'')">
+                                        <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>--</option> 
+                                    <?php foreach($schools as $obj ){ ?>
+                                        <option value="<?php echo $obj->id; ?>" <?php if(isset($filter_school_id) && $filter_school_id == $obj->id){ echo 'selected="selected"';} ?> > <?php echo $obj->school_name; ?></option>
+                                    <?php } ?>   
+                                </select>                            
+                                <select  class="form-control col-md-7 col-xs-12 auto-width" name="class_id_filter" id="class_id_filter" onchange="get_assignment_by_class_sa(this.value);" >
+                                    <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                               
+                                </select>
+                            
+                            <?php } ?>
                         </li>    
                     </ul>
                     <br/>
@@ -47,6 +66,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?></th>
                                         <th><?php echo $this->lang->line('class'); ?></th>
                                         <th><?php echo $this->lang->line('subject'); ?></th>
@@ -60,6 +82,9 @@
                                         <?php foreach($assignments as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->title; ?></td>
                                             <td><?php echo $obj->class_name; ?></td>
                                             <td><?php echo $obj->subject; ?></td>
@@ -70,7 +95,7 @@
                                                     <a href="<?php echo site_url('assignment/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                 <?php  } ?>
                                                 <?php if(has_permission(VIEW, 'assignment', 'assignment')){ ?>
-                                                    <a href="<?php echo site_url('assignment/view/'.$obj->id); ?>" class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                    <a  onclick="get_assignment_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-assignment-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                     <?php if($obj->assignment){ ?>
                                                     <a target="_blank" href="<?php echo UPLOAD_PATH; ?>/assignment/<?php echo $obj->assignment; ?>" class="btn btn-success btn-xs"><i class="fa fa-download"></i> <?php echo $this->lang->line('download'); ?> </a>
                                                     <?php  } ?>
@@ -91,11 +116,13 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('assignment/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                 <?php $this->load->view('layout/school_list_form'); ?>  
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>               
@@ -104,10 +131,12 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="class_id" required="required" onchange="get_subject_by_class(this.value, '', false);" >
+                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="add_class_id" required="required" onchange="get_subject_by_class(this.value, '');" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <?php foreach($classes as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                            <?php if(isset($classes) && !empty($classes)){ ?>
+                                                <?php foreach($classes as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                                <?php } ?>                                            
                                             <?php } ?>                                            
                                         </select>
                                         <div class="help-block"><?php echo form_error('class_id'); ?></div>
@@ -129,7 +158,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="deadline"><?php echo $this->lang->line('deadline'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="deadline"  id="add_deadline" value="<?php echo isset($post['deadline']) ?  $post['deadline'] : ''; ?>" placeholder="<?php echo $this->lang->line('deadline'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="deadline"  id="add_deadline" value="<?php echo isset($post['deadline']) ?  $post['deadline'] : ''; ?>" placeholder="<?php echo $this->lang->line('deadline'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('deadline'); ?></div>
                                     </div>
                                 </div>
@@ -176,11 +205,12 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('assignment/edit/'.$assignment->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                 <?php $this->load->view('layout/school_list_edit_form'); ?> 
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($assignment->title) ?  $assignment->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($assignment->title) ?  $assignment->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -189,10 +219,12 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="class_id" required="required" onchange="get_subject_by_class(this.value, '', true);">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id"  id="edit_class_id" required="required" onchange="get_subject_by_class(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <?php foreach($classes as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" <?php if($assignment->class_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $obj->name; ?></option>
+                                            <?php if(isset($classes) && !empty($classes)){ ?>
+                                                <?php foreach($classes as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" <?php if($assignment->class_id == $obj->id){ echo 'selected="selected"';} ?>><?php echo $obj->name; ?></option>
+                                                <?php } ?>                                            
                                             <?php } ?>                                            
                                         </select>
                                         <div class="help-block"><?php echo form_error('class_id'); ?></div>
@@ -215,7 +247,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="deadline"><?php echo $this->lang->line('deadline'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="deadline"  id="edit_deadline" value="<?php echo isset($assignment->deadline) ?  date('d-m-Y', strtotime($assignment->deadline)) : $post['deadline']; ?>" placeholder="<?php echo $this->lang->line('deadline'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="deadline"  id="edit_deadline" value="<?php echo isset($assignment->deadline) ?  date('d-m-Y', strtotime($assignment->deadline)) : $post['deadline']; ?>" placeholder="<?php echo $this->lang->line('deadline'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('deadline'); ?></div>
                                     </div>
                                 </div>
@@ -257,66 +289,7 @@
                             </div>
                         </div>  
                         <?php } ?>
-                        
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_assignment">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url('assignment/edit'), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('title'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $assignment->title; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('class'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $assignment->class_name; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('subject'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $assignment->subject; ?>
-                                    </div>
-                                </div>
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('deadline'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo date('M j, Y', strtotime($assignment->deadline)); ?>
-                                    </div>
-                                </div>
-                                                         
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('assignment'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php if($assignment->assignment){ ?>
-                                        <a href="<?php echo UPLOAD_PATH; ?>/assignment/<?php echo $assignment->assignment; ?>"  class="btn btn-success btn-xs"><i class="fa fa-download"></i> <?php echo $this->lang->line('download'); ?></a> <br/><br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                             
-                                <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-4"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-9 col-sm-9 col-xs-8">
-                                    : <?php echo $assignment->note; ?>
-                                    </div>
-                                </div>
-                                
-                                <?php if(has_permission(EDIT, 'assignment', 'assignment')){ ?>                                                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('assignment/edit/'.$assignment->id); ?>" class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
-                        
+                                          
                     </div>
                 </div>
             </div>
@@ -324,33 +297,124 @@
     </div>
 </div>
 
+
+<div class="modal fade bs-assignment-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('assignment'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_assignment_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_assignment_modal(assignment_id){
+         
+        $('.fn_assignment_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('assignment/get_single_assignment'); ?>",
+          data   : {assignment_id : assignment_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_assignment_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
 <link href="<?php echo VENDOR_URL; ?>datepicker/datepicker.css" rel="stylesheet">
- <script src="<?php echo VENDOR_URL; ?>datepicker/datepicker.js"></script>
+<script src="<?php echo VENDOR_URL; ?>datepicker/datepicker.js"></script>
+
+
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     
+    $("document").ready(function() {
+         <?php if(isset($edit) && !empty($edit)){ ?>
+            $("#edit_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();        
+        var class_id = '';
+        
+        <?php if(isset($edit) && !empty($edit)){ ?>
+            class_id =  '<?php echo $assignment->class_id; ?>';           
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                   if(class_id){
+                       $('#edit_class_id').html(response);   
+                   }else{
+                       $('#add_class_id').html(response);   
+                   }                  
+               }
+            }
+        });
+    }); 
+
+  </script>
+<!-- Super admin js end -->
+
  <script type="text/javascript">
      
   $('#add_deadline').datepicker();
   $('#edit_deadline').datepicker();
 
     
+    var edit = false;
     <?php if(isset($edit)){ ?>
-        get_subject_by_class('<?php echo $assignment->class_id; ?>', '<?php echo $assignment->subject_id; ?>', true);
-    <?php } ?>
-        
-    <?php if(isset($class_id)){ ?>
-        get_subject_by_class('<?php echo $class_id; ?>', '', false);
+        edit = true;
+        get_subject_by_class('<?php echo $assignment->class_id; ?>', '<?php echo $assignment->subject_id; ?>');
     <?php } ?>
     
-    function get_subject_by_class(class_id, subject_id, is_edit){       
-           
+    function get_subject_by_class(class_id, subject_id){       
+        
+        var school_id = '';
+        
+        <?php if(isset($edit)){ ?>                
+            school_id = $('#edit_school_id').val();
+         <?php }else{ ?> 
+            school_id = $('#add_school_id').val();
+         <?php } ?> 
+             
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
         $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_subject_by_class'); ?>",
-            data   : { class_id : class_id , subject_id : subject_id},               
+            data   : {school_id:school_id, class_id : class_id , subject_id : subject_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
                {
-                   if(is_edit){
+                   if(edit){
                         $('#edit_subject_id').html(response);
                    }else{
                         $('#add_subject_id').html(response);
@@ -360,11 +424,51 @@
         });                  
         
    }
+   
+   
+   /* Menu Filter Start */
     function get_assignment_by_class(url){          
         if(url){
             window.location.href = url; 
         }
     }
+    
+        
+    function get_class_by_school(school_id , class_id){
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {                     
+                  $('#class_id_filter').html(response); 
+               }
+            }
+        });
+    }
+    
+    
+    <?php if(isset($filter_school_id) && isset($class_id)){ ?>
+        get_class_by_school('<?php echo $filter_school_id; ?>', '<?php echo $class_id; ?>');
+    <?php } ?>
+    
+    function get_assignment_by_class_sa(class_id){
+    
+        var school_id = $('#school_id_filter').val();
+        if( !school_id){
+            
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }        
+        if(!class_id){
+            return false;
+        }        
+       window.location.href = '<?php echo site_url('assignment/index/'); ?>'+class_id+'/'+school_id; 
+        
+    }
+    
  </script>
   <script type="text/javascript">
         $(document).ready(function() {
@@ -378,9 +482,11 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
+        
     $("#add").validate();     
     $("#edit").validate(); 
 </script>

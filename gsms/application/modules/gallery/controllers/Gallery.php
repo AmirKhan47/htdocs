@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Gallery.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Gallery
  * @description     : Manage school Gallery for guardian, student, teacher and employee.  
@@ -35,7 +35,8 @@ class Gallery extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['galleries'] = $this->gallery->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['galleries'] = $this->gallery->get_gallery_list();
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_gallery') . ' | ' . SMS);
         $this->layout->view('gallery/index', $this->data);
@@ -61,6 +62,9 @@ class Gallery extends MY_Controller {
 
                 $insert_id = $this->gallery->insert('galleries', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been created a Gallery : '.$data['title']);
+                     
                     success($this->lang->line('insert_success'));
                     redirect('gallery/index');
                 } else {
@@ -71,8 +75,10 @@ class Gallery extends MY_Controller {
                 $this->data['post'] = $_POST;
             }
         }
+        
+        $this->data['galleries'] = $this->gallery->get_gallery_list();
+        
 
-        $this->data['galleries'] = $this->gallery->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('gallery') . ' | ' . SMS);
         $this->layout->view('gallery/index', $this->data);
@@ -102,9 +108,17 @@ class Gallery extends MY_Controller {
             $this->_prepare_gallery_validation();
             if ($this->form_validation->run() === TRUE) {
                 $data = $this->_get_posted_gallery_data();
+                
+                // get gallery for update gallery image
+               // $gallery = $this->gallery->get_single('galleries', array('id' => $this->input->post('id')));                
                 $updated = $this->gallery->update('galleries', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    $this->gallery->update('gallery_images', array('school_id'=>$data['school_id']), array('gallery_id' => $this->input->post('id')));
+                    
+                    create_log('Has been updated a Gallery : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('gallery/index');
                 } else {
@@ -124,7 +138,9 @@ class Gallery extends MY_Controller {
             }
         }
 
-        $this->data['galleries'] = $this->gallery->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['galleries'] = $this->gallery->get_gallery_list();
+        
+        $this->data['school_id'] = $this->data['gallery']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('gallery') . ' | ' . SMS);
@@ -150,7 +166,10 @@ class Gallery extends MY_Controller {
             redirect('gallery/index');
         }
         
-        $this->data['galleries'] = $this->gallery->get_list('galleries', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+       $this->data['galleries'] = $this->gallery->get_gallery_list();
+        
+        
         $this->data['gallery'] = $this->gallery->get_single('galleries', array('id' => $id));        
         
         $this->data['detail'] = TRUE;
@@ -171,9 +190,8 @@ class Gallery extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('title', $this->lang->line('gallery') . ' ' . $this->lang->line('title'), 'trim|required|callback_title');
-        $this->form_validation->set_rules('is_view_on_web', $this->lang->line('is_view_on_web'), 'trim|required');
-        $this->form_validation->set_rules('image', $this->lang->line('cover_image'), 'trim|callback_image');
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');
     }
 
@@ -188,7 +206,7 @@ class Gallery extends MY_Controller {
     * ********************************************************** */  
     public function title() {
         if ($this->input->post('id') == '') {
-            $gallery = $this->gallery->duplicate_check($this->input->post('title'));
+            $gallery = $this->gallery->duplicate_check($this->input->post('school_id'), $this->input->post('title'));
             if ($gallery) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
@@ -196,35 +214,12 @@ class Gallery extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $gallery = $this->gallery->duplicate_check($this->input->post('title'), $this->input->post('id'));
+            $gallery = $this->gallery->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('id'));
             if ($gallery) {
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
-            }
-        }
-    }
-
-    
-    /*****************Function image**********************************
-    * @type            : Function
-    * @function name   : image
-    * @description     : validate gallery image type/format                  
-    *                       
-    * @param           : null
-    * @return          : boolean true/false 
-    * ********************************************************** */ 
-    public function image() {
-        if ($_FILES['image']['name']) {
-            $name = $_FILES['image']['name'];
-            $arr = explode('.', $name);
-            $ext = end($arr);
-            if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
-                return TRUE;
-            } else {
-                $this->form_validation->set_message('image', $this->lang->line('select_valid_file_format'));
-                return FALSE;
             }
         }
     }
@@ -241,75 +236,26 @@ class Gallery extends MY_Controller {
     private function _get_posted_gallery_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'note';
+        $items[] = 'is_view_on_web';
 
         $data = elements($items, $_POST);
-
-        $data['is_view_on_web'] = $this->input->post('is_view_on_web') ? 1 : 0;
 
         if ($this->input->post('id')) {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
+                        
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
         }
 
-        if (isset($_FILES['image']['name'])) {
-            $data['image'] = $this->_upload_image();
-        }
-
         return $data;
     }
 
-    
-    /*****************Function _upload_image**********************************
-    * @type            : Function
-    * @function name   : _upload_image
-    * @description     : Process to to upload gallery image in the server
-    *                    and return image name                   
-    *                       
-    * @param           : null
-    * @return          : $return_image string value 
-    * ********************************************************** */
-    private function _upload_image() {
-
-        $prev_image = $this->input->post('prev_image');
-        $image = $_FILES['image']['name'];
-        $image_type = $_FILES['image']['type'];
-        $return_image = '';
-        if ($image != "") {
-            if ($image_type == 'image/jpeg' || $image_type == 'image/pjpeg' ||
-                    $image_type == 'image/jpg' || $image_type == 'image/png' ||
-                    $image_type == 'image/x-png' || $image_type == 'image/gif') {
-
-                $destination = 'assets/uploads/gallery/';
-
-                $file_type = explode(".", $image);
-                $extension = strtolower($file_type[count($file_type) - 1]);
-                $image_path = 'gallery-cover-' . time() . '-sms.' . $extension;
-
-                move_uploaded_file($_FILES['image']['tmp_name'], $destination . $image_path);
-
-                // need to unlink previous image
-                if ($prev_image != "") {
-                    if (file_exists($destination . $prev_image)) {
-                        @unlink($destination . $prev_image);
-                    }
-                }
-
-                $return_image = $image_path;
-            }
-        } else {
-            $return_image = $prev_image;
-        }
-
-        return $return_image;
-    }
-
-      
     
     /*****************Function delete**********************************
     * @type            : Function
@@ -328,16 +274,19 @@ class Gallery extends MY_Controller {
             redirect('gallery/index');
         }
         
+        $images = $this->gallery->get_list('gallery_images', array('gallery_id'=>$id), '', '', '', 'id', 'ASC');        
+        if(!empty($images)){
+            error($this->lang->line('pls_remove_child_data'));
+            redirect('gallery/index');
+        }
+        
         $gallery = $this->gallery->get_single('galleries', array('id' => $id));
+        
         if ($this->gallery->delete('galleries', array('id' => $id))) {
 
-            // delete teacher resume and image
-            $destination = 'assets/uploads/';
-            if (file_exists($destination . '/gallery/' . $gallery->image)) {
-                @unlink($destination . '/gallery/' . $gallery->image);
-            }
-
+            create_log('Has been deleted a Gallery : '.$gallery->title);
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Password.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Password
  * @description     : Reset users password by System administrator.  
@@ -21,7 +21,7 @@ class Password extends MY_Controller {
     function __construct() {
         parent::__construct();
          $this->load->model('Administrator_Model', 'administrator', true);
-         $this->data['roles'] = $this->administrator->get_list('roles', array('status' => 1), '','', '', 'id', 'ASC');
+         $this->data['roles'] = $this->administrator->get_list('roles', array('status' => 1, 'is_super_admin'=>0), '','', '', 'id', 'ASC');
          $this->data['years'] = $this->administrator->get_list('academic_years', array('status' => 1), '','', '', 'id', 'ASC');
     }
 
@@ -39,12 +39,15 @@ class Password extends MY_Controller {
        check_permission(EDIT);
        
         if($_POST){
+            
             $this->load->library('form_validation');
             $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
             $this->form_validation->set_rules('role_id', $this->lang->line('user'). ' ' .$this->lang->line('type'), 'trim|required');
+            
             if($this->input->post('role_id') == STUDENT){
                 $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');  
             }
+            
             $this->form_validation->set_rules('user_id', $this->lang->line('user'), 'trim|required');
             $this->form_validation->set_rules('password', $this->lang->line('password'), 'trim|required|min_length[5]|max_length[12]');
             $this->form_validation->set_rules('conf_password', $this->lang->line('password').' '.$this->lang->line('confirm'), 'trim|required|matches[password]');
@@ -54,8 +57,12 @@ class Password extends MY_Controller {
                 $data['temp_password'] = base64_encode($this->input->post('password'));
                 $data['modified_at'] = date('Y-m-d H:i:s');
                 $data['modified_by'] = logged_in_user_id();
+                
                 $this->administrator->update('users', $data, array('id'=> $this->input->post('user_id')));
                 success($this->lang->line('update_success'));
+                
+                $user = $this->administrator->get_single('users', array('id' => $this->input->post('user_id')));
+                create_log('Has been updated password for user : '. $user->username);
                 redirect('administrator/password');
              }
         }

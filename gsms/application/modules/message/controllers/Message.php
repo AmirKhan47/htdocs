@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Message.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Message
  * @description     : Manage users private messaging system.  
@@ -26,6 +26,8 @@ class Message extends MY_Controller {
         $this->data['trashs'] = $this->message->get_message_list($type = 'trash');
         $this->data['inboxs'] = $this->message->get_message_list($type = 'inbox');
         $this->data['new'] = $this->message->get_message_list($type = 'new');
+        
+        error_reporting(0);
     }
 
                     
@@ -118,9 +120,21 @@ class Message extends MY_Controller {
         if ($_POST) {
 
             $data = array();
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            
+            $data['school_id'] = $this->input->post('school_id');
             $data['subject'] = $this->input->post('subject');
             $data['body'] = nl2br($this->input->post('body'));
+                   
+            $school = $this->message->get_school_by_id($data['school_id']);
+                             
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('message/inbox');
+            }
+            
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['attachment'] = '';
 
             if ($this->input->post('message_id')) {
@@ -137,6 +151,7 @@ class Message extends MY_Controller {
             // default value for relation table
             $relation_data = array();
 
+            $relation_data['school_id'] = $data['school_id'] ;
             $relation_data['sender_id'] = logged_in_user_id();
             $relation_data['receiver_id'] = $this->input->post('receiver_id');
             $relation_data['is_trash'] = 0;
@@ -197,9 +212,16 @@ class Message extends MY_Controller {
         if ($id) {
             $this->data['message'] = $this->message->get_single_message($id);
         }
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['classes'] = $this->message->get_list('classes', $condition, '', '', '', 'id', 'ASC');
+        } 
 
-        $this->data['classes'] = $this->message->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
         $this->data['roles'] = $this->message->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
+        
         $this->layout->title($this->lang->line('compose') . ' ' . $this->lang->line('message') . ' | ' . SMS);
         $this->layout->view('message/compose', $this->data);
     }
@@ -218,7 +240,9 @@ class Message extends MY_Controller {
         check_permission(VIEW);
 
         if ($id) {
-            $this->data['message'] = $this->message->get_single_message($id);
+            $this->data['message'] = $this->message->get_single_message($id);            
+            $this->message->update('message_relationships', array('is_read' => 1), array('message_id' => $id, 'owner_id'=> logged_in_user_id()));
+            
             $this->data['replies'] = $this->message->get_list('replies', array('message_id' => $id), '', '', '', 'id', 'ASC');
 
             if (!$this->data['message']) {

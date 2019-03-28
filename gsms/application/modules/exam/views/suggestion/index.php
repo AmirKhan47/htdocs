@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'exam', 'grade')){ ?>
                     <a href="<?php echo site_url('exam/grade/'); ?>"><?php echo $this->lang->line('exam_grade'); ?></a>
                 <?php } ?> 
@@ -33,26 +33,39 @@
                     <ul  class="nav nav-tabs bordered">
                         <li class="<?php if(isset($list)){ echo 'active'; }?>"><a href="#tab_suggestion_list"   role="tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-list-ol"></i> <?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('list'); ?></a> </li>
                         <?php if(has_permission(ADD, 'exam', 'suggestion')){ ?>
-                            <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_suggestion"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('suggestion'); ?></a> </li>                          
+                            <?php if(isset($edit)){ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="<?php echo site_url('exam/suggestion/add'); ?>"  aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('suggestion'); ?></a> </li>                          
+                             <?php }else{ ?>
+                                <li  class="<?php if(isset($add)){ echo 'active'; }?>"><a href="#tab_add_suggestion"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-plus-square-o"></i> <?php echo $this->lang->line('add'); ?> <?php echo $this->lang->line('suggestion'); ?></a> </li>                          
+                             <?php } ?>
                         <?php } ?>
                         <?php if(isset($edit)){ ?>
                             <li  class="active"><a href="#tab_edit_suggestion"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> <?php echo $this->lang->line('suggestion'); ?></a> </li>                          
-                        <?php } ?>
-                        <?php if(isset($detail)){ ?>
-                            <li  class="active"><a href="#tab_view_suggestion"  role="tab"  data-toggle="tab" aria-expanded="false"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('view'); ?> <?php echo $this->lang->line('suggestion'); ?></a> </li>                          
-                        <?php } ?>
+                        <?php } ?>                        
                             <li class="li-class-list">
-                                <select  class="form-control col-md-7 col-xs-12" onchange="get_subject_list_by_class(this.value);">
-                                    <option value="<?php echo site_url('exam/suggestion/index/'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                    <?php foreach($classes as $obj ){ ?>
-                                        <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
-                                            <option value="<?php echo site_url('exam/suggestion/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
-                                        <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
-                                            <option value="<?php echo site_url('exam/suggestion/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
-                                        <?php } ?> 
-                                    
-                                    <?php } ?>                                            
-                                </select>
+                                <?php if($this->session->userdata('role_id') != SUPER_ADMIN){  ?>
+                                    <select  class="form-control col-md-7 col-xs-12" onchange="get_suggestion_list_by_class(this.value);">
+                                        <option value="<?php echo site_url('exam/suggestion/index/'); ?>">--<?php echo $this->lang->line('select'); ?>--</option> 
+                                        <?php foreach($class_list as $obj ){ ?>
+                                            <?php if($this->session->userdata('role_id') == STUDENT && $this->session->userdata('class_id') == $obj->id){ ?>
+                                                <option value="<?php echo site_url('exam/suggestion/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                            <?php }elseif($this->session->userdata('role_id') != STUDENT){ ?>
+                                                <option value="<?php echo site_url('exam/suggestion/index/'.$obj->id); ?>" <?php if(isset($class_id) && $class_id == $obj->id){ echo 'selected="selected"';} ?> ><?php echo $this->lang->line('class'); ?> <?php echo $obj->name; ?></option>
+                                            <?php } ?> 
+
+                                        <?php } ?>                                            
+                                    </select>
+                                <?php }else{ ?> 
+                                        <select  class="form-control col-md-7 col-xs-12 auto-width" name="school_id_filter" id="school_id_filter" onchange="get_class_by_school_filter(this.value,'')">
+                                            <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>--</option> 
+                                            <?php foreach($schools as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" <?php if(isset($filter_school_id) && $filter_school_id == $obj->id){ echo 'selected="selected"';} ?> > <?php echo $obj->school_name; ?></option>
+                                            <?php } ?>   
+                                        </select>                            
+                                        <select  class="form-control col-md-7 col-xs-12 auto-width" name="class_id_filter" id="class_id_filter" onchange="get_suggestion_list_by_class_sa(this.value);" >
+                                            <option value="">--<?php echo $this->lang->line('select'); ?>--</option>                                                                               
+                                        </select>
+                                <?php } ?>
                             </li> 
                     </ul>
                     <br/>
@@ -64,6 +77,9 @@
                                     <thead>
                                         <tr>
                                             <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <th><?php echo $this->lang->line('school'); ?></th>
+                                            <?php } ?>
                                             <th><?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?></th>
                                             <th><?php echo $this->lang->line('exam'); ?> <?php echo $this->lang->line('title'); ?></th>
                                             <th><?php echo $this->lang->line('class'); ?></th>                                       
@@ -76,6 +92,9 @@
                                             <?php foreach($suggestions as $obj){ ?>
                                             <tr>
                                                 <td><?php echo $count++; ?></td>
+                                                <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                    <td><?php echo $obj->school_name; ?></td>
+                                                <?php } ?>
                                                 <td><?php echo $obj->title; ?></td>
                                                 <td><?php echo $obj->exam_title; ?></td>
                                                 <td><?php echo $obj->class_name; ?></td>
@@ -85,7 +104,7 @@
                                                         <a href="<?php echo site_url('exam/suggestion/edit/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-pencil-square-o"></i> <?php echo $this->lang->line('edit'); ?> </a>
                                                      <?php } ?>
                                                     <?php if(has_permission(VIEW, 'exam', 'suggestion')){ ?>
-                                                        <a href="<?php echo site_url('exam/suggestion/view/'.$obj->id); ?>" class="btn btn-info btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                        <a  onclick="get_suggestion_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-suggestion-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
                                                         <?php if($obj->suggestion){ ?>
                                                             <a href="<?php echo UPLOAD_PATH .'/suggestion/'. $obj->suggestion; ?>" class="btn btn-success btn-xs"><i class="fa fa-download"></i> <?php echo $this->lang->line('download'); ?> </a>
                                                         <?php } ?>
@@ -107,11 +126,13 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('exam/suggestion/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?>   
+                                
                                 <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($post['title']) ?  $post['title'] : ''; ?>" placeholder="<?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>  
@@ -119,7 +140,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="exam_id"><?php echo $this->lang->line('exam'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="exam_id" id="exam_id" required="required">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="exam_id" id="add_exam_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($exams as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" ><?php echo $obj->title; ?></option>
@@ -133,7 +154,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id" id="class_id" required="required" onchange="get_subject_by_class(this.value, '', false);">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id" id="add_class_id" required="required" onchange="get_subject_by_class(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($classes as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
@@ -196,11 +217,13 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('exam/suggestion/edit/'.$suggestion->id), array('name' => 'edit', 'id' => 'edit', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                  
+                                 <?php $this->load->view('layout/school_list_edit_form'); ?> 
+                                
                                  <div class="item form-group">
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="title"><?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($suggestion->title) ?  $suggestion->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text">
+                                        <input  class="form-control col-md-7 col-xs-12"  name="title"  id="title" value="<?php echo isset($suggestion->title) ?  $suggestion->title : $post['title']; ?>" placeholder="<?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?>" required="required" type="text" autocomplete="off">
                                         <div class="help-block"><?php echo form_error('title'); ?></div>
                                     </div>
                                 </div>
@@ -208,7 +231,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="exam_id"><?php echo $this->lang->line('exam'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="exam_id" id="exam_id" required="required">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="exam_id" id="edit_exam_id" required="required">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($exams as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php if($obj->id == $suggestion->exam_id){ echo 'selected="selected"'; } ?>><?php echo $obj->title; ?></option>
@@ -221,7 +244,7 @@
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="class_id"><?php echo $this->lang->line('class'); ?> <span class="required">*</span>
                                     </label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id" id="class_id" required="required" onchange="get_subject_by_class(this.value, '', true);">
+                                        <select  class="form-control col-md-7 col-xs-12"  name="class_id" id="edit_class_id" required="required" onchange="get_subject_by_class(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
                                             <?php foreach($classes as $obj ){ ?>
                                             <option value="<?php echo $obj->id; ?>" <?php if($obj->id == $suggestion->class_id){ echo 'selected="selected"'; } ?>><?php echo $obj->name; ?></option>
@@ -280,64 +303,6 @@
                             </div>
                         </div>  
                         <?php } ?>
-
-                        <?php if(isset($detail)){ ?>
-                        <div class="tab-pane fade in active" id="tab_view_suggestion">
-                            <div class="x_content"> 
-                               <?php echo form_open_multipart(site_url(), array('name' => 'detail', 'id' => 'detail', 'class'=>'form-horizontal form-label-left'), ''); ?>
-                                 
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('title'); ?> </label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php echo $suggestion->title; ?>
-                                    </div>
-                                </div>
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('exam'); ?></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php echo $suggestion->exam_title; ?>
-                                    </div>
-                                </div>
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('class'); ?></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php echo $suggestion->class_name; ?>
-                                    </div>
-                                </div>
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('subject'); ?></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php echo $suggestion->subject; ?>
-                                    </div>
-                                </div>
-                                                           
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('suggestion'); ?></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                       <?php if($suggestion->suggestion){ ?>
-                                        <a href="<?php echo UPLOAD_PATH; ?>/suggestion/<?php echo $suggestion->suggestion; ?>"  class="btn btn-success btn-xs"><i class="fa fa-download"></i> <?php echo $this->lang->line('download'); ?> </a> <br/>
-                                        <?php } ?>
-                                    </div>
-                                </div>
-                                 <div class="item form-group">
-                                    <label class="col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('note'); ?></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php echo $suggestion->note; ?>
-                                    </div>
-                                </div>                         
-                                
-                                <?php if(has_permission(EDIT, 'exam', 'suggestion')){ ?>                             
-                                    <div class="ln_solid"></div>
-                                    <div class="form-group">
-                                        <div class="col-md-6 col-md-offset-3">
-                                            <a href="<?php echo site_url('exam/suggestion/edit/'.$suggestion->id); ?>"  class="btn btn-primary"><?php echo $this->lang->line('update'); ?></a>
-                                        </div>
-                                    </div>
-                                <?php } ?>
-                                <?php echo form_close(); ?>
-                            </div>
-                        </div>  
-                        <?php } ?>
                         
                     </div>
                 </div>
@@ -346,40 +311,151 @@
     </div>
 </div>
 
- <script type="text/javascript">     
-    <?php if(isset($edit)){ ?>
-        get_subject_by_class('<?php echo $suggestion->class_id; ?>', '<?php echo $suggestion->subject_id; ?>', true);           
-    <?php } ?>
-    <?php if(isset($class_id)){ ?>
-        get_subject_by_class('<?php echo $class_id; ?>', '', false);
-    <?php } ?>
-    
-    function get_subject_by_class(class_id, subject_id, is_edit){       
+
+
+<div class="modal fade bs-suggestion-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('suggestion'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_suggestion_data">            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_suggestion_modal(suggestion_id){
+         
+        $('.fn_suggestion_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('exam/suggestion/get_single_suggestion'); ?>",
+          data   : {suggestion_id : suggestion_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_suggestion_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+ 
+<!-- Super admin js START  -->
+ <script type="text/javascript">
+     var edit = false;
+    $("document").ready(function() {
+         <?php if(isset($edit) && !empty($edit)){ ?>
+           edit = true;       
+            $(".fn_school_id").trigger('change');
+         <?php } ?>
+    });
+     
+    $('.fn_school_id').on('change', function(){
+      
+        var school_id = $(this).val();        
+        var exam_id = '';
+        var class_id = '';
+        
+        <?php if(isset($edit) && !empty($edit)){ ?>
+            exam_id =  '<?php echo $suggestion->exam_id; ?>';           
+            class_id =  '<?php echo $suggestion->class_id; ?>';           
+         <?php } ?> 
+        
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+       
+       $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_exam_by_school'); ?>",
+            data   : { school_id:school_id, exam_id:exam_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                   if(edit){
+                       $('#edit_exam_id').html(response);   
+                   }else{
+                       $('#add_exam_id').html(response);   
+                   }
+                   
+                   get_class_by_school(school_id, class_id); 
+               }
+            }
+        });
+    }); 
+
+   function get_class_by_school(school_id, class_id){       
          
         $.ajax({       
             type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                   if(edit){
+                       $('#edit_class_id').html(response);   
+                   }else{
+                       $('#add_class_id').html(response);   
+                   }                  
+               }
+            }
+        });                  
+        
+   }
+  
+   
+  </script>
+<!-- Super admin js end -->
+
+ <script type="text/javascript">     
+    <?php if(isset($edit)){ ?>
+        edit = true;
+        get_subject_by_class('<?php echo $suggestion->class_id; ?>', '<?php echo $suggestion->subject_id; ?>');           
+    <?php } ?>
+
+    
+    function get_subject_by_class(class_id, subject_id ){       
+         
+        var school_id = '';
+       
+        <?php if(isset($edit)){ ?>                
+            school_id = $('#edit_school_id').val();
+         <?php }else{ ?> 
+            school_id = $('#add_school_id').val();
+         <?php } ?> 
+             
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        } 
+        
+        $.ajax({       
+            type   : "POST",
             url    : "<?php echo site_url('ajax/get_subject_by_class'); ?>",
-            data   : { class_id : class_id,  subject_id : subject_id},               
+            data   : { school_id : school_id, class_id : class_id,  subject_id : subject_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
                {
-                  if(is_edit){
+                   if(edit){
                         $('#edit_subject_id').html(response);
                    }else{
-                      $('#add_subject_id').html(response); 
+                       $('#add_subject_id').html(response); 
                    }
                }
             }
         });  
    }
-   
-   function get_subject_list_by_class(url){          
-        if(url){
-            window.location.href = url; 
-        }
-     }
-
+    
     $(document).ready(function() {
       $('#datatable-responsive').DataTable( {
           dom: 'Bfrtip',
@@ -391,9 +467,52 @@
               'pdfHtml5',
               'pageLength'
           ],
-          search: true
+            search: true,            
+            responsive: true
       });
     });
+    
+       
+    function get_suggestion_list_by_class(url){          
+        if(url){
+            window.location.href = url; 
+        }
+     }
+    
+    function get_class_by_school_filter(school_id , class_id){
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id, class_id:class_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {                     
+                  $('#class_id_filter').html(response); 
+               }
+            }
+        });
+    }
+    
+    
+    <?php if(isset($filter_school_id) && isset($class_id)){ ?>
+        get_class_by_school_filter('<?php echo $filter_school_id; ?>', '<?php echo $class_id; ?>');
+    <?php } ?>
+    
+    function get_suggestion_list_by_class_sa(class_id){
+    
+        var school_id = $('#school_id_filter').val();
+        if( !school_id){
+            
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }        
+        if(!class_id){
+            return false;
+        }        
+       window.location.href = '<?php echo site_url('exam/suggestion/index/'); ?>'+class_id+'/'+school_id; 
+    }
+       
     
     $("#add").validate();     
     $("#edit").validate(); 

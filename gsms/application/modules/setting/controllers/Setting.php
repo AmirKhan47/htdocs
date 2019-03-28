@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Setting.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Setting
  * @description     : Manage application general settings.  
@@ -19,8 +19,15 @@ class Setting extends MY_Controller {
 
     function __construct() {
         parent::__construct();
-        $this->load->model('Setting_Model', 'setting', true);        
-        $this->data['fields'] = $this->setting->get_table_fields('languages');
+        $this->load->model('Setting_Model', 'setting', true);  
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){  
+            
+            $condition['id'] = $this->session->userdata('school_id');     
+            $this->data['school'] = $this->setting->get_single('schools', $condition);
+        } 
         $this->data['years'] = $this->setting->get_list('academic_years', array('status' => 1), '', '', '', 'id', 'ASC');
     }
 
@@ -35,9 +42,10 @@ class Setting extends MY_Controller {
     * ********************************************************** */
     public function index() {
 
-        check_permission(VIEW);
-        $this->data['setting'] = $this->setting->get_single('settings', array('status' => 1));
-        $this->layout->title($this->lang->line('general') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
+        check_permission(VIEW);        
+               
+        
+        $this->layout->title($this->lang->line('school') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
         $this->layout->view('index', $this->data);
     }
 
@@ -60,10 +68,10 @@ class Setting extends MY_Controller {
             if ($this->form_validation->run() === TRUE) {
                 $data = $this->_get_posted_setting_data();
 
-                $insert_id = $this->setting->insert('settings', $data);
+                $insert_id = $this->setting->insert('schools', $data);
                 if ($insert_id) {
                     success($this->lang->line('insert_success'));
-                    redirect('setting/index');
+                    redirect('setting');
                 } else {
                     error($this->lang->line('insert_failed'));
                     redirect('setting/add');
@@ -72,8 +80,8 @@ class Setting extends MY_Controller {
                 $this->data = $_POST;
             }
         }
-        $this->data['setting'] = $this->setting->get_single('settings', array('status' => 1));
-        $this->layout->title($this->lang->line('general') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
+       
+        $this->layout->title($this->lang->line('school') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
         $this->layout->view('index', $this->data);
     }
 
@@ -96,14 +104,14 @@ class Setting extends MY_Controller {
             $this->_prepare_setting_validation();
             if ($this->form_validation->run() === TRUE) {
                 $data = $this->_get_posted_setting_data();
-                $updated = $this->setting->update('settings', $data, array('id' => $this->input->post('id')));
+                $updated = $this->setting->update('schools', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
                     // update language file
                     $this->update_lang();
 
                     success($this->lang->line('update_success'));
-                    redirect('setting/index');
+                    redirect('setting');
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('setting/edit/' . $this->input->post('id'));
@@ -111,8 +119,7 @@ class Setting extends MY_Controller {
             }
         }
         
-        $this->data['setting'] = $this->setting->get_single('settings', array('status' => 1));
-        $this->layout->title($this->lang->line('general') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
+        $this->layout->title($this->lang->line('school') . ' ' . $this->lang->line('setting') . ' | ' . SMS);
         $this->layout->view('setting/index', $this->data);
     }
 
@@ -129,18 +136,50 @@ class Setting extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
-        $this->form_validation->set_rules('school_name', $this->lang->line('school') . ' ' . $this->lang->line('name'), 'trim|required');
+        $this->form_validation->set_rules('school_name', $this->lang->line('school') . ' ' . $this->lang->line('name'), 'trim|required|callback_school_name');
         $this->form_validation->set_rules('address', $this->lang->line('address'), 'trim|required');
         $this->form_validation->set_rules('phone', $this->lang->line('phone'), 'trim|required');
         $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|required');
         $this->form_validation->set_rules('currency', $this->lang->line('currency'), 'trim|required');
         $this->form_validation->set_rules('currency_symbol', $this->lang->line('currency_symbol'), 'trim|required');
-        $this->form_validation->set_rules('language', $this->lang->line('language'), 'trim|required');
+        $this->form_validation->set_rules('session_start_month', $this->lang->line('session_start_month'), 'trim|required');
+        $this->form_validation->set_rules('session_end_month', $this->lang->line('session_end_month'), 'trim|required');
         $this->form_validation->set_rules('footer', $this->lang->line('footer'), 'trim|required');
-        $this->form_validation->set_rules('running_year', $this->lang->line('running_year'), 'trim|required');
     }
 
-       
+     
+    
+                
+    /*****************Function session_school**********************************
+    * @type            : Function
+    * @function name   : session_school
+    * @description     : Unique check for "academic school" data/value                  
+    *                       
+    * @param           : null
+    * @return          : boolean true/false 
+    * ********************************************************** */ 
+    public function school_name() {
+        if ($this->input->post('id') == '') {
+            $school = $this->setting->duplicate_school_check($this->input->post('school_name'));
+            if ($school) {
+                $this->form_validation->set_message('school_name', $this->lang->line('already_exist'));
+                return FALSE;
+            } else {
+                return TRUE;
+            }
+        } else if ($this->input->post('id') != '') {
+            $school = $this->setting->duplicate_school_check($this->input->post('school_name'), $this->input->post('id'));
+            if ($school) {
+                $this->form_validation->set_message('school_name', $this->lang->line('already_exist'));
+                return FALSE;
+            } else {
+                return TRUE;
+            }
+        } else {
+            return TRUE;
+        }
+    }
+    
     /*****************Function _get_posted_setting_data**********************************
     * @type            : Function
     * @function name   : _get_posted_setting_data
@@ -152,16 +191,22 @@ class Setting extends MY_Controller {
     private function _get_posted_setting_data() {
 
         $items = array();
+         
+        $items[] = 'school_code';
         $items[] = 'school_name';
         $items[] = 'address';
         $items[] = 'phone';
         $items[] = 'email';
         $items[] = 'currency';
         $items[] = 'currency_symbol';
-        $items[] = 'language';
-        $items[] = 'running_year';
         $items[] = 'school_fax';
-        $items[] = 'school_geocode';
+        $items[] = 'school_lat'; 
+        $items[] = 'school_lng'; 
+        $items[] = 'session_start_month';
+        $items[] = 'session_end_month';
+        $items[] = 'enable_frontend';
+        $items[] = 'final_result_type';
+        $items[] = 'footer';
         $items[] = 'facebook_url';
         $items[] = 'twitter_url';
         $items[] = 'linkedin_url';
@@ -169,13 +214,10 @@ class Setting extends MY_Controller {
         $items[] = 'youtube_url';
         $items[] = 'instagram_url';
         $items[] = 'pinterest_url';
-        $items[] = 'footer';
         
         $data = elements($items, $_POST);
 
-        // update current / runing year session
-        $this->db->update('academic_years', array('is_running' => 0));
-        $this->setting->update('academic_years', array('is_running' => 1), array('session_year' => $data['running_year']));
+        $data['registration_date'] = date('Y-m-d H:i:s', strtotime($this->input->post('registration_date')));
 
         if ($this->input->post('id')) {
             $data['modified_at'] = date('Y-m-d H:i:s');

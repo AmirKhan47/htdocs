@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Holiday.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Holiday
  * @description     : Manage school holiday.  
@@ -36,8 +36,9 @@ class Holiday extends MY_Controller {
     public function index() {
         
          check_permission(VIEW);
-        
-         $this->data['holidays'] = $this->holiday->get_holiday_list();     
+      
+        $this->data['holidays'] = $this->holiday->get_holiday_list(); 
+         
         $this->data['list'] = TRUE;
         $this->layout->title( $this->lang->line('manage_holiday'). ' | ' . SMS);
         $this->layout->view('holiday/index', $this->data);            
@@ -65,6 +66,9 @@ class Holiday extends MY_Controller {
 
                 $insert_id = $this->holiday->insert('holidays', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created a holiday : '.$data['title']); 
+                    
                     success($this->lang->line('insert_success'));
                     redirect('announcement/holiday/index');
                 } else {
@@ -76,7 +80,8 @@ class Holiday extends MY_Controller {
             }
         }
 
-        $this->data['holidays'] = $this->holiday->get_holiday_list();     
+        $this->data['holidays'] = $this->holiday->get_holiday_list(); 
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add'). ' ' . $this->lang->line('holiday'). ' | ' . SMS);
         $this->layout->view('holiday/index', $this->data);
@@ -108,6 +113,9 @@ class Holiday extends MY_Controller {
                 $updated = $this->holiday->update('holidays', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated a holiday : '.$data['title']);  
+                     
                     success($this->lang->line('update_success'));
                     redirect('announcement/holiday/index');                   
                 } else {
@@ -127,7 +135,9 @@ class Holiday extends MY_Controller {
             }
         }
 
-        $this->data['holidays'] = $this->holiday->get_holiday_list();     
+        $this->data['holidays'] = $this->holiday->get_holiday_list();
+        $this->data['school_id'] = $this->data['holiday']->school_id;
+        
         $this->data['edit'] = TRUE;       
         $this->layout->title($this->lang->line('edit'). ' ' . $this->lang->line('holiday'). ' | ' . SMS);
         $this->layout->view('holiday/index', $this->data);
@@ -152,13 +162,31 @@ class Holiday extends MY_Controller {
            redirect('announcement/holiday/index'); 
         }
         
-        $this->data['holidays'] = $this->holiday->get_holiday_list();      
+        $this->data['holidays'] = $this->holiday->get_holiday_list();
+        
         $this->data['holiday'] = $this->holiday->get_single('holidays', array('id' => $id));
+        
         $this->data['detail'] = TRUE;       
         $this->layout->title($this->lang->line('view'). ' ' . $this->lang->line('holiday'). ' | ' . SMS);
         $this->layout->view('holiday/index', $this->data);
     }
 
+    
+         /*****************Function get_single_holiday**********************************
+     * @type            : Function
+     * @function name   : get_single_holiday
+     * @description     : "Load single holiday information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_holiday(){
+        
+       $holiday_id = $this->input->post('holiday_id');
+       
+       $this->data['holiday'] = $this->holiday->get_single_holiday($holiday_id);
+       echo $this->load->view('holiday/get-single-holiday', $this->data);
+    }
     
        
     /*****************Function _prepare_holiday_validation**********************************
@@ -173,6 +201,7 @@ class Holiday extends MY_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('title', $this->lang->line('title'), 'trim|required|callback_title');   
         $this->form_validation->set_rules('date_from', $this->lang->line('from_date'), 'trim|required');   
         $this->form_validation->set_rules('date_to', $this->lang->line('to_date'), 'trim|required');   
@@ -192,7 +221,7 @@ class Holiday extends MY_Controller {
    {             
       if($this->input->post('id') == '')
       {   
-          $holiday = $this->holiday->duplicate_check($this->input->post('title'), $this->input->post('date_from')); 
+          $holiday = $this->holiday->duplicate_check($this->input->post('school_id'), $this->input->post('title'), $this->input->post('date_from')); 
           if($holiday){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -200,7 +229,7 @@ class Holiday extends MY_Controller {
               return TRUE;
           }          
       }else if($this->input->post('id') != ''){   
-         $holiday = $this->holiday->duplicate_check($this->input->post('title'),$this->input->post('date_from'), $this->input->post('id')); 
+         $holiday = $this->holiday->duplicate_check($this->input->post('school_id'), $this->input->post('title'),$this->input->post('date_from'), $this->input->post('id')); 
           if($holiday){
                 $this->form_validation->set_message('title', $this->lang->line('already_exist'));         
                 return FALSE;
@@ -223,9 +252,11 @@ class Holiday extends MY_Controller {
     private function _get_posted_holiday_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
         $items[] = 'date_from';    
         $items[] = 'note';
+        $items[] = 'is_view_on_web';
         $data = elements($items, $_POST);  
       
         $data['date_from'] = date('Y-m-d', strtotime($this->input->post('date_from')));
@@ -261,8 +292,13 @@ class Holiday extends MY_Controller {
            redirect('announcement/holiday/index'); 
         }
         
-        if ($this->holiday->delete('holidays', array('id' => $id))) {            
+        $holiday = $this->holiday->get_single('holidays', array('id' => $id));
+        
+        if ($this->holiday->delete('holidays', array('id' => $id))) {               
+            
+            create_log('Has been deleted a holiday : '.$holiday->title);  
             success($this->lang->line('delete_success'));
+            
         } else {
             error($this->lang->line('delete_failed'));
         }

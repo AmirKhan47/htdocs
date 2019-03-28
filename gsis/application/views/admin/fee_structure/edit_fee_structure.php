@@ -60,7 +60,7 @@
                                         <div class="col-md-8">
                                             <div class="input-icon right">
                                                 <i class="fa"></i>
-                                                <select type="text" data-rule-required="true" name="class_id" class="form-control" disabled="disabled">
+                                                <select type="text" data-rule-required="true" name="class_id" id="class_id1" class="form-control" disabled="disabled">
                                                     <option value="<?php echo $class['id']; ?>" selected><?php echo $class['class_name']; ?></option>
                                                     <?php foreach ($classes as $row => $class)
                                                     {
@@ -76,6 +76,18 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <div class="form-group">
+                                        <label class="control-label col-md-4">Type<span class="required" aria-required="true">*</span></label>
+                                        <div class="col-md-8">
+                                            <div class="input-icon right">
+                                                <i class="fa"></i>
+                                                <select type="text" data-rule-required="true" onchange="fee_structure_type_check()" id="fee_structure_type" name="fee_structure_type" class="form-control"  value="">
+                                                    <!-- <option value="<?php echo $fee_structure['fee_structure_type']; ?>" selected><?php echo $fee_structure['fee_structure_type']; ?> -->
+                                                    <option value="New" <?php if ($fee_structure['fee_structure_type']=='New') { echo 'selected'; } ?>>New</option>
+                                                    <option value="Old" <?php if ($fee_structure['fee_structure_type']=='Old') { echo 'selected'; } ?>>Old</option>
+                                                </select>
+                                                <div id="error_message"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -323,3 +335,47 @@
         </form>
     </div>
 </div>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
+<script type="text/javascript">
+    $.validate(
+    {
+        modules : 'location, date, security, file',
+    });
+    function fee_structure_type_check()
+    {
+        var class_id=$('#class_id1').val();
+        var fee_structure_type=$('#fee_structure_type').val();
+        if(class_id!='' && fee_structure_type!='')
+        {
+            $.ajax(
+            {
+                url:'<?php echo SURL.'fee_structure/fee_structure_type_check'?>',
+                type:'POST',
+                data:{class_id:class_id,fee_structure_type:fee_structure_type},
+                success:function(data)
+                {
+                    if(data== 1)
+                    {
+                        $('#class_id1').addClass('error');
+                        $('#fee_structure_type').addClass('error');
+                        $('#class_id1').css('border-color','rgb(185, 74, 72)');
+                        $('#fee_structure_type').css('border-color','rgb(185, 74, 72)');
+                        $('#error_message').html('<span class="help-block form-error" style="color:#e73d4a;">Fee Structure Type already assigned!</span>');
+                        $(':input[type="submit"]').prop('disabled', true);
+
+                    }
+                    else
+                    {
+                        $('#class_id1').removeClass('error');
+                        $('#fee_structure_type').removeClass('error');
+                        $('#class_id1').css('border-color','#208992');
+                        $('#fee_structure_type').css('border-color','#208992');
+                        $('#error_message').html('');
+                        $(':input[type="submit"]').prop('disabled', false);
+                    }
+                }
+            })
+        }
+    }
+</script>  -->

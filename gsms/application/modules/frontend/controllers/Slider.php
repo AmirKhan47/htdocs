@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Slider.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global - Multi School Management System Pro
  * @type            : Class
  * @class name      : Slider
  * @description     : Manage school Slider frontend website.  
@@ -35,7 +35,8 @@ class Slider extends MY_Controller {
 
         check_permission(VIEW);
 
-        $this->data['sliders'] = $this->slider->get_list('sliders', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['sliders'] = $this->slider->get_slider_list(); 
+        
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_slider') . ' | ' . SMS);
         $this->layout->view('slider/index', $this->data);
@@ -61,6 +62,9 @@ class Slider extends MY_Controller {
 
                 $insert_id = $this->slider->insert('sliders', $data);
                 if ($insert_id) {
+                    
+                     create_log('Has been upload slider image : '. $data['title']);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('frontend/slider/index');
                 } else {
@@ -72,7 +76,8 @@ class Slider extends MY_Controller {
             }
         }
 
-        $this->data['sliders'] = $this->slider->get_list('sliders', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['sliders'] = $this->slider->get_slider_list(); 
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('slider') . ' ' . $this->lang->line('image') . ' | ' . SMS);
         $this->layout->view('slider/index', $this->data);
@@ -105,6 +110,9 @@ class Slider extends MY_Controller {
                 $updated = $this->slider->update('sliders', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                     create_log('Has been updated uploaded slider image : '. $data['title']);
+                    
                     success($this->lang->line('update_success'));
                     redirect('frontend/slider/index');
                 } else {
@@ -124,37 +132,30 @@ class Slider extends MY_Controller {
             }
         }
 
-        $this->data['sliders'] = $this->slider->get_list('sliders', array('status' => 1), '', '', '', 'id', 'ASC');
+        $this->data['sliders'] = $this->slider->get_slider_list(); 
+        $this->data['school_id'] = $this->data['slider']->school_id;
         
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('slider') . ' ' . $this->lang->line('image') . ' | ' . SMS);
         $this->layout->view('slider/index', $this->data);
     }
 
-    
-    /*****************Function view**********************************
-    * @type            : Function
-    * @function name   : view
-    * @description     : Load user interface with specific home slider data                 
-    *                       
-    * @param           : $id integer value
-    * @return          : null 
-    * ********************************************************** */
-    public function view($id) {
-
-        check_permission(VIEW);
-
         
-        if(!is_numeric($id)){
-            error($this->lang->line('unexpected_error'));
-            redirect('frontend/slider/index');
-        }
-        $this->data['slider'] = $this->slider->get_single('sliders', array('id' => $id));
-        $this->data['sliders'] = $this->slider->get_list('sliders', array('status' => 1), '', '', '', 'id', 'ASC');
+           
+     /*****************Function get_single_slider**********************************
+     * @type            : Function
+     * @function name   : get_single_slider
+     * @description     : "Load single assignment information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_slider(){
         
-        $this->data['detail'] = TRUE;
-        $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('slider')  . ' ' . $this->lang->line('image'). ' | ' . SMS);
-        $this->layout->view('slider/index', $this->data);
+       $slider_id = $this->input->post('slider_id');
+       
+       $this->data['slider'] = $this->slider->get_single_slider($slider_id);
+       echo $this->load->view('slider/get-single-slider', $this->data);
     }
 
     
@@ -169,6 +170,7 @@ class Slider extends MY_Controller {
     private function _prepare_slider_validation() {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');  
         $this->form_validation->set_rules('image', $this->lang->line('slider').' '.$this->lang->line('image'), 'trim|callback_image');
     }
     
@@ -224,6 +226,7 @@ class Slider extends MY_Controller {
     private function _get_posted_slider_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'title';
 
         $data = elements($items, $_POST);
@@ -317,6 +320,7 @@ class Slider extends MY_Controller {
                 @unlink($destination . '/slider/' . $slider->image);
             }
 
+            create_log('Has been deletd a slider image : ' . $slider->title);
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

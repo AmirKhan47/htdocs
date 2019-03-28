@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Suggestion.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Suggestion
  * @description     : Manage exam suggestion for student by the teacher.  
@@ -20,13 +20,6 @@ class Suggestion extends MY_Controller {
     function __construct() {
         parent::__construct();
         $this->load->model('Suggestion_Model', 'suggestion', true);
-
-         // check running session
-        if(!$this->academic_year_id){
-            error($this->lang->line('academic_year_setting'));
-            redirect('setting');
-        }    
-       
     }
 
     
@@ -38,17 +31,37 @@ class Suggestion extends MY_Controller {
     * @param           : $class_id integer value
     * @return          : null 
     * ********************************************************** */
-    public function index($class_id = null) {
+    public function index($class_id = null, $school_id = null) {
 
         check_permission(VIEW);
 
-        $class_id = $this->uri->segment(4);
-        $this->data['class_id'] = $class_id;
+        if ($this->session->userdata('role_id') == STUDENT) {
+            $class_id = $this->session->userdata('class_id');    
+        }  
+        if ($this->session->userdata('role_id') != SUPER_ADMIN) {
+            $school_id = $this->session->userdata('school_id');    
+        }  
         
-        $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id);
-        $this->data['classes'] = $this->suggestion->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->suggestion->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
+        $this->data['class_id'] = $class_id;        
+        $school = $this->suggestion->get_school_by_id($school_id);  
         
+        $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id, $school_id, @$school->academic_year_id);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        }
+        $this->data['class_list'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        if($school){
+            $condition['academic_year_id'] = @$school->academic_year_id;  
+            $this->data['exams'] = $this->suggestion->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        
+        $this->data['filter_school_id'] = $school_id;        
+        $this->data['schools'] = $this->schools;
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_suggestion') . ' | ' . SMS);
         $this->layout->view('suggestion/index', $this->data);
@@ -74,11 +87,14 @@ class Suggestion extends MY_Controller {
 
                 $insert_id = $this->suggestion->insert('suggestions', $data);
                 if ($insert_id) {
+                    
+                    create_log('Has been created exam suggestion : '.$data['title']);
+                    
                     success($this->lang->line('insert_success'));
-                    redirect('exam/suggestion/index/' . $data['class_id']);
+                    redirect('exam/suggestion/index/' . $data['class_id'].'/'.$data['school_id']);
                 } else {
                     error($this->lang->line('insert_failed'));
-                    redirect('exam/suggestion/add/' . $data['class_id']);
+                    redirect('exam/suggestion/add/' . $data['class_id'].'/'.$data['school_id']);
                 }
             } else {
                 $this->data['post'] = $_POST;
@@ -92,10 +108,22 @@ class Suggestion extends MY_Controller {
         
         $this->data['class_id'] = $class_id;
         $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id);
-        $this->data['classes'] = $this->suggestion->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->suggestion->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            $this->data['class_list'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $school = $this->suggestion->get_school_by_id($condition['school_id']); 
+            
+            $condition['academic_year_id'] = $school->academic_year_id;   
+            $this->data['exams'] = $this->suggestion->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }
         
         
+        $this->data['schools'] = $this->schools;
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('suggestion') . ' | ' . SMS);
         $this->layout->view('suggestion/index', $this->data);
@@ -127,8 +155,11 @@ class Suggestion extends MY_Controller {
                 $updated = $this->suggestion->update('suggestions', $data, array('id' => $this->input->post('id')));
 
                 if ($updated) {
+                    
+                    create_log('Has been updated exam suggestion : '.$data['title']);
+                    
                     success($this->lang->line('update_success'));
-                    redirect('exam/suggestion/index/'.$data['class_id']);
+                    redirect('exam/suggestion/index/'.$data['class_id'].'/'.$data['school_id']);
                 } else {
                     error($this->lang->line('update_failed'));
                     redirect('exam/suggestion/edit/' . $this->input->post('id'));
@@ -153,11 +184,27 @@ class Suggestion extends MY_Controller {
         }
         
         $this->data['class_id'] = $class_id;
-        $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id);
-        $this->data['classes'] = $this->suggestion->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->suggestion->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
+        $this->data['filter_school_id'] = $this->data['suggestion']->school_id;
         
-
+        $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id, $this->data['suggestion']->school_id, $this->data['suggestion']->academic_year_id);
+        
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+        
+            $this->data['class_list'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $school = $this->suggestion->get_school_by_id($condition['school_id']); 
+            
+            $condition['academic_year_id'] = $school->academic_year_id;   
+            $this->data['exams'] = $this->suggestion->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        
+        $this->data['school_id'] = $this->data['suggestion']->school_id;
+        $this->data['schools'] = $this->schools;
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('suggestion') . ' | ' . SMS);
         $this->layout->view('suggestion/index', $this->data);
@@ -186,15 +233,46 @@ class Suggestion extends MY_Controller {
         $class_id = $this->data['suggestion']->class_id;
         
         $this->data['suggestions'] = $this->suggestion->get_suggestion_list($class_id);
-        $this->data['classes'] = $this->suggestion->get_list('classes', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['exams'] = $this->suggestion->get_list('exams', array('status' => 1, 'academic_year_id' => $this->academic_year_id), '', '', '', 'id', 'ASC');
-        $this->data['class_id'] = $class_id;
         
+        $condition = array();
+        $condition['status'] = 1;        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition['school_id'] = $this->session->userdata('school_id');
+            $this->data['classes'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $this->data['class_list'] = $this->suggestion->get_list('classes', $condition, '','', '', 'id', 'ASC');
+            
+            $school = $this->suggestion->get_school_by_id($condition['school_id']); 
+            
+            $condition['academic_year_id'] = $school->academic_year_id;   
+            $this->data['exams'] = $this->suggestion->get_list('exams', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['class_id'] = $class_id;
+        $this->data['schools'] = $this->schools;
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('suggestion') . ' | ' . SMS);
         $this->layout->view('suggestion/index', $this->data);
     }
 
+            
+           
+     /*****************Function get_single_suggestion**********************************
+     * @type            : Function
+     * @function name   : get_single_suggestion
+     * @description     : "Load single suggestion information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_suggestion(){
+        
+       $suggestion_id = $this->input->post('suggestion_id');
+       
+        $this->data['suggestion'] = $this->suggestion->get_single_suggestion($suggestion_id);
+       echo $this->load->view('suggestion/get-single-suggestion', $this->data);
+    }
+    
     
     /*****************Function _prepare_suggestion_validation**********************************
     * @type            : Function
@@ -209,6 +287,7 @@ class Suggestion extends MY_Controller {
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         $this->form_validation->set_rules('title', $this->lang->line('suggestion') . ' ' . $this->lang->line('title'), 'trim|required');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
         $this->form_validation->set_rules('exam_id', $this->lang->line('exam'), 'trim|required');
         $this->form_validation->set_rules('class_id', $this->lang->line('class'), 'trim|required');
         $this->form_validation->set_rules('subject_id', $this->lang->line('subject'), 'trim|required|callback_subject_id');
@@ -227,12 +306,15 @@ class Suggestion extends MY_Controller {
     * @return          : boolean true/false 
     * ********************************************************** */
     public function subject_id() {
+        
+        $school_id = $this->input->post('school_id');
         $exam_id = $this->input->post('exam_id');
         $class_id = $this->input->post('class_id');
         $subject_id = $this->input->post('subject_id');
-
+        $school = $this->suggestion->get_school_by_id($school_id); 
+         
         if ($this->input->post('id') == '') {
-            $suggestion = $this->suggestion->duplicate_check($exam_id, $class_id, $subject_id);
+            $suggestion = $this->suggestion->duplicate_check($school_id, $school->academic_year_id, $exam_id, $class_id, $subject_id);
             if ($suggestion) {
                 $this->form_validation->set_message('subject_id', $this->lang->line('already_exist'));
                 return FALSE;
@@ -240,7 +322,7 @@ class Suggestion extends MY_Controller {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $suggestion = $this->suggestion->duplicate_check($exam_id, $class_id, $subject_id, $this->input->post('id'));
+            $suggestion = $this->suggestion->duplicate_check($school_id, $school->academic_year_id, $exam_id, $class_id, $subject_id, $this->input->post('id'));
             if ($suggestion) {
                 $this->form_validation->set_message('subject_id', $this->lang->line('already_exist'));
                 return FALSE;
@@ -288,6 +370,7 @@ class Suggestion extends MY_Controller {
     private function _get_posted_suggestion_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'exam_id';
         $items[] = 'class_id';
         $items[] = 'subject_id';
@@ -300,7 +383,15 @@ class Suggestion extends MY_Controller {
             $data['modified_at'] = date('Y-m-d H:i:s');
             $data['modified_by'] = logged_in_user_id();
         } else {
-            $data['academic_year_id'] = $this->academic_year_id;
+            
+            $school = $this->suggestion->get_school_by_id($data['school_id']);
+            
+            if(!$school->academic_year_id){
+                error($this->lang->line('set_academic_year_for_school'));
+                redirect('exam/suggestion/index');
+            }
+            $data['academic_year_id'] = $school->academic_year_id;
+            
             $data['status'] = 1;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['created_by'] = logged_in_user_id();
@@ -378,6 +469,7 @@ class Suggestion extends MY_Controller {
         }
         
         $suggestion = $this->suggestion->get_single('suggestions', array('id' => $id));
+        
         if ($this->suggestion->delete('suggestions', array('id' => $id))) {
 
             // delete suggestion
@@ -385,6 +477,9 @@ class Suggestion extends MY_Controller {
             if (file_exists($destination . '/suggestion/' . $suggestion->suggestion)) {
                 @unlink($destination . '/suggestion/' . $suggestion->suggestion);
             }
+            
+            create_log('Has been deleted exam suggestion : '.$suggestion->title);
+            
             success($this->lang->line('delete_success'));
         } else {
             error($this->lang->line('delete_failed'));

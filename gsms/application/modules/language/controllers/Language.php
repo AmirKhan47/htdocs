@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Language.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Language
  * @description     : Manage maulti language system.  
@@ -22,7 +22,7 @@ class Language extends MY_Controller {
         $this->load->model('Language_Model', 'language', true);
         
         $this->data['fields'] = $this->language->get_table_fields('languages');
-        $this->data['active_lang'] = $this->db->get_where('settings', array('status'=>1))->row()->language;
+        $this->data['active_lang'] = $this->db->get_where('global_setting', array('status'=>1))->row()->language;
         
     }
 
@@ -71,6 +71,9 @@ class Language extends MY_Controller {
                 $response = $this->dbforge->add_column('languages', $fields);
 
                 if ($response) {
+                    
+                     create_log('Has been added a Language : '.$field);
+                    
                     success($this->lang->line('insert_success'));
                     redirect('language');
                 } else {
@@ -125,6 +128,9 @@ class Language extends MY_Controller {
                 $response = $this->dbforge->modify_column('languages', $fields);
 
                 if ($response) {
+                    
+                     create_log('Has been updated a Language : '.$new_field);
+                     
                     success($this->lang->line('update_success'));
                     redirect('language');
                 } else {
@@ -160,10 +166,13 @@ class Language extends MY_Controller {
             error($this->lang->line('unexpected_error'));
             redirect('language');
         }else{
-            $this->db->update('settings',array('language'=>$language));
+            
+            $this->db->update('global_setting',array('language'=>$language));
             
             // update language file
             $this->update_lang();
+            
+            create_log('Has been activated a language : '.$language);
             
             success($this->lang->line('update_success'));
             redirect('language');
@@ -208,6 +217,8 @@ class Language extends MY_Controller {
         $this->load->dbforge();
         $response = $this->dbforge->drop_column('languages', $language);
         if ($response) {
+            
+             create_log('Has been deleted a language : '.$language);
             success($this->lang->line('delete_success'));
             redirect('language/index');
         } else {
@@ -264,6 +275,7 @@ class Language extends MY_Controller {
             
             // update language file
             $this->update_lang();
+             create_log('Has been updated language label for : '.$language);
         }
         success($this->lang->line('update_success'));
         redirect('language/label/' . $language);

@@ -2,14 +2,14 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
             <div class="x_title">
-                <h3 class="head-title"><i class="fa fa-dollar"></i><small> <?php echo $this->lang->line('manage_grade_head'); ?></small></h3>
+                <h3 class="head-title"><i class="fa fa-dollar"></i><small> <?php echo $this->lang->line('manage_payment'); ?></small></h3>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>                    
                 </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                <?php if(has_permission(VIEW, 'payroll', 'grade')){ ?>
                     <a href="<?php echo site_url('payroll/grade/index'); ?>"><?php echo $this->lang->line('salary_grade'); ?></a>                   
                 <?php } ?>              
@@ -26,6 +26,7 @@
                 <?php echo form_open_multipart(site_url('payroll/history/index'), array('name' => 'payment', 'id' => 'payment', 'class' => 'form-horizontal form-label-left'), ''); ?>
                 <div class="row">
                   
+                    <?php $this->load->view('layout/school_list_filter'); ?>
                     <div class="col-md-3 col-sm-3 col-xs-12">
                         <div class="item form-group"> 
                             <div><?php echo $this->lang->line('role'); ?> <?php echo $this->lang->line('type'); ?> <span class="required"> *</span></div>
@@ -176,7 +177,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,             
+              responsive: true
           });
         });
 
@@ -184,11 +186,18 @@
         get_user_list('<?php echo $payment_to; ?>', <?php echo $user_id; ?>)
     <?php } ?>
     function get_user_list(payment_to, user_id){
-           
+       
+       var school_id = $('#school_id').val(); 
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           $('#payment_to').prop('selectedIndex',0);
+           return false;
+        }
+       
        $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_user_list_by_type'); ?>",
-            data   : { payment_to : payment_to, user_id : user_id},               
+            data   : {school_id:school_id, payment_to : payment_to, user_id : user_id},               
             async  : false,
             success: function(response){                                                   
                if(response)

@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Payment.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Payment
  * @description     : Manage all kind of paymnet transaction by integrated payment gateway.  
@@ -16,8 +16,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Payment extends My_Controller {
 
     public $data = array();
-    public $academic_year_id;
-    
+
     //https://github.com/bitmash/alipay-api-php/blob/master/Alipay.php
     
     function __construct() {
@@ -27,6 +26,8 @@ class Payment extends My_Controller {
          
          $this->config->load('custom');
          $this->load->library("paypal");
+         $this->load->library("CCAencrypt");
+         $this->load->helper('paytm');
     }
 
     
@@ -51,6 +52,7 @@ class Payment extends My_Controller {
         $due_amount      = $invoice->net_amount - $invoice->paid_amount;
         $this->data['due_amount'] = $due_amount;
         $this->data['invoice_id'] = $invoice_id;
+        $this->data['school_id'] = $invoice->school_id;
         
         $this->data['list'] = TRUE;
         $this->layout->title( $this->lang->line('payment'). ' | ' . SMS);
@@ -75,7 +77,10 @@ class Payment extends My_Controller {
             $this->_prepare_payment_validation();
             if ($this->form_validation->run() === TRUE) {
                 
-                $data = $this->_get_posted_payment_data();                
+                $data = $this->_get_posted_payment_data();
+
+                create_log('Has been proceeded a payment : '. $data['amount']. ' in :' . $this->input->post('payment_method'));
+                
                 if($this->input->post('payment_method') == 'cash' || $this->input->post('payment_method') == 'cheque'){
                     
                     $insert_id = $this->payment->insert('transactions', $data);
@@ -99,6 +104,14 @@ class Payment extends My_Controller {
                 }elseif($this->input->post('payment_method') == 'payumoney'){
                     
                     $this->pay_u_money($data);  
+                    
+                }elseif($this->input->post('payment_method') == 'ccavenue'){
+                    
+                    $this->cc_avenue($data); 
+                    
+                }elseif($this->input->post('payment_method') == 'paytm'){
+                    
+                    $this->pay_tm($data);  
                     
                 }else{                    
                     
@@ -131,6 +144,7 @@ class Payment extends My_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
         
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');   
         $this->form_validation->set_rules('amount', $this->lang->line('amount'), 'trim|required|callback_amount');   
         $this->form_validation->set_rules('payment_method', $this->lang->line('payment'). ' '. $this->lang->line('method'), 'trim|required|callback_payment_method');   
         
@@ -155,6 +169,11 @@ class Payment extends My_Controller {
             $this->form_validation->set_rules('pum_first_name', $this->lang->line('first_name'), 'trim|required');
             $this->form_validation->set_rules('pum_email', $this->lang->line('email'), 'trim|required');
             $this->form_validation->set_rules('pum_phone', $this->lang->line('phone'), 'trim|required');
+            
+        }elseif($this->input->post('payment_method') == 'ccavenue'){
+            
+        }elseif($this->input->post('payment_method') == 'paytm'){
+            
         }
         
         $this->form_validation->set_rules('note', $this->lang->line('note'), 'trim');   
@@ -195,8 +214,9 @@ class Payment extends My_Controller {
     * @return          : boolean true/false 
     * ********************************************************** */  
     public function payment_method() {
-  
-        $payment_method  = $this->payment->get_single('payment_settings', array('status'=>1));
+        
+        $school_id = $this->input->post('school_id');
+        $payment_method  = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$school_id));
       
         if ($this->input->post('payment_method') == 'cash' || $this->input->post('payment_method') == 'cheque') {
             return TRUE;
@@ -225,7 +245,24 @@ class Payment extends My_Controller {
             }else{
                 return TRUE;                
             }
-        }       
+       } elseif ($this->input->post('payment_method') == 'ccavenue' && $payment_method->ccavenue_status == 1) {
+
+            if ($payment_method->ccavenue_key == "" || $payment_method->ccavenue_salt == "") {
+                $this->form_validation->set_message("payment_method", $this->lang->line('input_valid_payment_setting'));
+                return FALSE;
+            }else{
+                return TRUE;                
+            }
+            
+        } elseif ($this->input->post('payment_method') == 'paytm' && $payment_method->paytm_status == 1) {
+
+            if ($payment_method->paytm_merchant_key == "" || $payment_method->paytm_merchant_mid == "" || $payment_method->paytm_merchant_website == "") {
+                $this->form_validation->set_message("payment_method", $this->lang->line('input_valid_payment_setting'));
+                return FALSE;
+            }else{
+                return TRUE;                
+            }
+        }           
     }
 
 
@@ -242,6 +279,7 @@ class Payment extends My_Controller {
     private function _get_posted_payment_data() {
 
         $items = array();
+        $items[] = 'school_id';
         $items[] = 'amount';
         $items[] = 'invoice_id';
         $items[] = 'payment_method';       
@@ -265,7 +303,10 @@ class Payment extends My_Controller {
         }            
               
         $data['status'] = 1;
-        $data['academic_year_id'] = $this->academic_year_id;
+        
+        $school = $this->payment->get_school_by_id($data['school_id']);
+        $data['academic_year_id'] = $school->academic_year_id;
+            
         $data['payment_date'] = date('Y-m-d');
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['created_by'] = logged_in_user_id(); 
@@ -286,29 +327,38 @@ class Payment extends My_Controller {
     * ********************************************************** */
     public function pay_u_money($data) {
         
-        $payment_setting  = $this->payment->get_single('payment_settings', array('status'=>1));
-        
+        //https://developer.payumoney.com/general/
+       
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$data['school_id']));
+               
         
         if ($payment_setting->payumoney_demo == TRUE) {
             $api_link = "https://test.payu.in/_payment";
         } else {
             $api_link = "https://secure.payu.in/_payment";
         }
+        
 
         $invoice = $this->invoice->get_single_invoice($data['invoice_id']);
         
-        $array['key'] = $payment_setting->payumoney_key;
-        $array['salt'] = $payment_setting->payumoney_salt;
+        $this->invoice->update('invoices', array('temp_amount'=>$data['amount']), array('id'=>$data['invoice_id']));
+        $pay_amount = $data['amount'];
+        if($payment_setting->payu_extra_charge > 0){
+            $pay_amount = $data['amount'] + ($payment_setting->payu_extra_charge/100*$data['amount']);
+        }
+        
+        $array['key'] = $payment_setting->payumoney_key; //'gtKFFx'; 
+        $array['salt'] = $payment_setting->payumoney_salt; //'eCwWELxi'; 
         $array['payu_base_url'] = $api_link; // For Test
         $array['surl'] = base_url('accounting/payment/payumoney_success/' . $data['invoice_id']);
         $array['furl'] = base_url('accounting/payment/payumoney_failed/' . $data['invoice_id']);
         $array['txnid'] = substr(hash('sha256', mt_rand() . microtime()), 0, 20);
         $array['action'] = $api_link;
-        $array['amount'] = $data['amount'];
+        $array['amount'] = $pay_amount;
         $array['firstname'] = $data['pum_first_name'];
         $array['email'] = $data['pum_email'];
         $array['phone'] = $data['pum_phone'];
-        $array['productinfo'] = 'Invoice' . ' - ' .$data['note'];
+        $array['productinfo'] = 'Invoice' . ': ' .$data['note'];
         $array['hash'] = $this->_generate_hash($array);
 
         $this->load->view('payment/pay_u_money', $array);
@@ -324,11 +374,13 @@ class Payment extends My_Controller {
     * @return          : $hash string value
     * ********************************************************** */
     private function _generate_hash($array) {
+        
         $hashSequence = "key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10";
         if (empty($array['key']) || empty($array['txnid']) || empty($array['amount']) || empty($array['firstname']) || empty($array['email']) || empty($array['phone']) || empty($array['productinfo']) || empty($array['surl']) || empty($array['furl'])) {
             return false;
         } else {
             
+            /*
             $hash = '';
             $salt = $array['salt'];
             $hashVarsSeq = explode('|', $hashSequence);
@@ -338,7 +390,10 @@ class Payment extends My_Controller {
                 $hash_string .= '|';
             }
             $hash_string .= $salt;
-            $hash = strtolower(hash('sha512', $hash_string));
+            */
+            
+            $retHashSeq = $array['key']."|".$array['txnid']."|".$array['amount']."|".$array['productinfo']."|".$array['firstname']."|".$array['email']."|||||||||||".$array['salt'];
+            $hash = strtolower(hash('sha512', $retHashSeq));
             return $hash;
         }
     }
@@ -370,9 +425,14 @@ class Payment extends My_Controller {
     * @return          : null
     * ********************************************************** */
     public function payumoney_success() {
+        
         // print_r($_POST); die();
+        
+        //mail('yousuf361@gmail.com', 'PayUMoney', json_encode($_POST));
+        
         $invoice_id = $this->uri->segment(4);
-        $payment_setting  = $this->payment->get_single('payment_settings', array('status'=>1));
+        $invoice = $this->invoice->get_single_invoice($invoice_id);
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$invoice->school_id));
         
         $status         = $_POST["status"];
         $firstname      = $_POST["firstname"];
@@ -385,26 +445,109 @@ class Payment extends My_Controller {
         $phone          = $_POST["phone"];
         $salt           = $payment_setting->payumoney_salt;
         
-
+        /*
         If (isset($_POST["additionalCharges"])) {
             $additionalCharges = $_POST["additionalCharges"];
             $retHashSeq = $additionalCharges . '|' . $salt . '|' . $status . '|||||||||||' . $email . '|' . $firstname . '|' . $productinfo . '|' . $amount . '|' . $txnid . '|' . $key;
         } else {
             $retHashSeq = $salt . '|' . $status . '|||||||||||' . $email . '|' . $firstname . '|' . $productinfo . '|' . $amount . '|' . $txnid . '|' . $key;
-        }
+        }*/
+       
+        $retHashSeq = $key."|".$txnid."|".$amount."|".$productinfo."|".$firstname."|".$email."|||||||||||".$salt;
 
         $hash = strtolower(hash("sha512", $retHashSeq));
+       // mail('yousuf361@gmail.com', 'Hash PayUMoney', $hash);
+                     
+        if ($status === "success") {                
+               
+            $payment = $this->payment->get_invoice_amount($invoice_id);  
+
+            $school = $this->payment->get_school_by_id($invoice->school_id);
+
+            $data['school_id'] = $invoice->school_id;
+            $data['invoice_id'] = $invoice_id;
+            $data['amount'] = $invoice->temp_amount;
+            $data['payment_method'] = 'PayUMoney';
+            $data['transaction_id'] = $txnid;
+            $data['pum_first_name'] = $firstname;
+            $data['pum_email'] = $email;
+            $data['pum_phone'] = $phone;
+            $data['note'] = $productinfo;
+            $data['status'] = 1;
+            $data['academic_year_id'] = $school->academic_year_id;
+            $data['payment_date'] = date('Y-m-d');
+            $data['created_at'] = date('Y-m-d H:i:s');
+            $data['created_by'] = logged_in_user_id(); 
+
+            $this->payment->insert('transactions', $data);                
+            $due_mount = $invoice->net_amount - $payment->paid_amount;
+
+            if(floatval($amount) < floatval($due_mount)){
+                $update = array('paid_status'=> 'partial');
+            }else{
+                $update = array('paid_status'=> 'paid', 'modified_at'=>date('Y-m-d H:i:s'));
+            }                    
+            $this->payment->update('invoices', $update, array('id'=>$invoice_id));
+
+            success($this->lang->line('payment_success'));
+            redirect('accounting/invoice/view/' . $invoice_id);
+
+        } else {
+            error($this->lang->line('payment_failed'));
+            redirect('accounting/invoice/view/' . $invoice_id);
+        }
+        
+    }
+    
+    
+    public function payumoney_success_bk() {
+        
+        // print_r($_POST); die();
+        
+        mail('yousuf361@gmail.com', 'PayUMoney', json_encode($_POST));
+        
+        $invoice_id = $this->uri->segment(4);
+        $invoice = $this->invoice->get_single_invoice($invoice_id);
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$invoice->school_id));
+        
+        $status         = $_POST["status"];
+        $firstname      = $_POST["firstname"];
+        $amount         = $_POST["amount"];
+        $txnid          = $_POST["txnid"];
+        $posted_hash    = $_POST["hash"];
+        $key            = $_POST["key"];
+        $productinfo    = $_POST["productinfo"];
+        $email          = $_POST["email"];
+        $phone          = $_POST["phone"];
+        $salt           = $payment_setting->payumoney_salt;
+        
+        /*
+        If (isset($_POST["additionalCharges"])) {
+            $additionalCharges = $_POST["additionalCharges"];
+            $retHashSeq = $additionalCharges . '|' . $salt . '|' . $status . '|||||||||||' . $email . '|' . $firstname . '|' . $productinfo . '|' . $amount . '|' . $txnid . '|' . $key;
+        } else {
+            $retHashSeq = $salt . '|' . $status . '|||||||||||' . $email . '|' . $firstname . '|' . $productinfo . '|' . $amount . '|' . $txnid . '|' . $key;
+        }*/
+       
+        $retHashSeq = $key."|".$txnid."|".$amount."|".$productinfo."|".$firstname."|".$email."|||||||||||".$salt;
+
+        $hash = strtolower(hash("sha512", $retHashSeq));
+        mail('yousuf361@gmail.com', 'PayUMoney', $hash);
+         
         if ($hash != $posted_hash) {
             
             error($this->lang->line('invalid_transaction_pls_try_again'));
             redirect('accounting/invoice/view/' . $invoice_id);
             
         } else {
-            if ($status === "success") {
+            
+            if ($status === "success") {                
+               
+                $payment = $this->payment->get_invoice_amount($invoice_id);  
                 
-                $invoice = $this->invoice->get_single_invoice($invoice_id);
-                $payment = $this->payment->get_invoice_amount($invoice_id);                
+                $school = $this->payment->get_school_by_id($invoice->school_id);
                          
+                $data['school_id'] = $invoice->school_id;
                 $data['invoice_id'] = $invoice_id;
                 $data['amount'] = $amount;
                 $data['payment_method'] = 'PayUMoney';
@@ -414,7 +557,7 @@ class Payment extends My_Controller {
                 $data['pum_phone'] = $phone;
                 $data['note'] = $productinfo;
                 $data['status'] = 1;
-                $data['academic_year_id'] = $this->db->get_where('academic_years', array('is_running'=>1))->row()->id;
+                $data['academic_year_id'] = $school->academic_year_id;
                 $data['payment_date'] = date('Y-m-d');
                 $data['created_at'] = date('Y-m-d H:i:s');
                 $data['created_by'] = logged_in_user_id(); 
@@ -454,13 +597,20 @@ class Payment extends My_Controller {
     * ********************************************************** */
     public function paypal($data)
     {
-        $payment_setting  = $this->payment->get_single('payment_settings', array('status'=>1));
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$data['school_id']));
         $invoice = $this->invoice->get_single_invoice($data['invoice_id']);
+        
+         
+        $this->invoice->update('invoices', array('temp_amount'=>$data['amount']), array('id'=>$data['invoice_id']));
+        $pay_amount = $data['amount'];
+        if($payment_setting->paypal_extra_charge > 0){
+            $pay_amount = $data['amount'] + ($payment_setting->paypal_extra_charge/100*$data['amount']);
+        }
         
         $this->paypal->add_field('rm', 2);
         $this->paypal->add_field('no_note', 0);
         $this->paypal->add_field('item_name', 'Invoice');
-        $this->paypal->add_field('amount', $data['amount']);
+        $this->paypal->add_field('amount', $pay_amount);
         $this->paypal->add_field('custom', $data['invoice_id']);
         $this->paypal->add_field('business', $payment_setting->paypal_email);
         $this->paypal->add_field('tax', 1);
@@ -514,5 +664,345 @@ class Payment extends My_Controller {
     }
  
     /* Paypal payment end */
+    
+    
+    
+     /* cc_avenue Payment Start */    
+    
+    /*****************Function cc_avenue**********************************
+    * @type            : Function
+    * @function name   : cc_avenue
+    * @description     : Payment processing using "cc_avenue" payment gateway                  
+    *                       
+    * @param           : $data array() value
+    * @return          : null 
+    * ********************************************************** */
+    public function cc_avenue($data) {
+              
+        
+        //http://webprepration.com/integrate-ccavenue-payment-gateway-in-php/
+        
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$data['school_id']));
+        $invoice = $this->invoice->get_single_invoice($data['invoice_id']);
+     
+        
+        if ($payment_setting->ccavenue_demo == TRUE) {
+            $api_link = "https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction"; // demo
+        } else {
+            $api_link = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";
+        }   
+        
+        $this->invoice->update('invoices', array('temp_amount'=>$data['amount']), array('id'=>$data['invoice_id']));
+        
+        $pay_amount = $data['amount'];
+        
+        if($payment_setting->ccavenue_extra_charge > 0){
+            $pay_amount = $data['amount'] + ($payment_setting->ccavenue_extra_charge/100*$data['amount']);
+        }
+                
+        $data = array(
+           // 'merchant_id' => $payment_setting->ccavenue_key,
+           // 'working_key' => $payment_setting->ccavenue_salt,
+            'merchant_id' => '123456',
+            'access_code' => 'aG4632543265ghjg',
+            'working_key' => 'fdshaj131231231',
+            'amount' => $pay_amount,
+            'action' => $api_link,
+            'order_id' => abs(crc32(uniqid())),
+            'redirect_url' => base_url('accounting/payment/cc_avenue_success/' . $data['invoice_id']),
+            'cancel_url' => base_url('accounting/payment/cc_avenue_cancel/' . $data['invoice_id']),
+            'billing_cust_name' => "",
+            'billing_cust_address' => "",
+            'billing_cust_country' => "",
+            'billing_cust_state' => "",
+            'billing_city' => "",
+            'billing_zip' => "",
+            'billing_cust_tel' => "",
+            'billing_cust_email' => "",
+            'delivery_cust_name' => "",
+            'delivery_cust_address' => "",
+            'delivery_cust_country' => "",
+            'delivery_cust_state' => "",
+            'delivery_city' => "",
+            'delivery_zip' => "",
+            'delivery_cust_tel' => "",
+            'delivery_cust_notes' => "",
+            'delivery_cust_notes' => "",
+            'name' => $invoice->head,
+            'address' => "",
+            'currency' => "INR",
+            'tid' => time(),
+        );
+
+        $this->load->view('payment/cc_avenue', $data);
+    }
+    
+    
+     /*****************Function cc_avenue_success**********************************
+    * @type            : Function
+    * @function name   : cc_avenue_success
+    * @description     : cc_avenue peyment processing success url                
+                         load user interface with success message 
+     *                   while user succesully pay.   
+    * @param           : null
+    * @return          : null
+    * ********************************************************** */
+    public function cc_avenue_success(){
+        
+        mail('yousuf361@gmail.com', 'CC Avenue', json_encode($_POST));
+        
+        $invoice_id = $this->uri->segment(4);
+        
+        $invoice = $this->invoice->get_single_invoice($invoice_id);
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$invoice->school_id));
+        
+        
+        $workingKey  = 'fdshaj131231231'; $payment_setting->ccavenue_salt;		//Working Key should be provided here.
+	$encResponse = $_POST["encResp"];			//This is the response sent by the CCAvenue Server
+	$rcvdString  = $this->ccaencrypt->decrypt($encResponse,$workingKey);		//Crypto Decryption used as per the specified working key.
+	$order_status="";
+	$decryptValues = explode('&', $rcvdString);        
+	$dataSize = sizeof($decryptValues);
+        
+        mail('yousuf361@gmail.com', 'CCAVENUE Return', json_encode($rcvdString));
+        
+	for($i = 0; $i < $dataSize; $i++) 
+	{
+            $information=explode('=',$decryptValues[$i]);
+            if($i==3){	$order_status=$information[1];}
+	}
+
+	if($order_status==="Success")
+	{
+	   
+            $payment = $this->payment->get_invoice_amount($invoice_id);                
+            $school = $this->payment->get_school_by_id($invoice->school_id);
+             
+            $data['invoice_id'] = $invoice_id;
+            $data['amount'] = $invoice->temp_amount;
+            $data['payment_method'] = 'CCAvenue';
+            $data['transaction_id'] = '1234567890';            
+            $data['note'] = 'Note';
+            $data['status'] = 1;
+            $data['academic_year_id'] = $school->academic_year_id;
+            $data['payment_date'] = date('Y-m-d');
+            $data['created_at'] = date('Y-m-d H:i:s');
+            $data['created_by'] = logged_in_user_id(); 
+
+            $this->payment->insert('transactions', $data);                
+            $due_mount = $invoice->net_amount - $payment->paid_amount;
+
+            if(floatval($data['amount']) < floatval($due_mount)){
+                $update = array('paid_status'=> 'partial');
+            }else{
+                $update = array('paid_status'=> 'paid', 'modified_at'=>date('Y-m-d H:i:s'));
+            }                    
+            $this->payment->update('invoices', $update, array('id'=>$invoice_id));
+
+            success($this->lang->line('payment_success'));
+            redirect('accounting/invoice/view/' . $invoice_id);
+            
+	}else{
+            
+            error($order_status .' : ' . $this->lang->line('payment_failed'));
+            redirect('accounting/invoice/view/' . $invoice_id);          
+	}
+    }
+    
+    
+     /*****************Function cc_avenue_cancel**********************************
+    * @type            : Function
+    * @function name   : cc_avenue_cancel
+    * @description     : cc_avenue peyment processing cancel url                
+                         load user interface with some cancel message 
+     *                   while user cancel cc_avenue paymnet 
+    * @param           : null
+    * @return          : null
+    * ********************************************************** */
+    public function cc_avenue_cancel(){
+        $invoice_id = $this->uri->segment(4);
+        error($this->lang->line('payment_failed'));
+        redirect('accounting/invoice/view/' . $invoice_id);
+    }
+
+    /* cc_avenue Payment END */  
+
+    
+        
+    /* PAY TM Payment Start */    
+    
+    
+        
+    /* PAY TM Payment Start */    
+    
+    /*****************Function pay_tm**********************************
+    * @type            : Function
+    * @function name   : pay_tm
+    * @description     : Payment processing using "pay_tm" payment gateway                  
+    *                       
+    * @param           : $data array() value
+    * @return          : null 
+    * ********************************************************** */
+    public function pay_tm($data) {
+  
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$data['school_id']));
+        $invoice = $this->invoice->get_single_invoice($data['invoice_id']);
+       
+        $this->invoice->update('invoices', array('temp_amount'=>$data['amount']), array('id'=>$data['invoice_id']));
+        $pay_amount = $data['amount'];
+        if($payment_setting->paytm_extra_charge > 0){
+            $pay_amount = $data['amount'] + ($payment_setting->paytm_extra_charge/100*$data['amount']);
+        }
+        
+        
+         if ($payment_setting->paytm_demo == TRUE) {
+             
+            // Key in your staging and production MID available in your dashboard
+            define("merchantMid", "rxazcv89315285244163");
+            // Key in your staging and production merchant key available in your dashboard
+            define("merchantKey", "gKpu7IKaLSbkchFS");
+            define("mobileNo", $this->session->userdata('phone') ? $this->session->userdata('phone') : '7777777777' );
+            define("email", define("mobileNo", $this->session->userdata('email') ? $this->session->userdata('email') : 'username@emailprovider.com' )); 
+            define("website", "WEBSTAGING");
+            define("industryTypeId", "Retail");
+            $transactionURL = "https://securegw-stage.paytm.in/theia/processTransaction";
+            
+         }else{
+             
+            // Key in your staging and production MID available in your dashboard
+             define("merchantMid", $payment_setting->paytm_merchant_mid);
+            // Key in your staging and production merchant key available in your dashboard
+             define("merchantKey", $payment_setting->paytm_merchant_key);
+             define("mobileNo", $this->session->userdata('phone') ? $this->session->userdata('phone') : '7777777777' );
+             define("email", define("mobileNo", $this->session->userdata('email') ? $this->session->userdata('email') : 'username@emailprovider.com' ));
+             define("website", $payment_setting->paytm_merchant_website);
+             define("industryTypeId", $payment_setting->paytm_industry_type);
+             $transactionURL = "https://securegw.paytm.in/theia/processTransaction"; //
+            
+         }
+                
+        define("orderId", "ORDS" . time().$data['invoice_id']);
+        define("channelId", "WEB");
+        define("custId", 'CUST'.$invoice->id);
+        define("txnAmount", $pay_amount);
+        define("callbackUrl", base_url('accounting/payment/pay_tm_success/' . $data['invoice_id']));
+       
+     
+        $paytmParams = array();
+        $paytmParams["MID"] = merchantMid;
+        $paytmParams["ORDER_ID"] = orderId;
+        $paytmParams["CUST_ID"] = custId;
+        $paytmParams["MOBILE_NO"] = mobileNo;
+        $paytmParams["EMAIL"] = email;
+        $paytmParams["CHANNEL_ID"] = channelId;
+        $paytmParams["TXN_AMOUNT"] = txnAmount;
+        $paytmParams["WEBSITE"] = website;
+        $paytmParams["INDUSTRY_TYPE_ID"] = industryTypeId;
+        $paytmParams["CALLBACK_URL"] = callbackUrl;
+        $paytmChecksum = getChecksumFromArray($paytmParams, merchantKey);
+       
+               
+        $data['paytmParams'] = $paytmParams;
+        $data['paytmChecksum'] = $paytmChecksum;
+        $data['transactionURL'] = $transactionURL;
+        
+        $this->load->view('payment/pay_tm', $data);
+    }
+    
+    
+     /*****************Function pay_tm_success**********************************
+    * @type            : Function
+    * @function name   : pay_tm_success
+    * @description     : pay_tm peyment processing success url                
+                         load user interface with success message 
+     *                   while user succesully pay.   
+    * @param           : null
+    * @return          : null
+    * ********************************************************** */
+    public function pay_tm_success(){
+        
+       // mail('yousuf361@gmail.com', 'PAY TM Return', json_encode($_POST));
+        
+        $invoice_id = $this->uri->segment(4);
+        $invoice = $this->invoice->get_single_invoice($invoice_id);
+        $payment = $this->payment->get_invoice_amount($invoice_id);   
+        $school = $this->payment->get_school_by_id($invoice->school_id);
+        $payment_setting   = $this->payment->get_single('payment_settings', array('status'=>1, 'school_id'=>$invoice->school_id));
+        
+       
+        $paytmParams = array();
+        $isValidChecksum = "FALSE";        
+        if ($payment_setting->paytm_demo == TRUE) {
+            
+            $merchantKey = "gKpu7IKaLSbkchFS";
+            
+        }else{
+             $merchantKey = $payment_setting->paytm_merchant_key; 
+        }  
+       
+        $paytmParams = $_POST;        
+        $paytmChecksum = isset($_POST["CHECKSUMHASH"]) ? $_POST["CHECKSUMHASH"] : "";
+	
+        //Verify all parameters received from Paytm pg to your application. Like MID received from paytm pg is same as your application’s MID, TXN_AMOUNT and ORDER_ID are same as what was sent by you to Paytm PG for initiating transaction etc.
+         $isValidChecksum = verifychecksum_e($paytmParams, $merchantKey, $paytmChecksum);
+        
+        if($isValidChecksum == "TRUE") {
+            
+            if ($_POST["STATUS"] == "TXN_SUCCESS") {
+                
+                
+                $data['school_id'] = $invoice->school_id;
+                $data['invoice_id'] = $invoice_id;
+                $data['amount'] = $invoice->temp_amount;
+                $data['payment_method'] = 'PayTM';
+                $data['transaction_id'] = $_POST["TXNID"];            
+                $data['note'] = $_POST["RESPMSG"]; 
+                $data['status'] = 1;
+                $data['academic_year_id'] = $school->academic_year_id;
+                $data['payment_date'] = date('Y-m-d');
+                $data['created_at'] = date('Y-m-d H:i:s');
+                $data['created_by'] = logged_in_user_id(); 
+
+                $this->payment->insert('transactions', $data);                
+                $due_mount = $invoice->net_amount - $payment->paid_amount;
+
+                if(floatval($data['amount']) < floatval($due_mount)){
+                    $update = array('paid_status'=> 'partial');
+                }else{
+                    $update = array('paid_status'=> 'paid', 'modified_at'=>date('Y-m-d H:i:s'));
+                }                    
+                $this->payment->update('invoices', $update, array('id'=>$invoice_id));
+
+                success($this->lang->line('payment_success'));
+                redirect('accounting/invoice/view/' . $invoice_id);
+                
+            }else{
+                error($this->lang->line('payment_failed'));
+                redirect('accounting/invoice/view/' . $invoice_id); 
+            }
+        }else{
+            error($this->lang->line('payment_failed'));
+            redirect('accounting/invoice/view/' . $invoice_id); 
+        }
+     
+    }
+    
+    
+     /*****************Function pay_tm_cancel**********************************
+    * @type            : Function
+    * @function name   : pay_tm_cancel
+    * @description     : pay_tm peyment processing cancel url                
+                         load user interface with some cancel message 
+     *                   while user cancel pay_tm paymnet 
+    * @param           : null
+    * @return          : null
+    * ********************************************************** */
+    public function pay_tm_cancel(){
+        $invoice_id = $this->uri->segment(4);
+        error($this->lang->line('payment_failed'));
+        redirect('accounting/invoice/view/' . $invoice_id);
+    }
+
+    /* PAY TM Payment END */  
 
 }

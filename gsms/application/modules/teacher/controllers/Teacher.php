@@ -3,7 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* * *****************Teacher.php**********************************
- * @product name    : Global School Management System Pro
+ * @product name    : Global Multi School Management System Express
  * @type            : Class
  * @class name      : Teacher
  * @description     : Manage teacers information of the school.  
@@ -37,7 +37,14 @@ class Teacher extends MY_Controller {
 
         $this->data['teachers'] = $this->teacher->get_teacher_list();
         $this->data['roles'] = $this->teacher->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-        $this->data['grades'] = $this->teacher->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
+        
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['grades'] = $this->teacher->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
         
         $this->data['list'] = TRUE;
         $this->layout->title($this->lang->line('manage_teacher') . ' | ' . SMS);
@@ -77,8 +84,15 @@ class Teacher extends MY_Controller {
 
         $this->data['teachers'] = $this->teacher->get_teacher_list();
         $this->data['roles'] = $this->teacher->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-         $this->data['grades'] = $this->teacher->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
-         
+
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['grades'] = $this->teacher->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
+        
         $this->data['add'] = TRUE;
         $this->layout->title($this->lang->line('add') . ' ' . $this->lang->line('teacher') . ' | ' . SMS);
         $this->layout->view('teacher/index', $this->data);
@@ -127,8 +141,16 @@ class Teacher extends MY_Controller {
 
         $this->data['teachers'] = $this->teacher->get_teacher_list();
         $this->data['roles'] = $this->teacher->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
-         $this->data['grades'] = $this->teacher->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
          
+        if($this->session->userdata('role_id') != SUPER_ADMIN){
+            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['grades'] = $this->teacher->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
+        
+        $this->data['school_id'] = $this->data['teacher']->school_id;
         $this->data['edit'] = TRUE;
         $this->layout->title($this->lang->line('edit') . ' ' . $this->lang->line('teacher') . ' | ' . SMS);
         $this->layout->view('teacher/index', $this->data);
@@ -150,13 +172,38 @@ class Teacher extends MY_Controller {
         $this->data['teachers'] = $this->teacher->get_teacher_list();
         $this->data['roles'] = $this->teacher->get_list('roles', array('status' => 1), '', '', '', 'id', 'ASC');
         $this->data['teacher'] = $this->teacher->get_single_teacher($id);
-         $this->data['grades'] = $this->teacher->get_list('salary_grades', array('status' => 1), '', '', '', 'id', 'ASC');
-         
+
+        if($this->session->userdata('role_id') != SUPER_ADMIN){            
+            $condition = array();
+            $condition['status'] = 1;
+            $condition['school_id'] = $this->session->userdata('school_id');        
+            $this->data['grades'] = $this->teacher->get_list('salary_grades', $condition, '', '', '', 'id', 'ASC');
+        }
+        
         $this->data['detail'] = TRUE;
         $this->layout->title($this->lang->line('view') . ' ' . $this->lang->line('teacher') . ' | ' . SMS);
         $this->layout->view('teacher/index', $this->data);
     }
 
+    
+            
+        
+     /*****************Function get_single_teacher**********************************
+     * @type            : Function
+     * @function name   : get_single_teacher
+     * @description     : "Load single teacher information" from database                  
+     *                    to the user interface   
+     * @param           : null
+     * @return          : null 
+     * ********************************************************** */
+    public function get_single_teacher(){
+        
+       $teacher_id = $this->input->post('teacher_id');
+       
+       $this->data['teacher'] = $this->teacher->get_single_teacher($teacher_id);
+       echo $this->load->view('teacher/get-single-teacher', $this->data);
+    }
+    
         
     /*****************Function _prepare_teacher_validation**********************************
     * @type            : Function
@@ -167,14 +214,18 @@ class Teacher extends MY_Controller {
     * @return          : null 
     * ********************************************************** */
     private function _prepare_teacher_validation() {
+        
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<div class="error-message" style="color: red;">', '</div>');
 
         if (!$this->input->post('id')) {   
-            $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|required|valid_email|callback_email');
+            $this->form_validation->set_rules('username', $this->lang->line('username'), 'trim|required|callback_username');
             $this->form_validation->set_rules('password', $this->lang->line('password'), 'trim|required');
         }
+        
+        $this->form_validation->set_rules('email', $this->lang->line('email'), 'trim|valid_email');
         $this->form_validation->set_rules('role_id', $this->lang->line('role'), 'trim|required');
+        $this->form_validation->set_rules('school_id', $this->lang->line('school'), 'trim|required');
 
         $this->form_validation->set_rules('responsibility', $this->lang->line('responsibility'), 'trim|required');
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required');
@@ -200,27 +251,27 @@ class Teacher extends MY_Controller {
 
         
                     
-    /*****************Function email**********************************
+    /*****************Function username**********************************
     * @type            : Function
-    * @function name   : email
-    * @description     : Unique check for "Teacher Email" data/value                  
+    * @function name   : username
+    * @description     : Unique check for "Teacher username" data/value                  
     *                       
     * @param           : null
     * @return          : boolean true/false 
     * ********************************************************** */ 
-    public function email() {
+    public function username() {
         if ($this->input->post('id') == '') {
-            $email = $this->teacher->duplicate_check($this->input->post('email'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->teacher->duplicate_check($this->input->post('username'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
             }
         } else if ($this->input->post('id') != '') {
-            $email = $this->teacher->duplicate_check($this->input->post('email'), $this->input->post('id'));
-            if ($email) {
-                $this->form_validation->set_message('email', $this->lang->line('already_exist'));
+            $username = $this->teacher->duplicate_check($this->input->post('username'), $this->input->post('id'));
+            if ($username) {
+                $this->form_validation->set_message('username', $this->lang->line('already_exist'));
                 return FALSE;
             } else {
                 return TRUE;
@@ -241,8 +292,11 @@ class Teacher extends MY_Controller {
     private function _get_posted_teacher_data() {
 
         $items = array();
-        $items[] = 'responsibility';
+        $items[] = 'school_id';
         $items[] = 'name';
+        $items[] = 'email';
+        $items[] = 'national_id';
+        $items[] = 'responsibility';
         $items[] = 'phone';
         $items[] = 'present_address';
         $items[] = 'permanent_address';
@@ -259,12 +313,12 @@ class Teacher extends MY_Controller {
         $items[] = 'pinterest_url';
         $items[] = 'twitter_url';
         $items[] = 'youtube_url';
+        $items[] = 'is_view_on_web';
         
         $data = elements($items, $_POST);
 
         $data['dob'] = date('Y-m-d', strtotime($this->input->post('dob')));
         $data['joining_date'] = date('Y-m-d', strtotime($this->input->post('joining_date')));
-        $data['is_view_on_web'] = $this->input->post('is_view_on_web') ? 1 : 0;
 
         if ($this->input->post('id')) {
             $data['modified_at'] = date('Y-m-d H:i:s');

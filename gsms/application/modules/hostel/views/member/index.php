@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'hostel', 'hostel')){ ?>
                     <a href="<?php echo site_url('hostel/index/'); ?>"><?php echo $this->lang->line('manage_hostel'); ?></a>
                 <?php } ?>
@@ -39,6 +39,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('photo'); ?></th>
                                         <th><?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('class'); ?></th>
@@ -54,6 +57,9 @@
                                         <?php foreach($members as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                <?php  if($obj->photo != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/student-photo/<?php echo $obj->photo; ?>" alt="" width="70" /> 
@@ -85,6 +91,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('photo'); ?></th>
                                         <th><?php echo $this->lang->line('name'); ?></th>
                                         <th><?php echo $this->lang->line('class'); ?></th>
@@ -99,6 +108,9 @@
                                         <?php foreach($non_members as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td>
                                                <?php  if($obj->photo != ''){ ?>
                                                 <img src="<?php echo UPLOAD_PATH; ?>/student-photo/<?php echo $obj->photo; ?>" alt="" width="70" /> 
@@ -111,15 +123,25 @@
                                             <td><?php echo $obj->section; ?></td>
                                             <td><?php echo $obj->roll_no; ?></td>
                                             <td>
-                                                <select  class="form-control col-md-7 col-xs-12 alignleft" name="hostel_id" id="hostel_id_<?php echo $obj->user_id; ?>" onchange="get_room_by_hostel(this.value, '<?php echo $obj->user_id; ?>');" required="required">
-                                                    <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('hostel'); ?>--</option>
-                                                    <?php foreach($hostels as $hostel){ ?>
-                                                        <option value="<?php echo $hostel->id; ?>"><?php echo $hostel->name; ?> [<?php echo $this->lang->line($hostel->type); ?>]</option>
-                                                    <?php } ?>
-                                                </select>
-                                                <select  class="form-control col-md-7 col-xs-12" name="room_id" id="room_id_<?php echo $obj->user_id; ?>" required="required">
-                                                    <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('room_no'); ?>--</option>                                                    
-                                                </select>
+                                                <div class="col-md-12 col-xs-12" >                                                     
+                                                    <input type="hidden" name="school_id" id="school_id_<?php echo $obj->user_id; ?>" value="<?php echo $obj->school_id; ?>" />
+                                                </div>
+                                                <div class="col-md-12 col-xs-12" >
+                                                    <select  class="form-control col-md-7 col-xs-12 alignleft" name="hostel_id" id="hostel_id_<?php echo $obj->user_id; ?>" onchange="get_room_by_hostel(this.value, '<?php echo $obj->user_id; ?>');" required="required">
+                                                        <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('hostel'); ?>--</option>
+                                                            <?php $hostels = get_hostel_by_school($obj->school_id); ?>
+                                                            <?php if(isset($hostels) && !empty($hostels)){ ?>
+                                                                <?php foreach($hostels as $hostel){ ?>
+                                                                    <option value="<?php echo $hostel->id; ?>"><?php echo $hostel->name; ?> [<?php echo $this->lang->line($hostel->type); ?>]</option>
+                                                                <?php } ?>
+                                                            <?php } ?>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-12 col-xs-12" >
+                                                    <select  class="form-control col-md-7 col-xs-12" name="room_id" id="room_id_<?php echo $obj->user_id; ?>" required="required">
+                                                        <option value="">--<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('room_no'); ?>--</option>                                                    
+                                                    </select>
+                                                </div>  
                                             </td>
                                             <td>
                                                 <?php if(has_permission(ADD, 'hostel', 'member')){ ?>
@@ -148,6 +170,7 @@
            
           var obj = $(this);  
           var user_id  = $(this).attr('id');         
+          var school_id  = $('#school_id_'+user_id).val();         
           var hostel_id  = $('#hostel_id_'+user_id).val();         
           var room_id  = $('#room_id_'+user_id).val();         
           if(hostel_id == ''){
@@ -158,10 +181,11 @@
                toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('room_no'); ?>'); 
                return false;
           }
+          
           $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('hostel/member/add_to_hostel'); ?>",
-            data   : { user_id : user_id, hostel_id : hostel_id, room_id : room_id},               
+            data   : {school_id:school_id, user_id : user_id, hostel_id : hostel_id, room_id : room_id},               
             async  : false,
             success: function(response){ 
                 if(response){
@@ -205,7 +229,8 @@
                   'pdfHtml5',
                   'pageLength'
               ],
-              search: true
+              search: true,              
+              responsive: true
           });
         });
 </script>

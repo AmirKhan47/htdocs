@@ -9,7 +9,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content quick-link">
-                <?php echo $this->lang->line('quick_link'); ?>:
+                 <span><?php echo $this->lang->line('quick_link'); ?>:</span>
                 <?php if(has_permission(VIEW, 'message', 'mail')){ ?>
                     <a href="<?php echo site_url('message/mail/index/'); ?>"><?php echo $this->lang->line('manage_email'); ?></a> |
                 <?php } ?>
@@ -35,6 +35,9 @@
                                 <thead>
                                     <tr>
                                         <th><?php echo $this->lang->line('sl_no'); ?></th>
+                                        <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                            <th><?php echo $this->lang->line('school'); ?></th>
+                                        <?php } ?>
                                         <th><?php echo $this->lang->line('session_year'); ?></th>
                                         <th><?php echo $this->lang->line('receiver_type'); ?></th>
                                         <th><?php echo $this->lang->line('receiver'); ?> <?php echo $this->lang->line('name'); ?></th>
@@ -48,13 +51,21 @@
                                         <?php foreach($texts as $obj){ ?>
                                         <tr>
                                             <td><?php echo $count++; ?></td>
+                                            <?php if($this->session->userdata('role_id') == SUPER_ADMIN){ ?>
+                                                <td><?php echo $obj->school_name; ?></td>
+                                            <?php } ?>
                                             <td><?php echo $obj->session_year; ?></td>
                                             <td><?php echo $obj->receiver_type; ?></td>
                                             <td><?php echo $obj->receivers; ?></td>
                                             <td><?php echo $obj->body; ?></td>                                           
                                             <td><?php echo get_nice_time($obj->created_at); ?></td>                                           
                                             <td>
-                                                <a href="<?php echo site_url('message/text/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
+                                                <?php if(has_permission(VIEW, 'message', 'text')){ ?>
+                                                    <a  onclick="get_sms_modal(<?php echo $obj->id; ?>);"  data-toggle="modal" data-target=".bs-sms-modal-lg"  class="btn btn-success btn-xs"><i class="fa fa-eye"></i> <?php echo $this->lang->line('view'); ?> </a>
+                                                <?php } ?>
+                                                <?php if(has_permission(DELETE, 'message', 'text')){ ?>
+                                                    <a href="<?php echo site_url('message/text/delete/'.$obj->id); ?>" onclick="javascript: return confirm('<?php echo $this->lang->line('confirm_alert'); ?>');" class="btn btn-danger btn-xs"><i class="fa fa-trash-o"></i> <?php echo $this->lang->line('delete'); ?> </a>
+                                                <?php } ?>
                                             </td>
                                         </tr>
                                         <?php } ?>
@@ -68,13 +79,17 @@
                             <div class="x_content"> 
                                <?php echo form_open_multipart(site_url('message/text/add'), array('name' => 'add', 'id' => 'add', 'class'=>'form-horizontal form-label-left'), ''); ?>
                                 
+                                <?php $this->load->view('layout/school_list_form'); ?> 
+                                
                                 <div class="item form-group"> 
                                     <label class="control-label col-md-3 col-sm-3 col-xs-12" for="role_id"><?php echo $this->lang->line('receiver_type'); ?> <span class="required">*</span></label>
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-12 col-xs-12"  name="role_id"  id="role_id" required="required" onchange="get_user_by_role(this.value, '');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option> 
-                                            <?php foreach($roles as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" <?php if(isset($message) && $message->role_id == $obj->id ){ echo 'selected="selected"';} ?> ><?php echo $obj->name; ?></option>
+                                            <?php if(isset($roles) && !empty($roles)){ ?>
+                                                <?php foreach($roles as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" <?php if(isset($message) && $message->role_id == $obj->id ){ echo 'selected="selected"';} ?> ><?php echo $obj->name; ?></option>
+                                                <?php } ?>                                            
                                             <?php } ?>                                            
                                         </select>
                                         <div class="help-block"><?php echo form_error('role_id'); ?></div>
@@ -86,8 +101,10 @@
                                     <div class="col-md-6 col-sm-6 col-xs-12">
                                         <select  class="form-control col-md-12 col-xs-12"  name="class_id"  id="class_id"  onchange="get_user('', this.value,'');">
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                            <?php foreach($classes as $obj ){ ?>
-                                            <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                             <?php if(isset($classes) && !empty($classes)){ ?>
+                                                <?php foreach($classes as $obj ){ ?>
+                                                <option value="<?php echo $obj->id; ?>" ><?php echo $obj->name; ?></option>
+                                                <?php } ?> 
                                             <?php } ?> 
                                         </select>
                                         <div class="help-block"><?php echo form_error('class_id'); ?></div>
@@ -114,18 +131,19 @@
                                 </div>                      
                                                               
                                 <div class="item form-group">  
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="receiver_id"><?php echo $this->lang->line('gateway'); ?> <span class="required">*</span></label>
-                                    <div class="col-md-6 col-sm-6 col-xs-12">
-                                        <?php $services = get_sms_gateways(); ?>
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12" for="sms_gateway"><?php echo $this->lang->line('gateway'); ?> <span class="required">*</span></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12">                                       
                                         <select  class="form-control col-md-12 col-xs-12"  name="sms_gateway"  id="sms_gateway" required="required" >
                                             <option value="">--<?php echo $this->lang->line('select'); ?>--</option>  
-                                            <?php foreach($services AS $key=>$value){ ?>
-                                            <option value="<?php echo $key; ?>"><?php echo $value; ?></option>  
-                                            <?php } ?>
                                         </select>
                                         <div class="help-block"><?php echo form_error('sms_gateway'); ?></div>
                                     </div>
                                 </div>
+                                
+                                <div class="form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12"><?php echo $this->lang->line('dynamic_tag'); ?></label>
+                                    <div class="col-md-6 col-sm-6 col-xs-12"  id="fn_tag">[name]</div>
+                                </div>    
                                
                                 <div class="ln_solid"></div>
                                 <div class="form-group">
@@ -146,7 +164,50 @@
     </div>
 </div>
 
+
+
+<div class="modal fade bs-sms-modal-lg" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+          <h4 class="modal-title"><?php echo $this->lang->line('sms'); ?> <?php echo $this->lang->line('information'); ?></h4>
+        </div>
+        <div class="modal-body fn_sms_data">
+            
+        </div>       
+      </div>
+    </div>
+</div>
+<script type="text/javascript">
+         
+    function get_sms_modal(sms_id){
+         
+        $('.fn_sms_data').html('<p style="padding: 20px;"><p style="padding: 20px;text-align:center;"><img src="<?php echo IMG_URL; ?>loading.gif" /></p>');
+        $.ajax({       
+          type   : "POST",
+          url    : "<?php echo site_url('message/text/get_single_sms'); ?>",
+          data   : {sms_id : sms_id},  
+          success: function(response){                                                   
+             if(response)
+             {
+                $('.fn_sms_data').html(response);
+             }
+          }
+       });
+    }
+</script>
+
+
+
  <script type="text/javascript">
+   
+   $('#add_school_id').on('change', function(){
+        $('#class_id').prop('selectedIndex',0);
+        $('#role_id').prop('selectedIndex',0);
+        $('#receiver_id').prop('selectedIndex',0);        
+        get_sms_gateways($(this).val());
+    });
    
   <?php if(isset($message)){ ?>
         get_user_by_role('<?php echo $message->role_id; ?>', '<?php echo $message->receiver_id; ?>');        
@@ -158,23 +219,31 @@
            $('.display').show();
            $('#class_id').prop('required', true);
            $('#receiver_id').html('<option value="">--<?php echo $this->lang->line('select'); ?>--</option>'); 
+           get_class_by_school();
        }else{
            get_user(role_id, '', user_id);
            $('#class_id').prop('required', false);
            $('.display').hide();
-       }       
+       }
+       
+       get_sms_gateways();
    }
    
    function get_user(role_id, class_id, user_id){
        
+       var school_id = $('#add_school_id').val();
        if(role_id == ''){
            role_id = $('#role_id').val();
        }
+       if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
        
        $.ajax({       
             type   : "POST",
             url    : "<?php echo site_url('ajax/get_user_by_role'); ?>",
-            data   : { role_id : role_id , class_id: class_id, user_id:user_id},               
+            data   : {school_id:school_id, role_id : role_id , class_id: class_id, user_id:user_id},               
             async  : false,
             success: function(response){                                                   
                if(response)
@@ -183,6 +252,50 @@
                }
             }
         }); 
+   }
+    
+      
+   function get_class_by_school(){
+        
+        var school_id = $('#add_school_id').val();
+        if(!school_id){
+           toastr.error('<?php echo $this->lang->line('select'); ?> <?php echo $this->lang->line('school'); ?>');
+           return false;
+        }
+        
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_class_by_school'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                    $('#class_id').html(response);                     
+               }
+            }
+        });
+   }
+   
+    function get_sms_gateways(school_id){       
+        
+        school_id = $('#add_school_id').val();
+        if(!school_id){
+           return false;
+        }
+        $.ajax({       
+            type   : "POST",
+            url    : "<?php echo site_url('ajax/get_sms_gateways'); ?>",
+            data   : { school_id:school_id},               
+            async  : false,
+            success: function(response){                                                   
+               if(response)
+               {  
+                   $('#sms_gateway').html(response);                                  
+               }
+            }
+        });                  
+        
    }
     
    $(document).ready(function() {
@@ -196,7 +309,8 @@
                 'pdfHtml5',
                 'pageLength'
             ],
-            search: true
+            search: true,             
+            responsive: true
         });
       });
       
